@@ -3,11 +3,10 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DESKTOP_DIR="$ROOT_DIR/apps/desktop-tauri"
-LLVM_BIN="/opt/homebrew/opt/llvm/bin"
-LLD_BIN="/opt/homebrew/opt/lld/bin"
 TARGET="x86_64-pc-windows-msvc"
 
 missing=()
+tool_bins=()
 
 require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -15,16 +14,39 @@ require_command() {
   fi
 }
 
-require_file() {
-  if [[ ! -x "$1" ]]; then
-    missing+=("$1")
+resolve_tool() {
+  local tool="$1"
+  local formula="$2"
+  local found=""
+
+  if found="$(command -v "$tool" 2>/dev/null)"; then
+    tool_bins+=("$(dirname "$found")")
+    return 0
   fi
+
+  if command -v brew >/dev/null 2>&1; then
+    local prefix
+    prefix="$(brew --prefix "$formula" 2>/dev/null || true)"
+    if [[ -n "$prefix" && -x "$prefix/bin/$tool" ]]; then
+      tool_bins+=("$prefix/bin")
+      return 0
+    fi
+  fi
+
+  for prefix in /opt/homebrew/opt/"$formula" /usr/local/opt/"$formula"; do
+    if [[ -x "$prefix/bin/$tool" ]]; then
+      tool_bins+=("$prefix/bin")
+      return 0
+    fi
+  done
+
+  missing+=("$tool")
 }
 
 require_command pnpm
 require_command cargo-xwin
-require_file "$LLVM_BIN/llvm-lib"
-require_file "$LLD_BIN/lld-link"
+resolve_tool llvm-lib llvm
+resolve_tool lld-link lld
 
 if [[ ${#missing[@]} -gt 0 ]]; then
   echo "Missing tools for macOS -> Windows cross build:" >&2
@@ -41,7 +63,9 @@ if ! rustup target list --installed | grep -qx "$TARGET"; then
   rustup target add "$TARGET"
 fi
 
-export PATH="$LLD_BIN:$LLVM_BIN:$PATH"
+for bin_dir in "${tool_bins[@]}"; do
+  export PATH="$bin_dir:$PATH"
+done
 
 pnpm --dir "$DESKTOP_DIR" exec tauri build \
   --runner cargo-xwin \
