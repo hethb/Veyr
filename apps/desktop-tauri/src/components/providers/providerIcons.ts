@@ -2,17 +2,22 @@
 // rust/src/native_ui/theme.rs::{provider_color, provider_icon}.
 // Keep in sync with the Rust registries when new providers are added.
 
+import abacus from "./icons/ProviderIcon-abacus.svg?raw";
 import alibaba from "./icons/ProviderIcon-alibaba.svg?raw";
 import amp from "./icons/ProviderIcon-amp.svg?raw";
 import antigravity from "./icons/ProviderIcon-antigravity.svg?raw";
 import augment from "./icons/ProviderIcon-augment.svg?raw";
+import bedrock from "./icons/ProviderIcon-bedrock.svg?raw";
 import claude from "./icons/ProviderIcon-claude.svg?raw";
 import codebuff from "./icons/ProviderIcon-codebuff.svg?raw";
 import codex from "./icons/ProviderIcon-codex.svg?raw";
+import commandcode from "./icons/ProviderIcon-commandcode.svg?raw";
 import copilot from "./icons/ProviderIcon-copilot.svg?raw";
+import crof from "./icons/ProviderIcon-crof.svg?raw";
 import cursor from "./icons/ProviderIcon-cursor.svg?raw";
 import deepgram from "./icons/ProviderIcon-deepgram.svg?raw";
 import deepseek from "./icons/ProviderIcon-deepseek.svg?raw";
+import doubao from "./icons/ProviderIcon-doubao.svg?raw";
 import elevenlabs from "./icons/ProviderIcon-elevenlabs.svg?raw";
 import factory from "./icons/ProviderIcon-factory.svg?raw";
 import gemini from "./icons/ProviderIcon-gemini.svg?raw";
@@ -23,6 +28,8 @@ import kilo from "./icons/ProviderIcon-kilo.svg?raw";
 import kimi from "./icons/ProviderIcon-kimi.svg?raw";
 import kiro from "./icons/ProviderIcon-kiro.svg?raw";
 import llmproxy from "./icons/ProviderIcon-llmproxy.svg?raw";
+import manus from "./icons/ProviderIcon-manus.svg?raw";
+import mimo from "./icons/ProviderIcon-mimo.svg?raw";
 import minimax from "./icons/ProviderIcon-minimax.svg?raw";
 import mistral from "./icons/ProviderIcon-mistral.svg?raw";
 import ollama from "./icons/ProviderIcon-ollama.svg?raw";
@@ -30,8 +37,10 @@ import opencode from "./icons/ProviderIcon-opencode.svg?raw";
 import opencodego from "./icons/ProviderIcon-opencodego.svg?raw";
 import openrouter from "./icons/ProviderIcon-openrouter.svg?raw";
 import perplexity from "./icons/ProviderIcon-perplexity.svg?raw";
+import stepfun from "./icons/ProviderIcon-stepfun.svg?raw";
 import synthetic from "./icons/ProviderIcon-synthetic.svg?raw";
 import t3chat from "./icons/ProviderIcon-t3chat.svg?raw";
+import venice from "./icons/ProviderIcon-venice.svg?raw";
 import vertexai from "./icons/ProviderIcon-vertexai.svg?raw";
 import warp from "./icons/ProviderIcon-warp.svg?raw";
 import windsurf from "./icons/ProviderIcon-windsurf.svg?raw";
@@ -62,17 +71,22 @@ export interface ProviderIcon {
 }
 
 const RAW: Record<string, string> = {
+  abacus: tint(abacus),
   alibaba: tint(alibaba),
   amp: tint(amp),
   antigravity: tint(antigravity),
   augment: tint(augment),
+  bedrock: tint(bedrock),
   claude: tint(claude),
   codebuff: tint(codebuff),
   codex: tint(codex),
+  commandcode: tint(commandcode),
   copilot: tint(copilot),
+  crof: tint(crof),
   cursor: tint(cursor),
   deepgram: tint(deepgram),
   deepseek: tint(deepseek),
+  doubao: tint(doubao),
   elevenlabs: tint(elevenlabs),
   factory: tint(factory),
   gemini: tint(gemini),
@@ -83,6 +97,8 @@ const RAW: Record<string, string> = {
   kimi: tint(kimi),
   kiro: tint(kiro),
   llmproxy: tint(llmproxy),
+  manus: tint(manus),
+  mimo: tint(mimo),
   minimax: tint(minimax),
   mistral: tint(mistral),
   ollama: tint(ollama),
@@ -90,8 +106,10 @@ const RAW: Record<string, string> = {
   opencodego: tint(opencodego),
   openrouter: tint(openrouter),
   perplexity: tint(perplexity),
+  stepfun: tint(stepfun),
   synthetic: tint(synthetic),
   t3chat: tint(t3chat),
+  venice: tint(venice),
   vertexai: tint(vertexai),
   warp: tint(warp),
   windsurf: tint(windsurf),
@@ -123,7 +141,7 @@ export const PROVIDER_ICON_REGISTRY: Record<string, ProviderIcon> = {
   groq:        { id: "groq",        brandColor: "#f55036", fallbackLetter: "G", svgPath: RAW.groq },
   jetbrains:   { id: "jetbrains",   brandColor: "#ff3399", fallbackLetter: "J", svgPath: RAW.jetbrains },
   kilo:        { id: "kilo",        brandColor: "#5d87ff", fallbackLetter: "K", svgPath: RAW.kilo },
-  bedrock:     { id: "bedrock",     brandColor: "#ff9900", fallbackLetter: "B" },
+  bedrock:     { id: "bedrock",     brandColor: "#ff9900", fallbackLetter: "B", svgPath: RAW.bedrock },
   kimi:        { id: "kimi",        brandColor: "#fe603c", fallbackLetter: "☽", svgPath: RAW.kimi },
   kimik2:      { id: "kimik2",      brandColor: "#4c00ff", fallbackLetter: "☽", svgPath: RAW.kimi },
   kiro:        { id: "kiro",        brandColor: "#ff9900", fallbackLetter: "K", svgPath: RAW.kiro },
@@ -145,14 +163,14 @@ export const PROVIDER_ICON_REGISTRY: Record<string, ProviderIcon> = {
   // Aliases / Rust-side normalizations without their own SVG.
   nanogpt:     { id: "nanogpt",     brandColor: "#687fa1", fallbackLetter: "N" },
   infini:      { id: "infini",      brandColor: "#687fa1", fallbackLetter: "I" },
-  abacus:      { id: "abacus",      brandColor: "#7c3aed", fallbackLetter: "A" },
-  manus:       { id: "manus",       brandColor: "#34322d", fallbackLetter: "M" },
-  mimo:        { id: "mimo",        brandColor: "#ff6900", fallbackLetter: "M" },
-  doubao:      { id: "doubao",      brandColor: "#2563eb", fallbackLetter: "D" },
-  commandcode: { id: "commandcode", brandColor: "#44ff00", fallbackLetter: "C" },
-  crof:        { id: "crof",        brandColor: "#7c3aed", fallbackLetter: "C" },
-  stepfun:     { id: "stepfun",     brandColor: "#999999", fallbackLetter: "S" },
-  venice:      { id: "venice",      brandColor: "#111827", fallbackLetter: "V" },
+  abacus:      { id: "abacus",      brandColor: "#7c3aed", fallbackLetter: "A", svgPath: RAW.abacus },
+  manus:       { id: "manus",       brandColor: "#34322d", fallbackLetter: "M", svgPath: RAW.manus },
+  mimo:        { id: "mimo",        brandColor: "#ff6900", fallbackLetter: "M", svgPath: RAW.mimo },
+  doubao:      { id: "doubao",      brandColor: "#2563eb", fallbackLetter: "D", svgPath: RAW.doubao },
+  commandcode: { id: "commandcode", brandColor: "#44ff00", fallbackLetter: "C", svgPath: RAW.commandcode },
+  crof:        { id: "crof",        brandColor: "#7c3aed", fallbackLetter: "C", svgPath: RAW.crof },
+  stepfun:     { id: "stepfun",     brandColor: "#999999", fallbackLetter: "S", svgPath: RAW.stepfun },
+  venice:      { id: "venice",      brandColor: "#111827", fallbackLetter: "V", svgPath: RAW.venice },
   openaiapi:   { id: "openaiapi",   brandColor: "#10a37f", fallbackLetter: "O" },
 };
 
