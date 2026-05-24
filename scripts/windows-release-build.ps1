@@ -157,6 +157,11 @@ try {
 
     $env:APP_VERSION = $version
     $env:CARGO_TARGET_DIR = $DesktopCargoTargetDir
+    if (-not $env:CARGO_BUILD_TARGET -and [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
+        [System.Runtime.InteropServices.OSPlatform]::Windows
+    )) {
+        $env:CARGO_BUILD_TARGET = "x86_64-pc-windows-msvc"
+    }
     $env:PNPM_HOME = if ($env:PNPM_HOME) { $env:PNPM_HOME } else { Join-Path $CacheDir "pnpm-home" }
 
     Write-Host "Building Win-CodexBar $version from $commit"

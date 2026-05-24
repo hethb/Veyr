@@ -28,6 +28,10 @@ jobs:
           shell: powershell.exe
           command: |
             $ErrorActionPreference = "Stop"
+            trap {
+              Write-Error $_
+              exit 1
+            }
             choco feature enable -n allowGlobalConfirmation
 
             choco install git gh innosetup nodejs-lts -y --no-progress
@@ -41,8 +45,9 @@ jobs:
                 [System.Environment]::GetEnvironmentVariable("Path", "User")
             }
 
-            rustup default stable-msvc
+            rustup default stable-x86_64-pc-windows-msvc
             rustup target add x86_64-pc-windows-msvc
+            $env:CARGO_BUILD_TARGET = "x86_64-pc-windows-msvc"
 
             corepack enable
             corepack prepare pnpm@10.18.1 --activate
@@ -76,6 +81,11 @@ jobs:
           no_output_timeout: 30m
           command: |
             $ErrorActionPreference = "Stop"
+            trap {
+              Write-Error $_
+              exit 1
+            }
+            $env:CARGO_BUILD_TARGET = "x86_64-pc-windows-msvc"
             $uploadCloudflare = [System.Boolean]::Parse("<< parameters.upload_cloudflare >>")
             $args = @("-NoLogo", "-ExecutionPolicy", "Bypass", "-File", "scripts\ci\circleci-release.ps1")
             if ($uploadCloudflare) {
@@ -83,7 +93,8 @@ jobs:
             }
             powershell.exe @args
             if ($LASTEXITCODE -ne 0) {
-              throw "circleci-release.ps1 failed with exit code $LASTEXITCODE"
+              Write-Error "circleci-release.ps1 failed with exit code $LASTEXITCODE"
+              exit $LASTEXITCODE
             }
 
       - store_artifacts:
