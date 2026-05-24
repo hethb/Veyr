@@ -25,14 +25,14 @@ jobs:
 
       - run:
           name: Install and verify release tools
-          shell: cmd.exe
+          shell: cmd.exe /d /s /c
           command: |
             powershell.exe -NoLogo -ExecutionPolicy Bypass -File scripts\ci\install-circleci-release-tools.ps1
             if errorlevel 1 exit /b %errorlevel%
 
       - run:
           name: Build and smoke test Windows release
-          shell: cmd.exe
+          shell: cmd.exe /d /s /c
           no_output_timeout: 30m
           command: |
             set CARGO_BUILD_TARGET=x86_64-pc-windows-msvc
@@ -45,7 +45,7 @@ jobs:
 
       - run:
           name: Assert release artifacts
-          shell: cmd.exe
+          shell: cmd.exe /d /s /c
           command: |
             powershell.exe -NoLogo -ExecutionPolicy Bypass -File scripts\ci\assert-release-assets.ps1
             if errorlevel 1 exit /b %errorlevel%
