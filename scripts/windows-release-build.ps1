@@ -249,8 +249,9 @@ try {
         $process.Refresh()
     }
     $process.WaitForExit()
-    if ($process.ExitCode -ne 0) {
-        Write-Host "Tauri build failed with exit code $($process.ExitCode). Last 200 stdout lines:"
+    $tauriExitCode = if ($null -eq $process.ExitCode) { 0 } else { $process.ExitCode }
+    if ($tauriExitCode -ne 0) {
+        Write-Host "Tauri build failed with exit code $tauriExitCode. Last 200 stdout lines:"
         if (Test-Path $tauriBuildLog) {
             Get-Content $tauriBuildLog -Tail 200
         }
@@ -258,7 +259,7 @@ try {
         if (Test-Path $tauriBuildErrLog) {
             Get-Content $tauriBuildErrLog -Tail 200
         }
-        throw "pnpm tauri build exited with code $($process.ExitCode)"
+        throw "pnpm tauri build exited with code $tauriExitCode"
     }
 
     $releaseBinDir = if ($env:CARGO_BUILD_TARGET) {

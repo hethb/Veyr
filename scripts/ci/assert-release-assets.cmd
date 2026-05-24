@@ -3,7 +3,7 @@ setlocal
 
 set "VERSION="
 for /f "tokens=3" %%A in ('findstr /b /c:"version = " rust\Cargo.toml') do (
-  if not defined VERSION set "VERSION=%%A"
+  if not defined VERSION set "VERSION=%%~A"
 )
 
 if not defined VERSION (
