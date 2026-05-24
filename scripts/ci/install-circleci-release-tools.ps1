@@ -4,10 +4,16 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 $env:CARGO_TERM_COLOR = "never"
 $env:CARGO_TERM_PROGRESS_WHEN = "never"
+$env:RUSTUP_INIT_SKIP_PATH_CHECK = "yes"
 $env:NO_COLOR = "1"
 trap {
     Write-Host $_
     [Environment]::Exit(1)
+}
+
+$cargoBin = Join-Path $env:USERPROFILE ".cargo\bin"
+if (Test-Path $cargoBin) {
+    $env:Path = "$cargoBin;$env:Path"
 }
 
 function Test-Command {
@@ -51,16 +57,19 @@ if (-not (Get-Command rustup -ErrorAction SilentlyContinue)) {
     choco install rustup.install -y --no-progress
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
         [System.Environment]::GetEnvironmentVariable("Path", "User")
-}
-
-$cargoBin = Join-Path $env:USERPROFILE ".cargo\bin"
-if (Test-Path $cargoBin) {
-    $env:Path = "$cargoBin;$env:Path"
+    if (Test-Path $cargoBin) {
+        $env:Path = "$cargoBin;$env:Path"
+    }
 }
 
 rustup default stable-x86_64-pc-windows-msvc
 if ($LASTEXITCODE -ne 0) {
     throw "rustup default failed with exit code $LASTEXITCODE"
+}
+
+rustup set auto-self-update disable
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Warning: rustup auto-self-update disable failed with exit code $LASTEXITCODE"
 }
 
 $env:CARGO_BUILD_TARGET = "x86_64-pc-windows-msvc"

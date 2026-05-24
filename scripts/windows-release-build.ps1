@@ -199,6 +199,10 @@ try {
     }
     if ($env:CARGO_BUILD_TARGET -and $rustup) {
         $toolchain = "stable-x86_64-pc-windows-msvc"
+        & $rustup.Source set auto-self-update disable
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Warning: rustup auto-self-update disable failed with exit code $LASTEXITCODE"
+        }
         Invoke-Native $rustup.Source @("toolchain", "install", $toolchain, "--profile", "minimal")
         if ($env:CARGO_BUILD_TARGET -ne "x86_64-pc-windows-msvc") {
             Invoke-Native $rustup.Source @("target", "add", $env:CARGO_BUILD_TARGET, "--toolchain", $toolchain)
