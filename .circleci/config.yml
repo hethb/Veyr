@@ -78,59 +78,38 @@ jobs:
           name: Build and smoke test Windows release
           no_output_timeout: 30m
           command: |
-            $ErrorActionPreference = "Continue"
-            $success = $true
-            try {
-              $env:CARGO_BUILD_TARGET = "x86_64-pc-windows-msvc"
-              $args = @("-NoLogo", "-ExecutionPolicy", "Bypass", "-File", "scripts\ci\circleci-release.ps1")
-              if ([System.Boolean]::Parse("<< parameters.upload_cloudflare >>")) {
-                $args += "-UploadCloudflare"
-              }
-              & powershell.exe @args | Out-Host
-              if ($LASTEXITCODE -ne 0) {
-                Write-Host "circleci-release.ps1 failed with exit code $LASTEXITCODE"
-                $success = $false
-              }
-            } catch {
-              Write-Host $_
-              $success = $false
+            $ErrorActionPreference = "Stop"
+            $env:CARGO_BUILD_TARGET = "x86_64-pc-windows-msvc"
+            $args = @("-NoLogo", "-ExecutionPolicy", "Bypass", "-File", "scripts\ci\circleci-release.ps1")
+            if ([System.Boolean]::Parse("<< parameters.upload_cloudflare >>")) {
+              $args += "-UploadCloudflare"
             }
-            if (-not $success) {
-              exit 1
+            & powershell.exe @args
+            if ($LASTEXITCODE -ne 0) {
+              throw "circleci-release.ps1 failed with exit code $LASTEXITCODE"
             }
 
       - run:
           name: Assert release artifacts
           command: |
-            $ErrorActionPreference = "Continue"
-            $success = $true
-            try {
-              $versionLine = Get-Content rust\Cargo.toml | Where-Object { $_ -match '^version = "([^"]+)"' } | Select-Object -First 1
-              if ($versionLine -notmatch '^version = "([^"]+)"') {
-                throw "Failed to determine version from rust\Cargo.toml"
-              }
-              $version = $Matches[1]
-              $assetsDir = "C:\code\Win-CodexBar-release\assets"
-              foreach ($name in @(
-                "CodexBar-$version-Setup.exe",
-                "CodexBar-$version-Setup.exe.sha256",
-                "CodexBar-$version-portable.exe",
-                "CodexBar-$version-portable.exe.sha256"
-              )) {
-                $path = Join-Path $assetsDir $name
-                if (-not (Test-Path -LiteralPath $path)) {
-                  Write-Host "Missing release artifact: $path"
-                  $success = $false
-                } else {
-                  Write-Host "Found $path"
-                }
-              }
-            } catch {
-              Write-Host $_
-              $success = $false
+            $ErrorActionPreference = "Stop"
+            $versionLine = Get-Content rust\Cargo.toml | Where-Object { $_ -match '^version = "([^"]+)"' } | Select-Object -First 1
+            if ($versionLine -notmatch '^version = "([^"]+)"') {
+              throw "Failed to determine version from rust\Cargo.toml"
             }
-            if (-not $success) {
-              exit 1
+            $version = $Matches[1]
+            $assetsDir = "C:\code\Win-CodexBar-release\assets"
+            foreach ($name in @(
+              "CodexBar-$version-Setup.exe",
+              "CodexBar-$version-Setup.exe.sha256",
+              "CodexBar-$version-portable.exe",
+              "CodexBar-$version-portable.exe.sha256"
+            )) {
+              $path = Join-Path $assetsDir $name
+              if (-not (Test-Path -LiteralPath $path)) {
+                throw "Missing release artifact: $path"
+              }
+              Write-Host "Found $path"
             }
 
       - store_artifacts:
