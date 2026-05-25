@@ -59,7 +59,6 @@ function Receive-File {
     )
 
     $maxSeconds = 240
-    $pollSeconds = 5
 
     for ($attempt = 1; $attempt -le 3; $attempt++) {
         if (Test-Path $Destination) {
@@ -67,54 +66,30 @@ function Receive-File {
         }
 
         Write-Host "Downloading $Name (attempt $attempt)..."
-        $job = Start-BitsTransfer `
-            -Source $Url `
-            -Destination $Destination `
-            -Asynchronous `
-            -DisplayName "WinCodexBarRust-$Name" `
-            -ErrorAction Stop
+        & curl.exe `
+            --fail `
+            --location `
+            --show-error `
+            --silent `
+            --retry 2 `
+            --retry-all-errors `
+            --connect-timeout 20 `
+            --max-time $maxSeconds `
+            --output $Destination `
+            $Url
+        if ($LASTEXITCODE -eq 0 -and (Test-Path $Destination)) {
+            return
+        }
 
-        try {
-            $jobId = $job.JobId
-            $elapsed = 0
-            while ($elapsed -lt $maxSeconds) {
-                Start-Sleep -Seconds $pollSeconds
-                $elapsed += $pollSeconds
-                $job = Get-BitsTransfer -ErrorAction Stop |
-                    Where-Object { $_.JobId -eq $jobId } |
-                    Select-Object -First 1
-                if (-not $job) {
-                    throw "BITS job disappeared while downloading $Name."
-                }
+        $exitCode = $LASTEXITCODE
+        if (Test-Path $Destination) {
+            Remove-Item -Force $Destination
+        }
 
-                if ($job.JobState -eq "Transferred") {
-                    Complete-BitsTransfer -BitsJob $job
-                    return
-                }
-
-                if ($job.JobState -eq "TransientError") {
-                    Resume-BitsTransfer -BitsJob $job -Asynchronous
-                } elseif ($job.JobState -eq "Error") {
-                    $message = $job.ErrorDescription
-                    Remove-BitsTransfer -BitsJob $job -Confirm:$false
-                    throw "BITS failed downloading $Name`: $message"
-                }
-
-                if (($elapsed % 30) -eq 0) {
-                    Write-Host "Still downloading $Name after ${elapsed}s..."
-                }
-            }
-
-            Remove-BitsTransfer -BitsJob $job -Confirm:$false
-            Write-Host "Timed out downloading $Name after ${maxSeconds}s."
-        } catch {
-            if ($job) {
-                Remove-BitsTransfer -BitsJob $job -Confirm:$false -ErrorAction SilentlyContinue
-            }
-            if ($attempt -eq 3) {
-                throw
-            }
-            Write-Host $_
+        if ($attempt -eq 3) {
+            throw "curl failed downloading $Name with exit code $exitCode"
+        } else {
+            Write-Host "curl failed downloading $Name with exit code $exitCode; retrying..."
         }
     }
 
@@ -191,28 +166,7 @@ function Install-RustToolchain {
         return
     }
 
-    Write-Host "Installing rustup through Chocolatey with a bounded wait..."
-    $chocoArgs = @("install", "rustup.install", "--version=1.27.1", "-y", "--no-progress")
-    $chocoProcess = Start-Process `
-        -FilePath "choco.exe" `
-        -ArgumentList $chocoArgs `
-        -NoNewWindow `
-        -PassThru
-
-    if (-not $chocoProcess.WaitForExit(120000)) {
-        Write-Host "Chocolatey rustup wrapper exceeded 120s; stopping wrapper and checking installed toolchain..."
-        Stop-Process -Id $chocoProcess.Id -Force -ErrorAction SilentlyContinue
-    } elseif ($chocoProcess.ExitCode -ne 0) {
-        throw "rustup.install failed with exit code $($chocoProcess.ExitCode)"
-    }
-
-    Add-RustPath
-    if ((Test-Command "cargo") -and (Test-Command "rustc")) {
-        Write-Host "Rust toolchain installed through rustup."
-        return
-    }
-
-    Write-Host "rustup.install did not expose cargo/rustc; using direct Rust archives fallback..."
+    Write-Host "Installing Rust from verified upstream archives..."
     if (Test-Path $rustRoot) {
         Write-Host "Removing incomplete cached Rust toolchain at $rustRoot..."
         Remove-Item -Recurse -Force $rustRoot
