@@ -51,6 +51,70 @@ function Get-FileSha256 {
     return (Get-FileHash -Algorithm SHA256 -Path $Path).Hash.ToLowerInvariant()
 }
 
+function Receive-File {
+    param(
+        [string]$Name,
+        [string]$Url,
+        [string]$Destination
+    )
+
+    $maxSeconds = 240
+    $pollSeconds = 5
+
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        if (Test-Path $Destination) {
+            Remove-Item -Force $Destination
+        }
+
+        Write-Host "Downloading $Name (attempt $attempt)..."
+        $job = Start-BitsTransfer `
+            -Source $Url `
+            -Destination $Destination `
+            -Asynchronous `
+            -DisplayName "WinCodexBarRust-$Name" `
+            -ErrorAction Stop
+
+        try {
+            $elapsed = 0
+            while ($elapsed -lt $maxSeconds) {
+                Start-Sleep -Seconds $pollSeconds
+                $elapsed += $pollSeconds
+                $job = Get-BitsTransfer -Id $job.Id -ErrorAction Stop
+
+                if ($job.JobState -eq "Transferred") {
+                    Complete-BitsTransfer -BitsJob $job
+                    return
+                }
+
+                if ($job.JobState -eq "TransientError") {
+                    Resume-BitsTransfer -BitsJob $job -Asynchronous
+                } elseif ($job.JobState -eq "Error") {
+                    $message = $job.ErrorDescription
+                    Remove-BitsTransfer -BitsJob $job -Confirm:$false
+                    throw "BITS failed downloading $Name`: $message"
+                }
+
+                if (($elapsed % 30) -eq 0) {
+                    Write-Host "Still downloading $Name after ${elapsed}s..."
+                }
+            }
+
+            Remove-BitsTransfer -BitsJob $job -Confirm:$false
+            Write-Host "Timed out downloading $Name after ${maxSeconds}s."
+        } catch {
+            if ($job) {
+                Remove-BitsTransfer -BitsJob $job -Confirm:$false -ErrorAction SilentlyContinue
+            }
+            if ($attempt -eq 3) {
+                throw
+            }
+            Write-Host $_
+        }
+    }
+
+    throw "Unable to download $Name after 3 attempts."
+}
+
 function Install-RustPackage {
     param([string]$Directory)
 
@@ -93,11 +157,7 @@ function Install-RustArchive {
     }
     New-Item -ItemType Directory -Force $extractDir | Out-Null
 
-    Write-Host "Downloading $Name..."
-    & curl.exe -fsSL --retry 3 --connect-timeout 30 --max-time 240 --speed-limit 1024 --speed-time 60 -o $archive $Url
-    if ($LASTEXITCODE -ne 0) {
-        throw "curl failed downloading $Name with exit code $LASTEXITCODE"
-    }
+    Receive-File -Name $Name -Url $Url -Destination $archive
 
     $actual = Get-FileSha256 $archive
     if ($actual -ne $Checksum.ToLowerInvariant()) {
