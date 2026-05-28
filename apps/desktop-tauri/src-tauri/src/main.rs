@@ -129,6 +129,7 @@ fn main() {
             commands::get_launch_block_reason,
             commands::get_work_area_rect,
             commands::play_notification_sound,
+            commands::open_external_url,
             commands::reanchor_tray_panel,
             commands::quit_app,
             commands::open_provider_dashboard,

@@ -1015,6 +1015,11 @@ html {
   font-size: 0.84rem;
   color: var(--text-eyebrow);
   text-decoration: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  appearance: none;
 }
 
 .about-link:hover {
@@ -4562,11 +4567,27 @@ html:has(.menu-surface--tray) {
   font-size: var(--font-caption);
   color: var(--accent);
   text-decoration: none;
+  cursor: pointer;
+  font-family: inherit;
+  appearance: none;
 }
 .about-link:hover {
   background: rgba(10, 132, 255, 0.10);
   border-color: rgba(10, 132, 255, 0.28);
   text-decoration: none;
+}
+.about-link--inline {
+  display: inline;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-eyebrow);
+  vertical-align: baseline;
+}
+.about-link--inline:hover {
+  background: transparent;
+  text-decoration: underline;
 }
 .about-link-sep {
   display: none;

@@ -584,6 +584,10 @@ pub(crate) fn bridge_commands() -> Vec<BridgeCommandDescriptor> {
             description: "Open the release page for the available update in the default browser.",
         },
         BridgeCommandDescriptor {
+            id: "open_external_url",
+            description: "Open a validated external http(s) URL in the default browser.",
+        },
+        BridgeCommandDescriptor {
             id: "get_api_keys",
             description: "List stored API keys for configured providers.",
         },

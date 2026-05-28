@@ -132,6 +132,10 @@ export function openReleasePage(): Promise<void> {
   return invoke<void>("open_release_page");
 }
 
+export function openExternalUrl(url: string): Promise<void> {
+  return invoke<void>("open_external_url", { url });
+}
+
 // ── Credential store bridge ──────────────────────────────────────────
 
 export function getApiKeys(): Promise<ApiKeyInfoBridge[]> {

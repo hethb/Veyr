@@ -2,7 +2,8 @@ use std::collections::HashMap;
 
 use super::{
     ProviderSummary, ProviderUsageSnapshot, apply_provider_order, bridge_commands, bridge_events,
-    provider_cookie_source_lookup, provider_region_lookup, validate_surface_target,
+    provider_cookie_source_lookup, provider_region_lookup, validate_external_url,
+    validate_surface_target,
 };
 use crate::surface::SurfaceMode;
 use crate::surface_target::SurfaceTarget;
@@ -62,7 +63,32 @@ fn bootstrap_contract_lists_current_surface_commands() {
     assert!(ids.contains(&"get_current_surface_mode"));
     assert!(ids.contains(&"get_current_surface_state"));
     assert!(ids.contains(&"get_app_info"));
+    assert!(ids.contains(&"open_external_url"));
     assert!(!ids.contains(&"get_proof_config"));
+}
+
+#[test]
+fn external_url_validation_allows_only_http_urls() {
+    assert_eq!(
+        validate_external_url(" https://github.com/Finesssee/Win-CodexBar ").unwrap(),
+        "https://github.com/Finesssee/Win-CodexBar"
+    );
+    assert_eq!(
+        validate_external_url("http://codexbar.app").unwrap(),
+        "http://codexbar.app"
+    );
+
+    for invalid in [
+        "",
+        "file:///etc/passwd",
+        "javascript:alert(1)",
+        "https://bad\nhost",
+    ] {
+        assert!(
+            validate_external_url(invalid).is_err(),
+            "accepted invalid URL: {invalid:?}"
+        );
+    }
 }
 
 #[test]

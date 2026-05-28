@@ -51,6 +51,11 @@ pub(crate) fn validate_external_url(url: &str) -> Result<&str, String> {
     Ok(trimmed)
 }
 
+#[tauri::command]
+pub fn open_external_url(url: String) -> Result<(), String> {
+    open_url_in_browser(&url)
+}
+
 #[cfg(target_os = "windows")]
 fn windows_system_binary(name: &str) -> std::path::PathBuf {
     std::env::var_os("SystemRoot")
