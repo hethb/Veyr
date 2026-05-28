@@ -2058,7 +2058,8 @@ body:has(.tray-panel-reveal) {
   scrollbar-color: rgba(255, 255, 255, 0.45) rgba(255, 255, 255, 0.08);
   list-style: none;
   margin: 0;
-  padding: 4px;
+  padding: 4px 10px 20px 4px;
+  scroll-padding-bottom: 20px;
 }
 
 .providers-sidebar__row {
@@ -2067,7 +2068,7 @@ body:has(.tray-panel-reveal) {
   grid-template-columns: 8px 24px 1fr auto auto;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 8px 16px 8px 10px;
   border-radius: 8px;
   cursor: pointer;
   user-select: none;

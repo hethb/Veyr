@@ -2,7 +2,19 @@
 
 ## Unreleased
 
+---
+
+## [Windows] 0.30.4 - 2026-05-29
+
+### Added
+- Add `codexbar diagnose`, a generic safe provider diagnostic export that reports provider/source/config/fetch health without exposing cookies, tokens, account emails, or raw secrets.
+
+### Changed
+- Port upstream CodexBar 0.30.1 provider diagnostics behavior to the Rust CLI while omitting macOS-only AppKit status-item handling that has no Windows Tauri equivalent.
+- Add trailing breathing room to Providers settings sidebar rows so row controls do not crowd the scrollbar.
+
 ### Fixed
+- Treat Claude OAuth usage HTTP 429s as rate limits, preserve cached credentials, and back off repeated background retries.
 - Reopen the tray panel from Windows shortcut/tray activation when the app is hidden, keep Claude usage on the current OAuth API path when no manual cookie is configured, and avoid flashing console windows during Windows CLI path probes.
 
 ---
