@@ -24,6 +24,13 @@
 - **CLI** — `codexbar usage`、`codexbar cost`、`codexbar config` 和本机回环 `codexbar serve`，便于脚本化、本地集成和 CI
 - **WSL 支持** — CLI 开箱即用，桌面壳层通过 WSLg 运行
 
+## v0.32.2 更新内容
+
+- 将上游 CodexBar v0.32.2 的性能优化和托盘 UI 微调移植到 Win-CodexBar。
+- 本地 Codex token 成本扫描会先走轻量 JSONL 快速路径，大型 session 日志库扫描更快、内存占用更低。
+- 紧凑托盘卡片增加横向和纵向留白，账号与套餐行不再那么拥挤。
+- 增加当前 Codex token-count JSONL 形态的回归测试，覆盖 `last_token_usage`、`total_token_usage` 和旧版 `event_msg` payload。
+
 ## v0.32.1 更新内容
 
 - 将上游 CodexBar v0.32.1 的稳定性修复移植到 Win-CodexBar。
@@ -120,7 +127,7 @@ Winget 分发已通过 [microsoft/winget-pkgs](https://github.com/microsoft/wing
 在 Windows 机器上做本地发布构建时，使用缓存版构建脚本：
 
 ```powershell
-.\scripts\windows-release-build.ps1 -Ref v0.32.1
+.\scripts\windows-release-build.ps1 -Ref v0.32.2
 ```
 
 脚本会在 `C:\code\Win-CodexBar-release\source` 维护干净源码签出，在 `C:\code\Win-CodexBar-release\cache\cargo-target` 复用 Rust 构建输出，在 `C:\code\Win-CodexBar-release\cache\pnpm-store` 复用 pnpm 包，并复用已签名的 WebView2/VC++ 引导程序下载。它仍会构建真实 release 二进制、校验 Microsoft 签名、用 Inno Setup 打包，并在 `C:\code\Win-CodexBar-release\assets` 输出 GitHub Release 使用的四个资产。
@@ -128,11 +135,11 @@ Winget 分发已通过 [microsoft/winget-pkgs](https://github.com/microsoft/wing
 常用发布参数：
 
 ```powershell
-.\scripts\windows-release-build.ps1 -Ref v0.32.1 -WarmCacheOnly
-.\scripts\windows-release-build.ps1 -Ref v0.32.1 -WarmCliCache
-.\scripts\windows-release-build.ps1 -Ref v0.32.1 -SmokeInstall
-.\scripts\windows-release-build.ps1 -Ref v0.32.1 -UploadRelease v0.32.1
-.\scripts\release-doctor.ps1 -Version 0.32.1
+.\scripts\windows-release-build.ps1 -Ref v0.32.2 -WarmCacheOnly
+.\scripts\windows-release-build.ps1 -Ref v0.32.2 -WarmCliCache
+.\scripts\windows-release-build.ps1 -Ref v0.32.2 -SmokeInstall
+.\scripts\windows-release-build.ps1 -Ref v0.32.2 -UploadRelease v0.32.2
+.\scripts\release-doctor.ps1 -Version 0.32.2
 ```
 
 GitHub Actions 只作为辅助检查；安装包和便携版资产以 Windows 构建服务器脚本为主发布路径。

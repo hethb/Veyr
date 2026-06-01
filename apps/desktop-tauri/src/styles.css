@@ -3263,14 +3263,19 @@ html:has(.menu-surface--tray) {
 }
 
 /* Tray font sizing — match macOS: .headline=13pt, .footnote=10pt */
-/* macOS: VStack(spacing: 6), .padding(.horizontal, 16), .padding(.top, 2), .padding(.bottom, 2) */
+/* macOS v0.32.2: H padding 20, header-only V padding 7, section V padding 6 */
 .menu-surface--tray .menu-card {
   gap: 6px;
-  padding: 2px 16px;
+  padding: var(--menu-card-header-only-y) var(--menu-card-x);
   min-width: 0;
   width: 100%;
   box-sizing: border-box;
   overflow: visible;
+}
+
+.menu-surface--tray .menu-card--with-details {
+  padding-top: var(--menu-card-section-y);
+  padding-bottom: var(--menu-card-section-y);
 }
 
 /* Tray name-group — row layout like macOS: HStack { name — Spacer — email } */
@@ -3526,21 +3531,30 @@ html:has(.menu-surface--tray) {
 /* ── Provider card — direct mirror of UsageMenuCardView ─────────────── */
 
 .menu-card {
+  --menu-card-x: 20px;
+  --menu-card-header-only-y: 7px;
+  --menu-card-section-y: 6px;
+  --menu-card-header-line-gap: 4px;
+  --menu-card-header-column-gap: 12px;
   display: flex;
   flex-direction: column;
   /* outer VStack(alignment:.leading, spacing: 6) */
   gap: 6px;
-  /* card container provides outer padding; keep inner padding minimal */
-  padding: 2px 2px;
+  padding: var(--menu-card-header-only-y) var(--menu-card-x);
   text-align: left;
   align-items: stretch;
 }
 
-/* Header VStack(spacing: 3) with two HStacks */
+.menu-card--with-details {
+  padding-top: var(--menu-card-section-y);
+  padding-bottom: var(--menu-card-section-y);
+}
+
+/* Header VStack(spacing: 4) with two HStacks */
 .menu-card__header {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--menu-card-header-line-gap);
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
@@ -3550,7 +3564,7 @@ html:has(.menu-surface--tray) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--menu-card-header-column-gap);
 }
 
 /* Provider brand badge + display name cluster. Tauri-only addition that
@@ -3592,7 +3606,7 @@ html:has(.menu-surface--tray) {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--menu-card-header-column-gap);
 }
 
 /* When subtitle-row contains error text, align to top (macOS: .top) */
@@ -4795,7 +4809,7 @@ html:has(.menu-surface--tray) {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--menu-card-header-column-gap);
 }
 .menu-card__name-group {
   display: flex;

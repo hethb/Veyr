@@ -24,6 +24,13 @@ The Windows port of [CodexBar](https://github.com/steipete/CodexBar) — a syste
 - **CLI** — `codexbar usage`, `codexbar cost`, `codexbar config`, and loopback `codexbar serve` for scripting and local integrations
 - **WSL support** — CLI works out of the box; desktop shell via WSLg
 
+## What's New in v0.32.2
+
+- Ported upstream CodexBar v0.32.2 performance and tray polish into Win-CodexBar.
+- Speeds up local Codex token-cost scanning on large session corpora with a lightweight JSONL fast path before falling back to full JSON parsing.
+- Gives compact tray cards more horizontal and vertical breathing room so account and plan rows are less cramped.
+- Adds regression coverage for current Codex token-count JSONL shapes, including `last_token_usage`, `total_token_usage`, and the older `event_msg` payload form.
+
 ## What's New in v0.32.1
 
 - Ported upstream CodexBar v0.32.1 stability fixes into Win-CodexBar.
@@ -121,7 +128,7 @@ The installer includes the desktop app, Microsoft's Evergreen WebView2 bootstrap
 For local release builds on a Windows machine, use the cached release builder:
 
 ```powershell
-.\scripts\windows-release-build.ps1 -Ref v0.32.1
+.\scripts\windows-release-build.ps1 -Ref v0.32.2
 ```
 
 Automated Windows release builds can run through CircleCI hosted Windows instead of GitHub Actions or always-on self-hosted machines. Cloudflare R2 can mirror verified artifacts after the Windows smoke install passes. See [docs/release/ci-cd.md](docs/release/ci-cd.md).
@@ -131,11 +138,11 @@ The script keeps a clean managed checkout under `C:\code\Win-CodexBar-release\so
 Useful release flags:
 
 ```powershell
-.\scripts\windows-release-build.ps1 -Ref v0.32.1 -WarmCacheOnly
-.\scripts\windows-release-build.ps1 -Ref v0.32.1 -WarmCliCache
-.\scripts\windows-release-build.ps1 -Ref v0.32.1 -SmokeInstall
-.\scripts\windows-release-build.ps1 -Ref v0.32.1 -UploadRelease v0.32.1
-.\scripts\release-doctor.ps1 -Version 0.32.1
+.\scripts\windows-release-build.ps1 -Ref v0.32.2 -WarmCacheOnly
+.\scripts\windows-release-build.ps1 -Ref v0.32.2 -WarmCliCache
+.\scripts\windows-release-build.ps1 -Ref v0.32.2 -SmokeInstall
+.\scripts\windows-release-build.ps1 -Ref v0.32.2 -UploadRelease v0.32.2
+.\scripts\release-doctor.ps1 -Version 0.32.2
 ```
 
 GitHub Actions are manual best-effort only for this project. CircleCI hosted Windows is the primary automated release path for installer and portable artifacts.

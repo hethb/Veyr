@@ -97,11 +97,15 @@ describe("MenuCard", () => {
   });
 
   it("does not mix stale local usage into an error card", async () => {
-    renderCard(provider("OAuth error: Claude OAuth credentials not found."));
+    const { container } = renderCard(
+      provider("OAuth error: Claude OAuth credentials not found."),
+    );
 
     expect(
       await screen.findByText("OAuth error: Claude OAuth credentials not found."),
     ).toBeInTheDocument();
+    expect(container.querySelector(".menu-card--header-only")).toBeInTheDocument();
+    expect(container.querySelector(".menu-card--with-details")).not.toBeInTheDocument();
 
     await waitFor(() => {
       expect(tauriMocks.getProviderChartData).toHaveBeenCalled();
@@ -133,9 +137,11 @@ describe("MenuCard", () => {
   });
 
   it("renders local token and cost totals after chart data loads", async () => {
-    renderCard(provider(null));
+    const { container } = renderCard(provider(null));
 
     expect(await screen.findByText("30d cost")).toBeInTheDocument();
+    expect(container.querySelector(".menu-card--with-details")).toBeInTheDocument();
+    expect(container.querySelector(".menu-card--header-only")).not.toBeInTheDocument();
     expect(screen.getAllByText("$1.23").length).toBeGreaterThan(0);
     expect(screen.getByText("30d tokens")).toBeInTheDocument();
     expect(screen.getByText("584K")).toBeInTheDocument();
