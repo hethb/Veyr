@@ -47,11 +47,11 @@ feature is responsible** and **how to spend less**.
 
 | | Helicone | PromptLens |
 |---|---|---|
-| Per-request logging | ✅ | ✅ |
-| Cost dashboard | ✅ | ✅ |
-| **Cost attribution by feature tag** | ⚠️ manual | ✅ auto-inferred from request path |
-| **Top prompt templates by spend** | ⚠️ partial | ✅ first-class |
-| **Optimization layer** (compressed prompt suggestions) | ❌ | ✅ roadmap |
+| Per-request logging | ✓ | ✓ |
+| Cost dashboard | ✓ | ✓ |
+| **Cost attribution by feature tag** | ⚠ manual | auto-inferred from request path |
+| **Top prompt templates by spend** | ⚠ partial | first-class |
+| **Optimization layer** (compressed prompt suggestions) | ✘ | roadmap |
 
 The PromptLens differentiator is the optimization layer: once we cluster your
 prompts by template hash, we can suggest a shorter version that produces the
@@ -127,21 +127,53 @@ Sign in at the dashboard, create an API key, and use it as the
 
 ### 4. Smoke-test the proxy
 
+**Free option — Groq (recommended for local dev)**
+
+1. Get a free API key at [console.groq.com](https://console.groq.com).
+2. Set in `.env` / `packages/proxy/.env`:
+
+   ```bash
+   OPENAI_UPSTREAM_URL=https://api.groq.com/openai/v1/chat/completions
+   GROQ_API_KEY=gsk_...
+   ```
+
+3. Restart the proxy. You should see on startup:
+
+   ```
+   OpenAI-compatible upstream: https://api.groq.com/openai/v1/chat/completions
+   ```
+
+4. Run the smoke script:
+
+   ```bash
+   export PROMPTLENS_KEY=pl_live_…   # from dashboard → API Keys
+   export GROQ_API_KEY=gsk_…
+   chmod +x scripts/smoke-groq.sh
+   ./scripts/smoke-groq.sh
+   ```
+
+   Or manually:
+
+   ```bash
+   curl -s http://localhost:3001/openai/v1/chat/completions \
+     -H "x-promptlens-key: pl_live_…" \
+     -H "Authorization: Bearer $GROQ_API_KEY" \
+     -H "Content-Type: application/json" \
+     -H "x-feature-tag: smoke-test" \
+     -d '{"model":"llama-3.1-8b-instant","messages":[{"role":"user","content":"hi"}]}'
+   ```
+
+You should see a row land in your `requests` table within a second, and the
+cost appear on `/dashboard` tagged `smoke-test`.
+
+**OpenAI (paid)**
+
 ```bash
 curl -s http://localhost:3001/health
 # {"status":"ok","timestamp":"…"}
 ```
 
-```bash
-curl -s http://localhost:3001/openai/v1/chat/completions \
-  -H "x-promptlens-key: pl_live_…" \
-  -H "Authorization: Bearer $OPENAI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -H "x-feature-tag: smoke-test" \
-  -d '{"model":"gpt-4o-mini","messages":[{"role":"user","content":"hi"}]}'
-```
-
-You should see a row land in your `requests` table within a second.
+Unset `OPENAI_UPSTREAM_URL` (or set it to `https://api.openai.com/v1/chat/completions`) and use `Authorization: Bearer $OPENAI_API_KEY` with `"model":"gpt-4o-mini"`.
 
 ## Deployment
 

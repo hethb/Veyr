@@ -8,8 +8,7 @@ import {
 } from "../utils/parseUsage.js";
 import { sha256 } from "../utils/hash.js";
 import { logRequest } from "../utils/logRequest.js";
-
-const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
+import { getOpenAIUpstreamUrl } from "../config.js";
 
 export const openaiRouter: Router = Router();
 
@@ -30,7 +29,7 @@ openaiRouter.post(
       typeof req.body?.model === "string" ? req.body.model : "unknown";
 
     try {
-      const result = await forwardAndCapture(req, res, OPENAI_URL);
+      const result = await forwardAndCapture(req, res, getOpenAIUpstreamUrl());
       const usage = parseOpenAI(result.contentType, result.body);
 
       logRequest({
