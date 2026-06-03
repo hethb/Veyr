@@ -1,0 +1,125 @@
+import { supabase } from "./supabase";
+
+const baseUrl = (import.meta.env.VITE_PROXY_URL as string | undefined) ?? "http://localhost:3001";
+
+async function authedFetch(path: string, init?: RequestInit): Promise<Response> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error("Not authenticated");
+
+  const headers = new Headers(init?.headers);
+  headers.set("Authorization", `Bearer ${token}`);
+  if (init?.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  const res = await fetch(`${baseUrl}${path}`, { ...init, headers });
+  if (!res.ok) {
+    let message = `HTTP ${res.status}`;
+    try {
+      const body = (await res.json()) as { error?: string };
+      if (body.error) message = body.error;
+    } catch {
+      // ignore parse failure; keep default message
+    }
+    throw new Error(message);
+  }
+  return res;
+}
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export interface OverviewBucket {
+  cost: number;
+  requests: number;
+  tokens: number;
+}
+
+export interface Overview {
+  today: OverviewBucket;
+  week: OverviewBucket;
+  month: OverviewBucket;
+}
+
+export interface ByTagRow {
+  feature_tag: string;
+  cost: number;
+  requests: number;
+}
+
+export interface TimeseriesPoint {
+  date: string;
+  cost: number;
+  requests: number;
+}
+
+export interface TopTemplateRow {
+  prompt_hash: string;
+  total_cost: number;
+  request_count: number;
+  avg_tokens: number;
+  feature_tag: string | null;
+}
+
+export interface ApiKey {
+  id: string;
+  key_prefix: string;
+  name: string;
+  created_at: string;
+  last_used_at: string | null;
+}
+
+export interface CreatedApiKey extends ApiKey {
+  /** The full secret. Returned once on create; never persisted in plaintext. */
+  key: string;
+}
+
+export type Period = "1d" | "7d" | "30d";
+
+// ---------------------------------------------------------------------------
+// Endpoints
+// ---------------------------------------------------------------------------
+
+export async function getOverview(): Promise<Overview> {
+  const res = await authedFetch("/api/stats/overview");
+  return (await res.json()) as Overview;
+}
+
+export async function getByTag(period: Period): Promise<ByTagRow[]> {
+  const res = await authedFetch(`/api/stats/by-tag?period=${period}`);
+  return (await res.json()) as ByTagRow[];
+}
+
+export async function getTimeseries(
+  period: Period,
+  granularity: "day" | "hour" = "day"
+): Promise<TimeseriesPoint[]> {
+  const res = await authedFetch(
+    `/api/stats/timeseries?period=${period}&granularity=${granularity}`
+  );
+  return (await res.json()) as TimeseriesPoint[];
+}
+
+export async function getTopTemplates(limit = 10): Promise<TopTemplateRow[]> {
+  const res = await authedFetch(`/api/stats/top-templates?limit=${limit}`);
+  return (await res.json()) as TopTemplateRow[];
+}
+
+export async function listKeys(): Promise<ApiKey[]> {
+  const res = await authedFetch("/api/keys");
+  return (await res.json()) as ApiKey[];
+}
+
+export async function createKey(name: string): Promise<CreatedApiKey> {
+  const res = await authedFetch("/api/keys", {
+    method: "POST",
+    body: JSON.stringify({ name }),
+  });
+  return (await res.json()) as CreatedApiKey;
+}
+
+export async function deleteKey(id: string): Promise<void> {
+  await authedFetch(`/api/keys/${id}`, { method: "DELETE" });
+}

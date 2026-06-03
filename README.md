@@ -1,0 +1,180 @@
+# PromptLens
+
+PromptLens is a drop-in proxy that gives engineering teams full visibility into
+their LLM API costs — broken down by feature, model, and prompt template.
+Replace your OpenAI baseURL with PromptLens and get a dashboard in minutes.
+
+```
+your app  ──▶  PromptLens proxy  ──▶  OpenAI / Anthropic
+                     │
+                     ▼
+              Supabase (Postgres)
+                     │
+                     ▼
+              PromptLens dashboard
+```
+
+## Quickstart
+
+**1. Install the SDK**
+
+```bash
+npm install promptlens
+```
+
+**2. Swap your client's `baseURL`**
+
+```ts
+import OpenAI from "openai";
+import { createOpenAIConfig } from "promptlens";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  ...createOpenAIConfig({ apiKey: process.env.PROMPTLENS_KEY! }),
+});
+```
+
+**3. Open the dashboard**
+
+Sign in at your dashboard URL and watch requests flow in. Costs are
+attributed to feature tags inferred from request paths automatically — or
+set explicitly via an `x-feature-tag` header.
+
+## vs Helicone
+
+Helicone shows you that you're spending money. PromptLens tells you **which
+feature is responsible** and **how to spend less**.
+
+| | Helicone | PromptLens |
+|---|---|---|
+| Per-request logging | ✅ | ✅ |
+| Cost dashboard | ✅ | ✅ |
+| **Cost attribution by feature tag** | ⚠️ manual | ✅ auto-inferred from request path |
+| **Top prompt templates by spend** | ⚠️ partial | ✅ first-class |
+| **Optimization layer** (compressed prompt suggestions) | ❌ | ✅ roadmap |
+
+The PromptLens differentiator is the optimization layer: once we cluster your
+prompts by template hash, we can suggest a shorter version that produces the
+same output for a fraction of the input-token cost. Helicone stops at "here's
+what you spent."
+
+## Repository layout
+
+```
+promptlens/
+├── packages/
+│   ├── proxy/          # Express proxy server (Node, TypeScript)
+│   ├── dashboard/      # React + Vite + Tailwind + Recharts dashboard
+│   └── sdk/            # npm-publishable SDK wrapper (`promptlens`)
+├── supabase/
+│   └── migrations/     # SQL migrations
+├── package.json        # workspace root
+└── .env.example
+```
+
+## Local development
+
+### Prerequisites
+
+- Node.js 20+
+- A Supabase project (free tier is enough)
+
+### 1. Set up Supabase
+
+1. Create a new Supabase project.
+2. In the SQL Editor, run the contents of `supabase/migrations/001_initial.sql`.
+3. Enable Email/Password auth in **Authentication → Providers**.
+4. Create a user (or invite yourself) under **Authentication → Users**.
+
+### 2. Configure environment
+
+```bash
+cp .env.example .env
+```
+
+Fill in:
+
+- `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY` — from your Supabase project's API settings.
+- `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` — same `SUPABASE_URL` and `SUPABASE_ANON_KEY` (the dashboard reads `VITE_*`).
+- `VITE_PROXY_URL` — `http://localhost:3001` for local dev.
+
+The proxy reads `.env` from its own folder. The simplest setup is to symlink
+or copy the root `.env` into each package:
+
+```bash
+cp .env packages/proxy/.env
+cp .env packages/dashboard/.env
+```
+
+### 3. Install + run
+
+```bash
+npm install
+```
+
+Then in two terminals:
+
+```bash
+# Terminal 1
+npm run dev:proxy        # http://localhost:3001
+
+# Terminal 2
+npm run dev:dashboard    # http://localhost:5173
+```
+
+Sign in at the dashboard, create an API key, and use it as the
+`PROMPTLENS_KEY` in your application.
+
+### 4. Smoke-test the proxy
+
+```bash
+curl -s http://localhost:3001/health
+# {"status":"ok","timestamp":"…"}
+```
+
+```bash
+curl -s http://localhost:3001/openai/v1/chat/completions \
+  -H "x-promptlens-key: pl_live_…" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "x-feature-tag: smoke-test" \
+  -d '{"model":"gpt-4o-mini","messages":[{"role":"user","content":"hi"}]}'
+```
+
+You should see a row land in your `requests` table within a second.
+
+## Deployment
+
+### Proxy → Railway
+
+1. Create a new Railway project. Add the PromptLens repo and set the **root directory** to `packages/proxy`.
+2. Set the **Build command** to `npm install --workspaces && npm run build:proxy` (run from repo root).
+3. Set the **Start command** to `node packages/proxy/dist/index.js`.
+4. Add environment variables: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`, `PORT` (Railway sets this automatically), `DASHBOARD_ORIGIN` (your Vercel URL, comma-separated if multiple).
+5. Deploy. Note the public URL.
+
+### Dashboard → Vercel
+
+1. Import the repo into Vercel.
+2. Set the **root directory** to `packages/dashboard`.
+3. Build command: `npm run build` (Vercel detects Vite automatically).
+4. Output directory: `dist`.
+5. Environment variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_PROXY_URL` (your Railway URL).
+6. Deploy.
+
+### Update SDK consumers
+
+Point your client apps at the deployed proxy URL by setting `baseUrl` on
+`createOpenAIConfig` (or by relying on the public default once you publish
+the proxy at `https://api.promptlens.dev`).
+
+## Privacy
+
+By default PromptLens stores **only** structured metadata (token counts, cost,
+feature tag, prompt SHA-256 hash). Full prompt content is never logged.
+Set `STORE_PROMPTS=true` in the proxy environment to opt in to storing raw
+prompts (not enabled in V1 — placeholder for future opt-in).
+
+## License
+
+MIT

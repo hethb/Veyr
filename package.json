@@ -1,0 +1,20 @@
+{
+  "name": "promptlens",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Drop-in LLM cost observability and optimization proxy",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:proxy": "npm run dev --workspace=@promptlens/proxy",
+    "dev:dashboard": "npm run dev --workspace=@promptlens/dashboard",
+    "build": "npm run build --workspaces --if-present",
+    "build:proxy": "npm run build --workspace=@promptlens/proxy",
+    "build:dashboard": "npm run build --workspace=@promptlens/dashboard",
+    "build:sdk": "npm run build --workspace=promptlens"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
