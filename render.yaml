@@ -1,0 +1,34 @@
+# Render Blueprint for the PromptLens proxy (Node/Express).
+# Dashboard is deployed separately on Vercel.
+#
+# After first deploy, set the secret env vars (marked sync:false) in the
+# Render dashboard, and point DASHBOARD_ORIGIN at your Vercel URL.
+services:
+  - type: web
+    name: promptlens-proxy
+    runtime: node
+    plan: free
+    branch: main
+    # Install dev deps (typescript) so the build can run, then compile.
+    buildCommand: npm install --include=dev && npm run build:proxy
+    startCommand: node packages/proxy/dist/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      # OpenAI-compatible upstream. Currently Groq (free tier).
+      - key: OPENAI_UPSTREAM_URL
+        value: https://api.groq.com/openai/v1/chat/completions
+      - key: STORE_PROMPTS
+        value: "false"
+      # Comma-separated allowed dashboard origins (your Vercel URL).
+      # Set this after the dashboard is deployed.
+      - key: DASHBOARD_ORIGIN
+        sync: false
+      # Secrets — set these in the Render dashboard (never committed).
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
