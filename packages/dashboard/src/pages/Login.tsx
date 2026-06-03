@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
 export function Login() {
   const navigate = useNavigate();
@@ -10,6 +10,8 @@ export function Login() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    if (!isSupabaseConfigured) return;
+
     let mounted = true;
     void supabase.auth.getSession().then(({ data }) => {
       if (mounted && data.session) navigate("/dashboard", { replace: true });
@@ -54,6 +56,15 @@ export function Login() {
         <p className="mt-1 text-sm text-slate-500">
           Use the email and password for your Supabase project.
         </p>
+
+        {!isSupabaseConfigured && (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            Supabase is not configured. Copy <code className="font-mono">.env.example</code> to{" "}
+            <code className="font-mono">.env</code> and set{" "}
+            <code className="font-mono">VITE_SUPABASE_URL</code> and{" "}
+            <code className="font-mono">VITE_SUPABASE_ANON_KEY</code>.
+          </div>
+        )}
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <div>
@@ -100,7 +111,7 @@ export function Login() {
 
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || !isSupabaseConfigured}
             className="w-full rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-50"
           >
             {submitting ? "Signing in…" : "Sign in"}

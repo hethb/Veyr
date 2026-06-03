@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { formatNumber, formatUsd } from "../lib/format";
 import { Skeleton } from "./Skeleton";
 
@@ -6,12 +7,33 @@ interface MetricCardProps {
   cost: number | null;
   requests: number | null;
   loading: boolean;
+  variant?: "light" | "dark";
 }
 
-export function MetricCard({ label, cost, requests, loading }: MetricCardProps) {
+export function MetricCard({
+  label,
+  cost,
+  requests,
+  loading,
+  variant = "light",
+}: MetricCardProps) {
+  const dark = variant === "dark";
+
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="text-xs font-medium uppercase tracking-wider text-slate-500">
+    <div
+      className={cn(
+        "border p-5",
+        dark
+          ? "border-white/10 bg-black"
+          : "rounded-xl border-slate-200 bg-white shadow-sm"
+      )}
+    >
+      <div
+        className={cn(
+          "text-xs font-medium uppercase tracking-wider",
+          dark ? "text-neutral-500" : "text-slate-500"
+        )}
+      >
         {label}
       </div>
       {loading ? (
@@ -21,10 +43,17 @@ export function MetricCard({ label, cost, requests, loading }: MetricCardProps) 
         </div>
       ) : (
         <>
-          <div className="mt-2 text-3xl font-semibold tabular-nums text-slate-900">
+          <div
+            className={cn(
+              "mt-2 text-3xl font-semibold tabular-nums",
+              dark ? "text-white" : "text-slate-900"
+            )}
+          >
             {formatUsd(cost ?? 0, 4)}
           </div>
-          <div className="mt-1 text-sm text-slate-500">
+          <div
+            className={cn("mt-1 text-sm", dark ? "text-neutral-500" : "text-slate-500")}
+          >
             {formatNumber(requests ?? 0)} requests
           </div>
         </>

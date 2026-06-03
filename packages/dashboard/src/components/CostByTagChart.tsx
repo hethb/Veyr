@@ -9,23 +9,31 @@ import {
   YAxis,
 } from "recharts";
 import type { ByTagRow } from "../lib/api";
+import { chartColors, type ChartTheme } from "../lib/chartTheme";
 
 interface CostByTagChartProps {
   data: ByTagRow[];
   selectedTag: string | null;
   onSelect: (tag: string | null) => void;
+  theme?: ChartTheme;
 }
 
-const COLOR = "#6366f1";
-const COLOR_DIM = "#c7d2fe";
-const COLOR_SELECTED = "#4338ca";
-
-export function CostByTagChart({ data, selectedTag, onSelect }: CostByTagChartProps) {
+export function CostByTagChart({
+  data,
+  selectedTag,
+  onSelect,
+  theme = "light",
+}: CostByTagChartProps) {
+  const colors = chartColors[theme];
   const top = data.slice(0, 8);
 
   if (top.length === 0) {
     return (
-      <div className="flex h-72 items-center justify-center text-sm text-slate-400">
+      <div
+        className={`flex h-72 items-center justify-center text-sm ${
+          theme === "dark" ? "text-neutral-500" : "text-slate-400"
+        }`}
+      >
         No requests yet — point your SDK at the proxy to see data.
       </div>
     );
@@ -39,23 +47,26 @@ export function CostByTagChart({ data, selectedTag, onSelect }: CostByTagChartPr
           layout="vertical"
           margin={{ top: 8, right: 16, left: 16, bottom: 0 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+          <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
           <XAxis
             type="number"
-            tick={{ fontSize: 12, fill: "#64748b" }}
+            tick={{ fontSize: 12, fill: colors.axis }}
             tickFormatter={(v: number) => `$${v.toFixed(2)}`}
           />
           <YAxis
             type="category"
             dataKey="feature_tag"
-            tick={{ fontSize: 12, fill: "#0f172a" }}
+            tick={{ fontSize: 12, fill: colors.axisLabel }}
             width={140}
           />
           <Tooltip
             formatter={(value: number) => [`$${Number(value).toFixed(4)}`, "Cost"]}
             contentStyle={{
-              borderRadius: 8,
-              border: "1px solid #e2e8f0",
+              borderRadius: 0,
+              border: `1px solid ${colors.tooltipBorder}`,
+              backgroundColor:
+                theme === "dark" ? colors.tooltipBg : "#ffffff",
+              color: colors.tooltipLabel,
               fontSize: 12,
             }}
           />
@@ -70,10 +81,10 @@ export function CostByTagChart({ data, selectedTag, onSelect }: CostByTagChartPr
             {top.map((row) => {
               const fill =
                 selectedTag == null
-                  ? COLOR
+                  ? colors.primary
                   : row.feature_tag === selectedTag
-                  ? COLOR_SELECTED
-                  : COLOR_DIM;
+                    ? colors.primarySelected
+                    : colors.primaryDim;
               return <Cell key={row.feature_tag} fill={fill} />;
             })}
           </Bar>
