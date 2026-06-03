@@ -7,6 +7,7 @@ import {
   type CreatedApiKey,
 } from "../lib/api";
 import { formatDate } from "../lib/format";
+import { copyToClipboard } from "../lib/clipboard";
 import { Skeleton } from "../components/Skeleton";
 
 export function Keys() {
@@ -70,12 +71,10 @@ export function Keys() {
   }
 
   async function copyKey(value: string) {
-    try {
-      await navigator.clipboard.writeText(value);
+    const ok = await copyToClipboard(value);
+    if (ok) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // ignore clipboard failures silently
     }
   }
 

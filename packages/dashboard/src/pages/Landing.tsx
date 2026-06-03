@@ -3,12 +3,13 @@ import { Link } from "react-router-dom";
 import {
   ArrowRight,
   BarChart3,
+  CheckCircle2,
   Code2,
-  GitCompare,
   Home,
   Layers,
   Zap,
 } from "lucide-react";
+import { CopyCodeBlock } from "../components/CopyCodeBlock";
 import { DemoDashboard } from "../components/DemoDashboard";
 import { FeaturesSection } from "../components/FeaturesSection";
 import { HeroSection } from "../components/HeroSection";
@@ -20,7 +21,7 @@ const LANDING_NAV_ITEMS = [
   { name: "How it works", url: "#how", icon: Zap },
   { name: "Features", url: "#features", icon: Layers },
   { name: "Demo", url: "#demo", icon: BarChart3 },
-  { name: "Compare", url: "#compare", icon: GitCompare },
+  { name: "Built for", url: "#built-for", icon: CheckCircle2 },
 ] as const;
 
 const ACCENTS = ["#076EFF", "#4FABFF", "#B1C5FF"] as const;
@@ -51,7 +52,7 @@ export function Landing() {
       <HowItWorks />
       <FeaturesSection />
       <DemoSection />
-      <VsHelicone />
+      <BuiltForSection />
       <FinalCta signedIn={signedIn} />
       <Footer />
     </div>
@@ -159,9 +160,7 @@ function HowItWorks() {
               <p className="mt-2 text-sm leading-relaxed text-neutral-500">
                 {s.body}
               </p>
-              <div className="mt-5 border border-white/10 bg-neutral-950 px-3 py-2.5 font-mono text-xs text-neutral-400">
-                {s.code}
-              </div>
+              <CopyCodeBlock code={s.code} />
             </div>
           ))}
         </div>
@@ -188,45 +187,40 @@ function DemoSection() {
   );
 }
 
-function VsHelicone() {
-  const rows = [
+function BuiltForSection() {
+  const capabilities = [
     {
       label: "Per-request logging",
-      helicone: "yes",
-      promptlens: "yes",
+      detail: "Every call captured with latency, tokens, and status",
     },
     {
       label: "Cost dashboard",
-      helicone: "yes",
-      promptlens: "yes",
+      detail: "Today, this week, and this month at a glance",
     },
     {
       label: "Cost attribution by feature",
-      helicone: "manual tagging",
-      promptlens: "auto-inferred from request path",
+      detail: "Auto-inferred from your request path — no manual tagging",
       highlight: true,
     },
     {
       label: "Top prompt templates by spend",
-      helicone: "partial",
-      promptlens: "first-class",
+      detail: "Rank prompt hashes by total cost and volume",
       highlight: true,
     },
     {
-      label: "Optimization suggestions (compressed prompts)",
-      helicone: "no",
-      promptlens: "yes",
+      label: "Optimization suggestions",
+      detail: "Compressed prompt recommendations to cut token waste",
       highlight: true,
     },
   ];
 
   return (
-    <section id="compare" className="border-t border-white/10 bg-black">
+    <section id="built-for" className="border-t border-white/10 bg-black">
       <div className="mx-auto max-w-6xl px-6 py-24">
         <SectionHeader
-          eyebrow="vs Helicone"
+          eyebrow="Built for teams"
           title="Costs are table stakes. We tell you what to do about them."
-          subtitle="Helicone shows you that you're spending money. PromptLens tells you which feature is responsible — and how to spend less."
+          subtitle="PromptLens goes beyond spend totals — see which feature is responsible and how to spend less."
         />
 
         <div className="mt-10 overflow-hidden border border-white/10">
@@ -234,14 +228,13 @@ function VsHelicone() {
             <thead>
               <tr className="border-b border-white/10 bg-white/[0.02] text-xs uppercase tracking-wider text-neutral-500">
                 <th className="px-5 py-3 text-left font-medium">Capability</th>
-                <th className="px-5 py-3 text-left font-medium">Helicone</th>
                 <th className="px-5 py-3 text-left font-medium text-[#4FABFF]">
-                  PromptLens
+                  What you get
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {rows.map((row) => (
+              {capabilities.map((row) => (
                 <tr
                   key={row.label}
                   className={row.highlight ? "bg-[#076EFF]/[0.04]" : ""}
@@ -249,10 +242,7 @@ function VsHelicone() {
                   <td className="px-5 py-4 font-medium text-white">
                     {row.label}
                   </td>
-                  <td className="px-5 py-4 text-neutral-500">{row.helicone}</td>
-                  <td className="px-5 py-4 font-medium text-[#B1C5FF]">
-                    {row.promptlens}
-                  </td>
+                  <td className="px-5 py-4 text-[#B1C5FF]">{row.detail}</td>
                 </tr>
               ))}
             </tbody>
@@ -324,6 +314,9 @@ function Footer() {
           </a>
           <a href="#demo" className="transition-colors hover:text-white">
             Demo
+          </a>
+          <a href="#built-for" className="transition-colors hover:text-white">
+            Built for
           </a>
           <Link to="/login" className="transition-colors hover:text-white">
             Sign in
