@@ -10,6 +10,7 @@ import { openaiRouter } from "./routes/openai.js";
 import { anthropicRouter } from "./routes/anthropic.js";
 import { statsRouter } from "./routes/stats.js";
 import { keysRouter } from "./routes/keys.js";
+import { policiesRouter } from "./routes/policies.js";
 import { getOpenAIUpstreamUrl } from "./config.js";
 
 const app = express();
@@ -46,6 +47,7 @@ app.use("/openai", openaiRouter);
 app.use("/anthropic", anthropicRouter);
 app.use("/api/stats", statsRouter);
 app.use("/api/keys", keysRouter);
+app.use("/api/policies", policiesRouter);
 
 // 404
 app.use((_req: Request, res: Response) => {
@@ -70,4 +72,7 @@ const port = parseInt(process.env.PORT ?? "3001", 10);
 app.listen(port, () => {
   console.log(`PromptLens proxy listening on :${port}`);
   console.log(`OpenAI-compatible upstream: ${getOpenAIUpstreamUrl()}`);
+  console.log(
+    `Control plane: compression default=${process.env.ENABLE_COMPRESSION === "true" ? "on" : "off"}`
+  );
 });

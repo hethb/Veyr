@@ -50,6 +50,7 @@ export function Landing() {
       <Header signedIn={signedIn} />
       <HeroSection signedIn={signedIn} />
       <HowItWorks />
+      <ProductLayers />
       <FeaturesSection />
       <DemoSection />
       <BuiltForSection />
@@ -111,23 +112,23 @@ function HowItWorks() {
     {
       icon: Code2,
       accent: ACCENTS[0],
-      title: "Install the SDK",
-      body: "One npm package. No agent, no SDK rewrite.",
-      code: "npm install promptlens",
+      title: "Get your API key",
+      body: "Sign in once. Create a key in the dashboard. That’s the only account setup.",
+      code: "export PROMPTLENS_KEY=pl_live_…",
     },
     {
       icon: Zap,
       accent: ACCENTS[1],
-      title: "Swap your baseURL",
-      body: "Two extra lines on your existing OpenAI or Anthropic client.",
-      code: '...createOpenAIConfig({ apiKey: process.env.PROMPTLENS_KEY })',
+      title: "Plug into your app",
+      body: "One npm install. Wrap your existing OpenAI client — no agent, no prompt rewrite.",
+      code: `npm install promptlens openai\n\nimport { promptlensOpenAI } from "promptlens";\nconst openai = new OpenAI(\n  promptlensOpenAI({ apiKey: process.env.OPENAI_API_KEY! })\n);`,
     },
     {
       icon: BarChart3,
       accent: ACCENTS[2],
-      title: "Open the dashboard",
-      body: "Costs are auto-attributed to features and prompt templates.",
-      code: "open dashboard.promptlens.dev",
+      title: "See spend by feature",
+      body: "Every API call is logged. Dashboard shows cost, tokens, and top prompts — live.",
+      code: "# your existing chat.completions code — unchanged",
     },
   ];
 
@@ -137,7 +138,7 @@ function HowItWorks() {
         <SectionHeader
           eyebrow="How it works"
           title="Three steps to LLM cost visibility"
-          subtitle="No infrastructure changes. No reformatting prompts. No agent in your hot path."
+          subtitle="Built for engineering teams — like TokenGuard for the browser, but for your production LLM stack. One env var, two lines of code."
         />
 
         <div className="mt-14 grid gap-4 md:grid-cols-3">
@@ -161,6 +162,56 @@ function HowItWorks() {
                 {s.body}
               </p>
               <CopyCodeBlock code={s.code} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProductLayers() {
+  const layers = [
+    {
+      phase: "Layer 1 — Live",
+      title: "Observability",
+      detail:
+        "Summarization costs $4.2k/mo. Chatbot $800. Search $200. Your OpenAI bill never breaks this down — we do.",
+      code: 'feature: "summarization"',
+    },
+    {
+      phase: "Layer 2 — Building",
+      title: "Optimization",
+      detail:
+        "Compress bloated system prompts before they hit the model. TokenGuard logic, running in your proxy — 20–40% input savings on verbose prompts.",
+      code: "compress: true  // SDK flag → x-promptlens-compress",
+    },
+    {
+      phase: "Layer 3 — Foundation",
+      title: "Governance",
+      detail:
+        "Monthly budget per feature. Max tokens per request. 429 when a team blows their cap — no codebase changes.",
+      code: 'monthly_budget_usd: 5000  // dashboard policies API',
+    },
+  ];
+
+  return (
+    <section id="layers" className="border-t border-white/10 bg-black">
+      <div className="mx-auto max-w-6xl px-6 py-24">
+        <SectionHeader
+          eyebrow="Product"
+          title="Observe → optimize → enforce"
+          subtitle="One proxy in your API path. Three layers that compound as you scale — from startup spend to enterprise controls."
+        />
+        <div className="mt-14 grid gap-4 md:grid-cols-3">
+          {layers.map((l) => (
+            <div key={l.title} className="border border-white/10 bg-black p-6">
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#4FABFF]">
+                {l.phase}
+              </p>
+              <h3 className="mt-3 text-lg font-semibold text-white">{l.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-neutral-500">{l.detail}</p>
+              <CopyCodeBlock code={l.code} />
             </div>
           ))}
         </div>

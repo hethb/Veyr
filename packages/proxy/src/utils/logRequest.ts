@@ -13,6 +13,8 @@ export interface LogRequestInput {
   finishReason: string | null;
   promptHash: string | null;
   errorMessage: string | null;
+  compressionApplied?: boolean;
+  tokensSavedEstimate?: number;
 }
 
 /**
@@ -40,6 +42,8 @@ export function logRequest(input: LogRequestInput): void {
       finish_reason: input.finishReason,
       prompt_hash: input.promptHash,
       error_message: input.errorMessage,
+      compression_applied: input.compressionApplied ?? false,
+      tokens_saved_estimate: input.tokensSavedEstimate ?? 0,
     })
     .then(({ error }) => {
       if (error) console.error("[logRequest] insert failed:", error.message);

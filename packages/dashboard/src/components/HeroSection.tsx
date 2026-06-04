@@ -28,8 +28,8 @@ export function HeroSection({ signedIn }: HeroSectionProps) {
       className="relative h-[400vh] w-full overflow-clip bg-black pt-32"
     >
       <GoogleGeminiEffect
-        title="See exactly where your LLM spend is going"
-        description="PromptLens is a drop-in proxy that gives engineering teams full visibility into LLM API costs — broken down by feature, model, and prompt template."
+        title="The LLM spend management layer"
+        description="Point your API at PromptLens. See which features burn money — then compress prompts and enforce budgets from the same proxy. Helicone shows what happened; PromptLens changes what happens."
         pathLengths={[
           pathLengthFirst,
           pathLengthSecond,
@@ -56,7 +56,7 @@ export function HeroSection({ signedIn }: HeroSectionProps) {
               </a>
             </div>
             <p className="text-xs text-neutral-500">
-              Swap your baseURL — get a dashboard in minutes
+              npm install promptlens — one env var, two lines of code
             </p>
           </div>
         }

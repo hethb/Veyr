@@ -1,8 +1,12 @@
 # PromptLens
 
-PromptLens is a drop-in proxy that gives engineering teams full visibility into
-their LLM API costs — broken down by feature, model, and prompt template.
-Replace your OpenAI baseURL with PromptLens and get a dashboard in minutes.
+**LLM spend management** — a hosted proxy between your app and OpenAI/Anthropic.
+
+Change where requests go. PromptLens logs every call (metadata only by default), shows which **feature** is costing you money, compresses bloated prompts, and enforces budgets — from the same integration point.
+
+> Helicone shows what happened. **PromptLens changes what happens.**
+
+See [ROADMAP.md](./ROADMAP.md) for the three product layers (observe → optimize → enforce).
 
 ```
 your app  ──▶  PromptLens proxy  ──▶  OpenAI / Anthropic
@@ -14,31 +18,48 @@ your app  ──▶  PromptLens proxy  ──▶  OpenAI / Anthropic
               PromptLens dashboard
 ```
 
-## Quickstart
+## Quickstart (plug-in for your app)
 
-**1. Install the SDK**
+Same idea as [TokenGuard](https://github.com/hethb/TokenGuard) — minimal setup — but for **production LLM APIs** (not the browser). Customers add one env var and two lines of code. See [QUICKSTART.md](./QUICKSTART.md) for the full sellable flow vs self-host.
+
+**1. Get a key** — Sign in to the dashboard → **API Keys** → copy `pl_live_…` → set `PROMPTLENS_KEY`.
+
+**2. Install and wire the SDK**
 
 ```bash
-npm install promptlens
+npm install promptlens openai
 ```
-
-**2. Swap your client's `baseURL`**
 
 ```ts
 import OpenAI from "openai";
-import { createOpenAIConfig } from "promptlens";
+import { promptlensOpenAI } from "promptlens";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  ...createOpenAIConfig({ apiKey: process.env.PROMPTLENS_KEY! }),
-});
+const openai = new OpenAI(
+  promptlensOpenAI({
+    apiKey: process.env.OPENAI_API_KEY!,
+    feature: "my-feature", // optional — shows in dashboard
+  })
+);
 ```
 
-**3. Open the dashboard**
+**3. Ship** — Existing `chat.completions` calls unchanged. Open the dashboard for cost by feature, tokens, and top prompt templates.
 
-Sign in at your dashboard URL and watch requests flow in. Costs are
-attributed to feature tags inferred from request paths automatically — or
-set explicitly via an `x-feature-tag` header.
+### Control plane (Layers 2 & 3)
+
+Per-request headers (or SDK flags):
+
+- `x-promptlens-compress: 1` — rule-based prompt compression (TokenGuard-style)
+- `x-promptlens-max-tokens: 512` — cap completion tokens on outbound requests
+
+Per-feature policies (dashboard API `PUT /api/policies`):
+
+- `monthly_budget_usd` — returns `429` when feature spend exceeds cap
+- `compress_prompts` — always compress for that feature
+- `max_completion_tokens` — enforced server-side
+
+Run migration `supabase/migrations/002_control_plane.sql` after `001_initial.sql`.
+
+For local development or enterprise self-host, see [Local development](#local-development) below.
 
 ## vs Helicone
 

@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { apiKeyAuth } from "../middleware/auth.js";
+import { controlPlane } from "../middleware/controlPlane.js";
 import { featureTag } from "../middleware/featureTag.js";
 import { forwardAndCapture } from "../utils/forward.js";
 import {
@@ -17,6 +18,7 @@ anthropicRouter.post(
   "/v1/messages",
   apiKeyAuth,
   featureTag,
+  controlPlane,
   async (req: Request, res: Response): Promise<void> => {
     const apiKeyId = req.apiKeyId;
     if (!apiKeyId) {
@@ -45,6 +47,8 @@ anthropicRouter.post(
         finishReason: usage.finishReason,
         promptHash,
         errorMessage: result.ok ? null : usage.errorMessage ?? `HTTP ${result.status}`,
+        compressionApplied: req.promptLens?.compressionApplied,
+        tokensSavedEstimate: req.promptLens?.tokensSavedEstimate,
       });
     } catch (err) {
       console.error("[anthropic] upstream error:", err);

@@ -1,68 +1,73 @@
 # promptlens
 
-Drop-in SDK for the [PromptLens](https://promptlens.dev) proxy. Routes your
-OpenAI and Anthropic calls through PromptLens for full cost observability —
-broken down by feature, model, and prompt template.
+Plug-in LLM cost tracking for production apps. One env var, two lines of code.
 
 ## Install
 
 ```bash
-npm install promptlens
+npm install promptlens openai
 ```
 
 ## Usage
 
-### OpenAI
-
 ```ts
 import OpenAI from "openai";
-import { createOpenAIConfig } from "promptlens";
+import { promptlensOpenAI } from "promptlens";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  ...createOpenAIConfig({ apiKey: process.env.PROMPTLENS_KEY! }),
+const openai = new OpenAI(
+  promptlensOpenAI({
+    apiKey: process.env.OPENAI_API_KEY!,
+    feature: "my-feature", // optional — appears in dashboard
+  })
+);
+
+// All completions are logged automatically
+await openai.chat.completions.create({
+  model: "gpt-4o-mini",
+  messages: [{ role: "user", content: "Hello" }],
 });
+```
 
-// That's it. All calls are now logged and attributed.
+```bash
+# Only new secret — from PromptLens dashboard → API Keys
+export PROMPTLENS_KEY=pl_live_...
 ```
 
 ### Anthropic
 
 ```ts
 import Anthropic from "@anthropic-ai/sdk";
-import { createAnthropicConfig } from "promptlens";
+import { promptlensAnthropic } from "promptlens";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-  ...createAnthropicConfig({ apiKey: process.env.PROMPTLENS_KEY! }),
-});
-```
-
-## Tagging requests by feature
-
-PromptLens automatically infers a `feature_tag` from the request path
-(via the `Referer` header or an explicit `x-request-path` header). To set
-it explicitly, send the `x-feature-tag` header on the underlying call:
-
-```ts
-await openai.chat.completions.create(
-  {
-    model: "gpt-4o-mini",
-    messages: [{ role: "user", content: "Summarize this." }],
-  },
-  {
-    headers: { "x-feature-tag": "summarize" },
-  },
+const anthropic = new Anthropic(
+  promptlensAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 );
 ```
 
-## Self-hosting
-
-Set `baseUrl` to your own proxy:
+### Self-hosted proxy
 
 ```ts
-createOpenAIConfig({
-  apiKey: process.env.PROMPTLENS_KEY!,
+promptlensOpenAI({
+  apiKey: process.env.OPENAI_API_KEY!,
   baseUrl: "https://promptlens.mycompany.com",
 });
 ```
+
+Or set `PROMPTLENS_BASE_URL` in the environment.
+
+## Lower-level API
+
+If you prefer spreading config yourself:
+
+```ts
+import { createOpenAIConfig, resolvePromptLensConfig } from "promptlens";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY!,
+  ...createOpenAIConfig(resolvePromptLensConfig()),
+});
+```
+
+## vs TokenGuard
+
+[TokenGuard](https://github.com/hethb/TokenGuard) is a browser extension that optimizes chat usage. PromptLens is for **teams** that call OpenAI/Anthropic from code and need spend broken down by feature and prompt template.

@@ -7,3 +7,8 @@ export function getOpenAIUpstreamUrl(): string {
     process.env.OPENAI_UPSTREAM_URL?.trim() || DEFAULT_OPENAI_UPSTREAM
   );
 }
+
+/** When true, compress system/user prompts unless x-promptlens-compress: 0 */
+export function isCompressionEnabledByDefault(): boolean {
+  return process.env.ENABLE_COMPRESSION === "true";
+}
