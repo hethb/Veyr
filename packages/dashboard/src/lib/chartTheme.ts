@@ -10,6 +10,7 @@ export const chartColors = {
     axisLabel: "#0f172a",
     tooltipBorder: "#e2e8f0",
     tooltipLabel: "#0f172a",
+    tooltipBg: "#ffffff",
   },
   dark: {
     primary: "#076EFF",
