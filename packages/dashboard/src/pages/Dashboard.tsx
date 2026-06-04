@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 import { CostByTagChart } from "../components/CostByTagChart";
 import { CostTimeChart } from "../components/CostTimeChart";
 import { MetricCard } from "../components/MetricCard";
@@ -15,6 +16,8 @@ import {
   type TimeseriesPoint,
   type TopTemplateRow,
 } from "../lib/api";
+
+const panelClass = "border border-white/10 bg-black/50 p-5 backdrop-blur-md";
 
 export function Dashboard() {
   const [overview, setOverview] = useState<Overview | null>(null);
@@ -111,8 +114,13 @@ export function Dashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#4FABFF]">
+          Overview
+        </p>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white">
+          Dashboard
+        </h1>
+        <p className="mt-1 text-sm text-neutral-500">
           Cost attribution across features and templates.
         </p>
       </div>
@@ -125,24 +133,27 @@ export function Dashboard() {
           cost={overview?.today.cost ?? null}
           requests={overview?.today.requests ?? null}
           loading={overviewLoading}
+          variant="dark"
         />
         <MetricCard
           label="This week"
           cost={overview?.week.cost ?? null}
           requests={overview?.week.requests ?? null}
           loading={overviewLoading}
+          variant="dark"
         />
         <MetricCard
           label="This month"
           cost={overview?.month.cost ?? null}
           requests={overview?.month.requests ?? null}
           loading={overviewLoading}
+          variant="dark"
         />
       </div>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className={panelClass}>
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-slate-900">Cost over time</h2>
+          <h2 className="text-base font-semibold text-white">Cost over time</h2>
           <PeriodToggle value={period} onChange={setPeriod} />
         </div>
         <div className="mt-4">
@@ -151,19 +162,19 @@ export function Dashboard() {
           ) : seriesLoading ? (
             <Skeleton className="h-72 w-full" />
           ) : (
-            <CostTimeChart data={series} />
+            <CostTimeChart data={series} theme="dark" />
           )}
         </div>
       </section>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className={panelClass}>
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-slate-900">Cost by feature tag</h2>
+          <h2 className="text-base font-semibold text-white">Cost by feature tag</h2>
           {selectedTag && (
             <button
               type="button"
               onClick={() => setSelectedTag(null)}
-              className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+              className="text-xs font-medium text-[#4FABFF] transition-colors hover:text-[#B1C5FF]"
             >
               Clear filter ({selectedTag})
             </button>
@@ -179,6 +190,7 @@ export function Dashboard() {
               data={tagData}
               selectedTag={selectedTag}
               onSelect={setSelectedTag}
+              theme="dark"
             />
           )}
         </div>
@@ -186,12 +198,10 @@ export function Dashboard() {
 
       <section>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-slate-900">
-            Top prompt templates
-          </h2>
+          <h2 className="text-base font-semibold text-white">Top prompt templates</h2>
           {selectedTag && (
-            <span className="text-xs text-slate-500">
-              Filtered to <span className="font-mono">{selectedTag}</span>
+            <span className="text-xs text-neutral-500">
+              Filtered to <span className="font-mono text-neutral-400">{selectedTag}</span>
             </span>
           )}
         </div>
@@ -200,7 +210,7 @@ export function Dashboard() {
         ) : templatesLoading ? (
           <Skeleton className="h-48 w-full" />
         ) : (
-          <TopTemplatesTable rows={templates} filterTag={selectedTag} />
+          <TopTemplatesTable rows={templates} filterTag={selectedTag} variant="dark" />
         )}
       </section>
     </div>
@@ -215,17 +225,18 @@ interface PeriodToggleProps {
 function PeriodToggle({ value, onChange }: PeriodToggleProps) {
   const opts: Period[] = ["7d", "30d"];
   return (
-    <div className="inline-flex overflow-hidden rounded-lg border border-slate-200 bg-white text-xs font-medium">
+    <div className="inline-flex overflow-hidden border border-white/10 bg-black text-xs font-medium">
       {opts.map((p) => (
         <button
           key={p}
           type="button"
           onClick={() => onChange(p)}
-          className={`px-3 py-1.5 transition-colors ${
+          className={cn(
+            "px-3 py-1.5 transition-colors",
             value === p
-              ? "bg-indigo-600 text-white"
-              : "text-slate-600 hover:bg-slate-50"
-          }`}
+              ? "bg-[#076EFF] text-white"
+              : "text-neutral-400 hover:bg-white/5 hover:text-white"
+          )}
         >
           {p}
         </button>
@@ -236,7 +247,7 @@ function PeriodToggle({ value, onChange }: PeriodToggleProps) {
 
 function ErrorBanner({ message }: { message: string }) {
   return (
-    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+    <div className="border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
       {message}
     </div>
   );

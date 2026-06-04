@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { GradientDots } from "@/components/ui/gradient-dots";
 import { supabase } from "../lib/supabase";
 
 interface LayoutProps {
@@ -21,50 +22,66 @@ export function Layout({ children }: LayoutProps) {
   }
 
   return (
-    <div className="flex h-full min-h-screen">
-      <aside className="flex w-60 flex-col border-r border-slate-200 bg-white">
-        <div className="px-6 py-5">
-          <div className="flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-indigo-600 text-sm font-bold text-white">
-              PL
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-slate-900">PromptLens</div>
-              <div className="text-xs text-slate-500">v0.1</div>
-            </div>
+    <div className="relative min-h-screen bg-black text-white">
+      <GradientDots
+        duration={20}
+        dotSize={10}
+        spacing={12}
+        backgroundColor="#000000"
+        className="pointer-events-none fixed inset-0 z-0"
+      />
+
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-30 h-px bg-gradient-to-r from-transparent via-[#076EFF]/60 to-transparent" />
+
+      <div className="relative z-10 flex min-h-screen">
+        <aside className="flex w-60 shrink-0 flex-col border-r border-white/10 bg-black/70 backdrop-blur-md">
+          <div className="px-6 py-5">
+            <Link to="/" className="flex items-center gap-3">
+              <span className="grid h-8 w-8 place-items-center border border-[#076EFF] bg-black text-sm font-bold text-[#4FABFF]">
+                PL
+              </span>
+              <div>
+                <div className="text-sm font-semibold tracking-tight text-white">
+                  PromptLens
+                </div>
+                <div className="text-xs text-neutral-500">v0.1</div>
+              </div>
+            </Link>
           </div>
-        </div>
 
-        <nav className="flex-1 px-3">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                `mt-1 block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-indigo-50 text-indigo-700"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                }`
-              }
+          <nav className="flex-1 px-3">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  `mt-1 block px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive
+                      ? "border border-[#076EFF]/40 bg-[#076EFF]/10 text-[#4FABFF]"
+                      : "border border-transparent text-neutral-400 hover:bg-white/5 hover:text-white"
+                  }`
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="border-t border-white/10 p-3">
+            <button
+              type="button"
+              onClick={signOut}
+              className="block w-full px-3 py-2 text-left text-sm font-medium text-neutral-400 transition-colors hover:bg-white/5 hover:text-white"
             >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
+              Sign out
+            </button>
+          </div>
+        </aside>
 
-        <div className="border-t border-slate-200 p-3">
-          <button
-            type="button"
-            onClick={signOut}
-            className="block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-          >
-            Sign out
-          </button>
-        </div>
-      </aside>
-
-      <main className="flex-1 overflow-auto bg-slate-50 p-8">{children}</main>
+        <main className="relative flex-1 overflow-auto">
+          <div className="p-8">{children}</div>
+        </main>
+      </div>
     </div>
   );
 }

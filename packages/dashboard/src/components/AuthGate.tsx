@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import type { Session } from "@supabase/supabase-js";
+import { GradientDots } from "@/components/ui/gradient-dots";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
 interface AuthGateProps {
@@ -32,12 +33,17 @@ export function AuthGate({ children }: AuthGateProps) {
 
   if (!isSupabaseConfigured) {
     return (
-      <div className="flex h-full min-h-screen items-center justify-center bg-slate-50 p-6">
-        <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <h1 className="text-lg font-semibold text-slate-900">Supabase not configured</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Copy <code className="font-mono text-xs">.env.example</code> to{" "}
-            <code className="font-mono text-xs">.env</code> and set your Supabase
+      <div className="relative flex min-h-screen items-center justify-center bg-black p-6 text-white">
+        <GradientDots
+          duration={20}
+          backgroundColor="#000000"
+          className="pointer-events-none fixed inset-0 z-0"
+        />
+        <div className="relative z-10 max-w-md border border-white/10 bg-black/70 p-8 text-center backdrop-blur-md">
+          <h1 className="text-lg font-semibold text-white">Supabase not configured</h1>
+          <p className="mt-2 text-sm text-neutral-400">
+            Copy <code className="font-mono text-xs text-[#4FABFF]">.env.example</code> to{" "}
+            <code className="font-mono text-xs text-[#4FABFF]">.env</code> and set your Supabase
             credentials, then restart the dev server.
           </p>
         </div>
@@ -47,8 +53,13 @@ export function AuthGate({ children }: AuthGateProps) {
 
   if (session === undefined) {
     return (
-      <div className="flex h-full min-h-screen items-center justify-center text-sm text-slate-400">
-        Loading…
+      <div className="relative flex min-h-screen items-center justify-center bg-black text-sm text-neutral-500">
+        <GradientDots
+          duration={20}
+          backgroundColor="#000000"
+          className="pointer-events-none fixed inset-0 z-0"
+        />
+        <span className="relative z-10">Loading…</span>
       </div>
     );
   }
