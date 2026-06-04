@@ -4,6 +4,7 @@ build/
 .env
 .env.local
 .env.*.local
+.promptlens-dev-key
 *.log
 .DS_Store
 .vite/

@@ -50,7 +50,7 @@ const FEATURE_DETAILS = [
   {
     icon: Sparkles,
     title: "Compression suggestions",
-    body: "PromptLens flags prompts that could be shortened without losing quality. Cut token waste before it shows up on your invoice — something vanilla observability tools don't offer.",
+    body: "PromptLens flags prompts that could be shortened without losing quality. Cut token waste before it shows up on your invoice.",
   },
 ];
 
@@ -67,7 +67,7 @@ export function FeaturesSection() {
               A deeper look at what PromptLens tracks
             </h2>
             <p className="mt-4 text-base leading-relaxed text-neutral-500">
-              Helicone tells you how much you spent. PromptLens tells you{" "}
+              Most observability tools stop at totals. PromptLens tells you{" "}
               <span className="text-neutral-300">where</span>,{" "}
               <span className="text-neutral-300">why</span>, and{" "}
               <span className="text-neutral-300">what to fix</span> — all from

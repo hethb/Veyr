@@ -21,6 +21,12 @@ const PRICES: Record<string, ModelPrice> = {
   "gpt-4-turbo":     { input: 0.01000,  output: 0.03000 },
   "gpt-3.5-turbo":   { input: 0.00050,  output: 0.00150 },
 
+  // Groq (USD per 1k tokens — update when vendor pricing changes)
+  "llama-3.1-8b-instant":    { input: 0.00005, output: 0.00008 },
+  "llama-3.3-70b-versatile": { input: 0.00059, output: 0.00079 },
+  "llama3-8b-8192":          { input: 0.00005, output: 0.00008 },
+  "mixtral-8x7b-32768":      { input: 0.00024, output: 0.00024 },
+
   // Anthropic
   "claude-3-5-sonnet-20241022": { input: 0.00300, output: 0.01500 },
   "claude-3-5-haiku-20241022":  { input: 0.00080, output: 0.00400 },
