@@ -14,8 +14,9 @@ services:
     startCommand: node packages/proxy/dist/index.js
     healthCheckPath: /health
     envVars:
+      # Node 22+ required: @supabase/supabase-js needs native WebSocket.
       - key: NODE_VERSION
-        value: "20"
+        value: "22"
       # OpenAI-compatible upstream. Currently Groq (free tier).
       - key: OPENAI_UPSTREAM_URL
         value: https://api.groq.com/openai/v1/chat/completions
