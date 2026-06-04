@@ -4,91 +4,109 @@ import {
   useMotionTemplate,
   useMotionValue,
   useSpring,
-  useTransform,
 } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 type GradientDotsProps = React.ComponentProps<typeof motion.div> & {
   dotSize?: number;
   spacing?: number;
-  /** Slow ambient drift duration (default: 48) */
-  duration?: number;
   backgroundColor?: string;
-  /** How strongly the glow follows the cursor, 0–1 (default: 0.35) */
-  mouseInfluence?: number;
+  /** Radius of the cursor highlight in px (default: 220) */
+  spotlightRadius?: number;
 };
 
+function dotGrid(dotColor: string, dotSize: number) {
+  return `
+    radial-gradient(circle at 50% 50%, ${dotColor} 0 ${dotSize}px, transparent ${dotSize}px),
+    radial-gradient(circle at 50% 50%, ${dotColor} 0 ${dotSize}px, transparent ${dotSize}px)
+  `;
+}
+
 export function GradientDots({
-  dotSize = 10,
-  spacing = 12,
-  duration = 48,
+  dotSize = 2,
+  spacing = 14,
   backgroundColor = "#000000",
-  mouseInfluence = 0.35,
+  spotlightRadius = 220,
   className,
   ...props
 }: GradientDotsProps) {
   const hexSpacing = spacing * 1.732;
+  const gridSize = `${spacing}px ${hexSpacing}px`;
+  const gridOffset = `0px 0px, ${spacing / 2}px ${hexSpacing / 2}px`;
 
-  const mouseX = useMotionValue(0.5);
-  const mouseY = useMotionValue(0.5);
-  const springX = useSpring(mouseX, { stiffness: 40, damping: 22, mass: 0.8 });
-  const springY = useSpring(mouseY, { stiffness: 40, damping: 22, mass: 0.8 });
+  const mouseX = useMotionValue(
+    typeof window !== "undefined" ? window.innerWidth / 2 : 0
+  );
+  const mouseY = useMotionValue(
+    typeof window !== "undefined" ? window.innerHeight / 2 : 0
+  );
+  const cursorX = useSpring(mouseX, { stiffness: 120, damping: 24, mass: 0.4 });
+  const cursorY = useSpring(mouseY, { stiffness: 120, damping: 24, mass: 0.4 });
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
-      mouseX.set(e.clientX / window.innerWidth);
-      mouseY.set(e.clientY / window.innerHeight);
+      mouseX.set(e.clientX);
+      mouseY.set(e.clientY);
     };
     window.addEventListener("mousemove", onMove, { passive: true });
     return () => window.removeEventListener("mousemove", onMove);
   }, [mouseX, mouseY]);
 
-  const influence = mouseInfluence * 100;
+  const spotlightMask = useMotionTemplate`radial-gradient(circle ${spotlightRadius}px at ${cursorX}px ${cursorY}px, black 0%, rgba(0,0,0,0.75) 45%, transparent 100%)`;
 
-  const glow1X = useTransform(springX, (v) => `${(v - 0.5) * influence + 50}%`);
-  const glow1Y = useTransform(springY, (v) => `${(v - 0.5) * influence + 50}%`);
-  const glow2X = useTransform(springX, (v) => `${(0.5 - v) * influence * 0.6 + 35}%`);
-  const glow2Y = useTransform(springY, (v) => `${(0.5 - v) * influence * 0.6 + 65}%`);
-  const glow3X = useTransform(springX, (v) => `${(v - 0.3) * influence * 0.4 + 70}%`);
-  const glow3Y = useTransform(springY, (v) => `${(v - 0.7) * influence * 0.4 + 30}%`);
+  const cursorGlow = useMotionTemplate`radial-gradient(circle ${spotlightRadius * 1.4}px at ${cursorX}px ${cursorY}px, rgba(7, 110, 255, 0.22) 0%, rgba(79, 171, 255, 0.08) 35%, transparent 70%)`;
 
-  const backgroundImage = useMotionTemplate`
-    radial-gradient(circle at 50% 50%, transparent 1.5px, ${backgroundColor} 0 ${dotSize}px, transparent ${dotSize}px),
-    radial-gradient(circle at 50% 50%, transparent 1.5px, ${backgroundColor} 0 ${dotSize}px, transparent ${dotSize}px),
-    radial-gradient(circle at ${glow1X} ${glow1Y}, rgba(7, 110, 255, 0.14) 0%, transparent 55%),
-    radial-gradient(circle at ${glow2X} ${glow2Y}, rgba(79, 171, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(ellipse at ${glow3X} ${glow3Y}, rgba(177, 197, 255, 0.07) 0%, transparent 60%)
-  `;
+  const hotspotMask = useMotionTemplate`radial-gradient(circle ${spotlightRadius * 0.45}px at ${cursorX}px ${cursorY}px, black 0%, transparent 100%)`;
+
+  const baseDots = dotGrid("rgba(79, 171, 255, 0.22)", dotSize);
+  const litDots = dotGrid("rgba(177, 197, 255, 0.85)", dotSize);
+  const hotDots = dotGrid("rgba(255, 255, 255, 0.55)", dotSize * 0.85);
 
   return (
     <motion.div
-      className={cn("absolute inset-0", className)}
-      style={{
-        backgroundColor,
-        backgroundImage,
-        backgroundSize: `
-          ${spacing}px ${hexSpacing}px,
-          ${spacing}px ${hexSpacing}px,
-          180% 180%,
-          160% 160%,
-          200% 200%
-        `,
-      }}
-      animate={{
-        backgroundPosition: [
-          `0px 0px, ${spacing / 2}px ${hexSpacing / 2}px, 0% 0%, 0% 0%, 0% 0%`,
-          `0px 0px, ${spacing / 2}px ${hexSpacing / 2}px, 15% 8%, -10% 12%, 8% -6%`,
-          `0px 0px, ${spacing / 2}px ${hexSpacing / 2}px, 0% 0%, 0% 0%, 0% 0%`,
-        ],
-      }}
-      transition={{
-        backgroundPosition: {
-          duration,
-          ease: "linear",
-          repeat: Number.POSITIVE_INFINITY,
-        },
-      }}
+      className={cn("absolute inset-0 overflow-hidden", className)}
+      style={{ backgroundColor }}
       {...props}
-    />
+    >
+      {/* Always-visible dot grid */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: baseDots,
+          backgroundSize: gridSize,
+          backgroundPosition: gridOffset,
+        }}
+      />
+
+      {/* Brighter dots revealed near the cursor */}
+      <motion.div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: litDots,
+          backgroundSize: gridSize,
+          backgroundPosition: gridOffset,
+          maskImage: spotlightMask,
+          WebkitMaskImage: spotlightMask,
+        }}
+      />
+
+      {/* Core hotspot — brightest dots at cursor */}
+      <motion.div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: hotDots,
+          backgroundSize: gridSize,
+          backgroundPosition: gridOffset,
+          maskImage: hotspotMask,
+          WebkitMaskImage: hotspotMask,
+        }}
+      />
+
+      {/* Soft blue wash following the cursor */}
+      <motion.div
+        className="absolute inset-0"
+        style={{ backgroundImage: cursorGlow }}
+      />
+    </motion.div>
   );
 }

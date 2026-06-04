@@ -33,7 +33,7 @@ export function TopTemplatesTable({
       className={cn(
         "overflow-hidden border",
         dark
-          ? "border-white/10 bg-black/50 backdrop-blur-md"
+          ? "border-white/10 bg-black/65 backdrop-blur-md"
           : "rounded-xl border-slate-200 bg-white shadow-sm"
       )}
     >

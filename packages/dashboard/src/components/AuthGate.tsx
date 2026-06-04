@@ -35,7 +35,6 @@ export function AuthGate({ children }: AuthGateProps) {
     return (
       <div className="relative flex min-h-screen items-center justify-center bg-black p-6 text-white">
         <GradientDots
-          duration={20}
           backgroundColor="#000000"
           className="pointer-events-none fixed inset-0 z-0"
         />
@@ -55,7 +54,6 @@ export function AuthGate({ children }: AuthGateProps) {
     return (
       <div className="relative flex min-h-screen items-center justify-center bg-black text-sm text-neutral-500">
         <GradientDots
-          duration={20}
           backgroundColor="#000000"
           className="pointer-events-none fixed inset-0 z-0"
         />

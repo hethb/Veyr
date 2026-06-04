@@ -17,7 +17,7 @@ import {
   type TopTemplateRow,
 } from "../lib/api";
 
-const panelClass = "border border-white/10 bg-black/50 p-5 backdrop-blur-md";
+const panelClass = "border border-white/10 bg-black/65 p-5 backdrop-blur-md";
 
 export function Dashboard() {
   const [overview, setOverview] = useState<Overview | null>(null);

@@ -24,7 +24,7 @@ export function MetricCard({
       className={cn(
         "border p-5",
         dark
-          ? "border-white/10 bg-black/50 backdrop-blur-md"
+          ? "border-white/10 bg-black/65 backdrop-blur-md"
           : "rounded-xl border-slate-200 bg-white shadow-sm"
       )}
     >
