@@ -24,9 +24,10 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="relative min-h-screen bg-black text-white">
       <GradientDots
-        duration={20}
+        duration={48}
         dotSize={10}
         spacing={12}
+        mouseInfluence={0.4}
         backgroundColor="#000000"
         className="pointer-events-none fixed inset-0 z-0"
       />
