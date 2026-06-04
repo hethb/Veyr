@@ -52,15 +52,15 @@ export function GradientDots({
     return () => window.removeEventListener("mousemove", onMove);
   }, [mouseX, mouseY]);
 
-  const spotlightMask = useMotionTemplate`radial-gradient(circle ${spotlightRadius}px at ${cursorX}px ${cursorY}px, black 0%, rgba(0,0,0,0.75) 45%, transparent 100%)`;
+  const spotlightMask = useMotionTemplate`radial-gradient(circle ${spotlightRadius}px at ${cursorX}px ${cursorY}px, black 0%, rgba(0,0,0,0.8) 50%, transparent 100%)`;
 
-  const cursorGlow = useMotionTemplate`radial-gradient(circle ${spotlightRadius * 1.4}px at ${cursorX}px ${cursorY}px, rgba(7, 110, 255, 0.22) 0%, rgba(79, 171, 255, 0.08) 35%, transparent 70%)`;
+  const cursorGlow = useMotionTemplate`radial-gradient(circle ${spotlightRadius * 1.3}px at ${cursorX}px ${cursorY}px, rgba(7, 110, 255, 0.14) 0%, rgba(79, 171, 255, 0.05) 40%, transparent 72%)`;
 
-  const hotspotMask = useMotionTemplate`radial-gradient(circle ${spotlightRadius * 0.45}px at ${cursorX}px ${cursorY}px, black 0%, transparent 100%)`;
+  const hotspotMask = useMotionTemplate`radial-gradient(circle ${spotlightRadius * 0.38}px at ${cursorX}px ${cursorY}px, black 0%, transparent 100%)`;
 
-  const baseDots = dotGrid("rgba(79, 171, 255, 0.22)", dotSize);
-  const litDots = dotGrid("rgba(177, 197, 255, 0.85)", dotSize);
-  const hotDots = dotGrid("rgba(255, 255, 255, 0.55)", dotSize * 0.85);
+  const baseDots = dotGrid("rgba(79, 171, 255, 0.17)", dotSize);
+  const litDots = dotGrid("rgba(177, 197, 255, 0.62)", dotSize);
+  const hotDots = dotGrid("rgba(255, 255, 255, 0.38)", dotSize * 0.85);
 
   return (
     <motion.div

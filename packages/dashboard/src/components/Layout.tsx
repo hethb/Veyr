@@ -26,7 +26,7 @@ export function Layout({ children }: LayoutProps) {
       <GradientDots
         dotSize={2}
         spacing={14}
-        spotlightRadius={240}
+        spotlightRadius={200}
         backgroundColor="#000000"
         className="pointer-events-none fixed inset-0 z-0"
       />
