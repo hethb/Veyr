@@ -74,6 +74,33 @@ export interface CreatedApiKey extends ApiKey {
 
 export type Period = "1d" | "7d" | "30d";
 
+export type SuggestionSeverity = "high" | "medium" | "low";
+export type SuggestionCategory =
+  | "model"
+  | "token-waste"
+  | "session"
+  | "caching"
+  | "volume";
+
+export interface Suggestion {
+  id: string;
+  severity: SuggestionSeverity;
+  category: SuggestionCategory;
+  title: string;
+  description: string;
+  impact_usd: number;
+  evidence: Record<string, unknown>;
+  action: string;
+  quick_win?: boolean;
+}
+
+export interface CompressionPreview {
+  original_tokens: number;
+  compressed_tokens: number;
+  pct_reduction: number;
+  compressed_prompt: string;
+}
+
 // ---------------------------------------------------------------------------
 // Endpoints
 // ---------------------------------------------------------------------------
@@ -118,4 +145,19 @@ export async function createKey(name: string): Promise<CreatedApiKey> {
 
 export async function deleteKey(id: string): Promise<void> {
   await authedFetch(`/api/keys/${id}`, { method: "DELETE" });
+}
+
+export async function getSuggestions(): Promise<Suggestion[]> {
+  const res = await authedFetch("/api/analysis/suggestions");
+  return (await res.json()) as Suggestion[];
+}
+
+export async function previewCompression(
+  promptHash: string
+): Promise<CompressionPreview> {
+  const res = await authedFetch("/api/analysis/compress", {
+    method: "POST",
+    body: JSON.stringify({ prompt_hash: promptHash }),
+  });
+  return (await res.json()) as CompressionPreview;
 }

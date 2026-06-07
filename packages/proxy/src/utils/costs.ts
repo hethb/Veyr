@@ -51,6 +51,16 @@ function resolvePrice(model: string): ModelPrice {
   return FALLBACK;
 }
 
+/** USD per single input (prompt) token for a model. */
+export function inputCostPerToken(model: string): number {
+  return resolvePrice(model).input / 1000;
+}
+
+/** USD per single output (completion) token for a model. */
+export function outputCostPerToken(model: string): number {
+  return resolvePrice(model).output / 1000;
+}
+
 /**
  * Calculates total cost in USD for a single request.
  * Result is rounded to 8 decimal places to fit numeric(10, 8).

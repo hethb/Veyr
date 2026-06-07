@@ -4,6 +4,7 @@ import { CostByTagChart } from "../components/CostByTagChart";
 import { CostTimeChart } from "../components/CostTimeChart";
 import { MetricCard } from "../components/MetricCard";
 import { Skeleton } from "../components/Skeleton";
+import { SuggestionsPanel } from "../components/SuggestionsPanel";
 import { TopTemplatesTable } from "../components/TopTemplatesTable";
 import {
   getByTag,
@@ -213,6 +214,8 @@ export function Dashboard() {
           <TopTemplatesTable rows={templates} filterTag={selectedTag} variant="dark" />
         )}
       </section>
+
+      <SuggestionsPanel />
     </div>
   );
 }

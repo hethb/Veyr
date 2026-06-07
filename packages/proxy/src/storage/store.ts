@@ -156,6 +156,36 @@ export function insertRequest(input: RequestInsert): void {
     });
 }
 
+/** Richer row shape for the optimization analysis engine. */
+export interface AnalysisRow {
+  timestamp: string;
+  model: string;
+  feature_tag: string | null;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  cost_usd: number;
+  status: string;
+  prompt_hash: string | null;
+}
+
+/**
+ * Rows for the optimization analysis engine. Selects the extra columns
+ * (model, status) the stats endpoints don't need. Single-tenant: every key.
+ */
+export function getRequestsForAnalysis(sinceIso: string): AnalysisRow[] {
+  return getDb()
+    .prepare(
+      `SELECT timestamp, model, feature_tag, prompt_tokens, completion_tokens,
+              total_tokens, cost_usd, status, prompt_hash
+       FROM requests
+       WHERE timestamp >= ?
+       ORDER BY timestamp ASC
+       LIMIT 100000`
+    )
+    .all(sinceIso) as AnalysisRow[];
+}
+
 /** All request rows since an ISO timestamp (single-tenant: every key). */
 export function getRequestsSince(sinceIso: string): RequestRow[] {
   return getDb()

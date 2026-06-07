@@ -62,6 +62,51 @@ Per-feature policies (dashboard API `PUT /api/policies`):
 
 For local development or enterprise self-host, see [Local development](#local-development) below.
 
+## Token optimization
+
+PromptLens analyzes your logged traffic and surfaces specific, actionable ways
+to cut token spend. Suggestions appear in a panel on the dashboard and are
+served by `GET /api/analysis/suggestions` — all analysis runs **in-process over
+the local SQLite data**, with no external API or LLM calls.
+
+Each suggestion includes an estimated monthly saving, the evidence that
+triggered it, and a concrete action. The single highest-impact suggestion is
+flagged as a **quick win**.
+
+### Detection rules (in plain English)
+
+1. **Expensive model on a simple feature** — a feature averages under 500 prompt
+   tokens but mostly uses a frontier model (GPT-4o, Claude Sonnet/Opus) and
+   costs more than $5/month. Route it to a mini/Haiku model (~80% cheaper).
+2. **Ballooning completion tokens** — a feature's responses are more than 2x
+   the length of its inputs (20+ calls, >$3/month). Cap `max_tokens`.
+3. **High error rate burning tokens** — more than 10% of a feature's calls (10+
+   in the last 7 days) are failing while you still pay for prompt tokens. Fix
+   the underlying error.
+4. **One feature dominating spend** — a single feature is more than 60% of total
+   spend. A risk alert to add a budget cap or model override.
+5. **Redundant long prompt template** — the same system prompt hash is sent 50+
+   times/month averaging over 800 tokens. Compress it (~30% saving).
+6. **Bursty traffic / low cache efficiency** — a feature sends repeated bursts
+   (20+ calls within 10 minutes, more than 3 times in 7 days). Enable provider
+   prompt caching.
+7. **Quick win** — whichever live suggestion has the highest estimated saving is
+   highlighted so you know where to start.
+
+A suggestion is only surfaced when the evidence clears its threshold — no false
+positives. Suggestions are most meaningful after **at least 7 days of traffic**;
+with little data the panel simply says there's nothing to suggest yet.
+
+### Prompt compression previews
+
+For redundant-template suggestions, a **Preview compression** button calls
+`POST /api/analysis/compress`. By default PromptLens stores only the SHA-256
+hash of prompts (not their content), so this returns a `404` explaining that
+you must set `STORE_PROMPTS=true` to enable previews. When prompt content is
+available, it runs a deterministic, rule-based compression (collapse blank
+lines, strip XML/HTML comments, trim "You are an AI assistant…" boilerplate and
+filler words) and returns the original vs. compressed token counts.
+
 ## vs Helicone
 
 Helicone shows you that you're spending money. PromptLens tells you **which
