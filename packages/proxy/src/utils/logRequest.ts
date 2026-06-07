@@ -1,4 +1,4 @@
-import { getServiceClient } from "./supabase.js";
+import { insertRequest } from "../storage/store.js";
 import { calculateCost } from "./costs.js";
 
 export interface LogRequestInput {
@@ -25,27 +25,25 @@ export function logRequest(input: LogRequestInput): void {
   const cost = calculateCost(input.model, input.promptTokens, input.completionTokens);
   const total = input.promptTokens + input.completionTokens;
 
-  const supabase = getServiceClient();
-  void supabase
-    .from("requests")
-    .insert({
-      api_key_id: input.apiKeyId,
+  try {
+    insertRequest({
+      apiKeyId: input.apiKeyId,
       model: input.model,
       provider: input.provider,
-      feature_tag: input.featureTag,
-      prompt_tokens: input.promptTokens,
-      completion_tokens: input.completionTokens,
-      total_tokens: total,
-      cost_usd: cost,
-      latency_ms: input.latencyMs,
+      featureTag: input.featureTag,
+      promptTokens: input.promptTokens,
+      completionTokens: input.completionTokens,
+      totalTokens: total,
+      costUsd: cost,
+      latencyMs: input.latencyMs,
       status: input.status,
-      finish_reason: input.finishReason,
-      prompt_hash: input.promptHash,
-      error_message: input.errorMessage,
-      compression_applied: input.compressionApplied ?? false,
-      tokens_saved_estimate: input.tokensSavedEstimate ?? 0,
-    })
-    .then(({ error }) => {
-      if (error) console.error("[logRequest] insert failed:", error.message);
+      finishReason: input.finishReason,
+      promptHash: input.promptHash,
+      errorMessage: input.errorMessage,
+      compressionApplied: input.compressionApplied ?? false,
+      tokensSavedEstimate: input.tokensSavedEstimate ?? 0,
     });
+  } catch (err) {
+    console.error("[logRequest] insert failed:", err);
+  }
 }

@@ -1,22 +1,10 @@
 import { Router, type Request, type Response } from "express";
-import { dashboardAuth } from "../middleware/dashboardAuth.js";
-import { getServiceClient } from "../utils/supabase.js";
-
-interface RequestRow {
-  timestamp: string;
-  cost_usd: number | string;
-  total_tokens: number;
-  prompt_tokens: number;
-  completion_tokens: number;
-  feature_tag: string | null;
-  prompt_hash: string | null;
-}
+import { getRequestsSince, type RequestRow } from "../storage/store.js";
 
 type Period = "1d" | "7d" | "30d";
 type Granularity = "hour" | "day";
 
 export const statsRouter: Router = Router();
-statsRouter.use(dashboardAuth);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -36,35 +24,6 @@ function parsePeriod(value: unknown, fallback: Period = "7d"): Period {
 
 function parseGranularity(value: unknown): Granularity {
   return value === "hour" ? "hour" : "day";
-}
-
-async function listUserApiKeyIds(userId: string): Promise<string[]> {
-  const supabase = getServiceClient();
-  const { data, error } = await supabase
-    .from("api_keys")
-    .select("id")
-    .eq("user_id", userId);
-  if (error) throw new Error(error.message);
-  return (data ?? []).map((row: { id: string }) => row.id);
-}
-
-async function fetchRows(
-  apiKeyIds: string[],
-  sinceIso: string
-): Promise<RequestRow[]> {
-  if (apiKeyIds.length === 0) return [];
-  const supabase = getServiceClient();
-  const { data, error } = await supabase
-    .from("requests")
-    .select(
-      "timestamp, cost_usd, total_tokens, prompt_tokens, completion_tokens, feature_tag, prompt_hash"
-    )
-    .in("api_key_id", apiKeyIds)
-    .gte("timestamp", sinceIso)
-    .order("timestamp", { ascending: false })
-    .limit(50000);
-  if (error) throw new Error(error.message);
-  return (data as RequestRow[] | null) ?? [];
 }
 
 function num(v: number | string): number {
@@ -87,17 +46,10 @@ function bucketKey(ts: string, granularity: Granularity): string {
 // GET /api/stats/overview
 // ---------------------------------------------------------------------------
 
-statsRouter.get("/overview", async (req: Request, res: Response): Promise<void> => {
-  const userId = req.userId;
-  if (!userId) {
-    res.status(401).json({ error: "Unauthenticated" });
-    return;
-  }
-
+statsRouter.get("/overview", (_req: Request, res: Response): void => {
   try {
-    const apiKeyIds = await listUserApiKeyIds(userId);
     const sinceMonth = new Date(Date.now() - periodMs("30d")).toISOString();
-    const rows = await fetchRows(apiKeyIds, sinceMonth);
+    const rows = getRequestsSince(sinceMonth);
 
     const now = Date.now();
     const startToday = new Date();
@@ -148,18 +100,11 @@ statsRouter.get("/overview", async (req: Request, res: Response): Promise<void> 
 // GET /api/stats/by-tag
 // ---------------------------------------------------------------------------
 
-statsRouter.get("/by-tag", async (req: Request, res: Response): Promise<void> => {
-  const userId = req.userId;
-  if (!userId) {
-    res.status(401).json({ error: "Unauthenticated" });
-    return;
-  }
-
+statsRouter.get("/by-tag", (req: Request, res: Response): void => {
   const period = parsePeriod(req.query.period);
   try {
-    const apiKeyIds = await listUserApiKeyIds(userId);
     const since = new Date(Date.now() - periodMs(period)).toISOString();
-    const rows = await fetchRows(apiKeyIds, since);
+    const rows = getRequestsSince(since);
 
     const grouped = new Map<string, { cost: number; requests: number }>();
     for (const r of rows) {
@@ -189,20 +134,13 @@ statsRouter.get("/by-tag", async (req: Request, res: Response): Promise<void> =>
 // GET /api/stats/timeseries
 // ---------------------------------------------------------------------------
 
-statsRouter.get("/timeseries", async (req: Request, res: Response): Promise<void> => {
-  const userId = req.userId;
-  if (!userId) {
-    res.status(401).json({ error: "Unauthenticated" });
-    return;
-  }
-
+statsRouter.get("/timeseries", (req: Request, res: Response): void => {
   const period = parsePeriod(req.query.period);
   const granularity = parseGranularity(req.query.granularity);
 
   try {
-    const apiKeyIds = await listUserApiKeyIds(userId);
     const since = new Date(Date.now() - periodMs(period)).toISOString();
-    const rows = await fetchRows(apiKeyIds, since);
+    const rows = getRequestsSince(since);
 
     const grouped = new Map<string, { cost: number; requests: number }>();
     for (const r of rows) {
@@ -252,19 +190,12 @@ function fillBuckets(
 // GET /api/stats/top-templates
 // ---------------------------------------------------------------------------
 
-statsRouter.get("/top-templates", async (req: Request, res: Response): Promise<void> => {
-  const userId = req.userId;
-  if (!userId) {
-    res.status(401).json({ error: "Unauthenticated" });
-    return;
-  }
-
+statsRouter.get("/top-templates", (req: Request, res: Response): void => {
   const limit = Math.max(1, Math.min(100, parseInt(String(req.query.limit ?? "10"), 10) || 10));
 
   try {
-    const apiKeyIds = await listUserApiKeyIds(userId);
     const since = new Date(Date.now() - periodMs("30d")).toISOString();
-    const rows = await fetchRows(apiKeyIds, since);
+    const rows: RequestRow[] = getRequestsSince(since);
 
     interface Agg {
       total_cost: number;

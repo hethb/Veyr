@@ -27,6 +27,10 @@ const STRIP_RESPONSE_HEADERS = new Set([
   "connection",
   "keep-alive",
   "content-length",
+  // fetch/undici transparently decompresses the upstream body, so the bytes we
+  // stream are already decoded. Forwarding the original content-encoding would
+  // make the client try to gunzip plaintext (Z_DATA_ERROR).
+  "content-encoding",
 ]);
 
 export interface ForwardResult {

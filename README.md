@@ -12,17 +12,20 @@ See [ROADMAP.md](./ROADMAP.md) for the three product layers (observe → optimiz
 your app  ──▶  PromptLens proxy  ──▶  OpenAI / Anthropic
                      │
                      ▼
-              Supabase (Postgres)
+              local SQLite store
                      │
                      ▼
               PromptLens dashboard
 ```
 
+> Runs zero-config: the proxy stores keys and request logs in a local SQLite
+> file. No external database or login required. (See [Local development](#local-development).)
+
 ## Quickstart (plug-in for your app)
 
 Same idea as [TokenGuard](https://github.com/hethb/TokenGuard) — minimal setup — but for **production LLM APIs** (not the browser). Customers add one env var and two lines of code. See [QUICKSTART.md](./QUICKSTART.md) for the full sellable flow vs self-host.
 
-**1. Get a key** — Sign in to the dashboard → **API Keys** → copy `pl_live_…` → set `PROMPTLENS_KEY`.
+**1. Get a key** — Open the dashboard → **API Keys** → copy `pl_live_…` → set `PROMPTLENS_KEY`. (Or run `npm run seed` to mint one from the CLI.)
 
 **2. Install and wire the SDK**
 
@@ -56,8 +59,6 @@ Per-feature policies (dashboard API `PUT /api/policies`):
 - `monthly_budget_usd` — returns `429` when feature spend exceeds cap
 - `compress_prompts` — always compress for that feature
 - `max_completion_tokens` — enforced server-side
-
-Run migration `supabase/migrations/002_control_plane.sql` after `001_initial.sql`.
 
 For local development or enterprise self-host, see [Local development](#local-development) below.
 
@@ -98,42 +99,35 @@ promptlens/
 ### Prerequisites
 
 - Node.js 20+
-- A Supabase project (free tier is enough)
 
-### 1. Set up Supabase
+That's it — no database or cloud account. The proxy keeps keys and request
+logs in a local SQLite file at `packages/proxy/.promptlens/data.db`.
 
-1. Create a new Supabase project.
-2. In the SQL Editor, run the contents of `supabase/migrations/001_initial.sql`.
-3. Enable Email/Password auth in **Authentication → Providers**.
-4. Create a user (or invite yourself) under **Authentication → Users**.
-
-### 2. Configure environment
-
-```bash
-cp .env.example .env
-```
-
-Fill in:
-
-- `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY` — from your Supabase project's API settings.
-- `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` — same `SUPABASE_URL` and `SUPABASE_ANON_KEY` (the dashboard reads `VITE_*`).
-- `VITE_PROXY_URL` — `http://localhost:3001` for local dev.
-
-The proxy reads `.env` from its own folder. The simplest setup is to symlink
-or copy the root `.env` into each package:
-
-```bash
-cp .env packages/proxy/.env
-cp .env packages/dashboard/.env
-```
-
-### 3. Install + run
+### 1. Install + seed
 
 ```bash
 npm install
+npm run seed     # creates the demo API key + realistic sample data
 ```
 
-Then in two terminals:
+`npm run seed` prints a `pl_live_…` demo key (shown once) and fills the store
+with 30 days of sample requests so the dashboard is populated immediately.
+Re-run it any time to mint a fresh key; add `-- --reset` to wipe everything.
+
+### 2. Configure environment (optional)
+
+Defaults work out of the box. To point the proxy at a specific upstream (e.g.
+free Groq) or change ports:
+
+```bash
+cp .env.example .env
+cp .env packages/proxy/.env       # proxy reads .env from its own folder
+cp .env packages/dashboard/.env   # dashboard reads VITE_* vars
+```
+
+### 3. Run
+
+In two terminals:
 
 ```bash
 # Terminal 1
@@ -143,8 +137,8 @@ npm run dev:proxy        # http://localhost:3001
 npm run dev:dashboard    # http://localhost:5173
 ```
 
-Sign in at the dashboard, create an API key, and use it as the
-`PROMPTLENS_KEY` in your application.
+Open the dashboard — no login. The **API Keys** page lets you create more keys;
+use any `pl_live_…` key as the `PROMPTLENS_KEY` in your application.
 
 ### 4. Smoke-test the proxy
 
@@ -203,8 +197,8 @@ Unset `OPENAI_UPSTREAM_URL` (or set it to `https://api.openai.com/v1/chat/comple
 1. Create a new Railway project. Add the PromptLens repo and set the **root directory** to `packages/proxy`.
 2. Set the **Build command** to `npm install --workspaces && npm run build:proxy` (run from repo root).
 3. Set the **Start command** to `node packages/proxy/dist/index.js`.
-4. Add environment variables: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`, `PORT` (Railway sets this automatically), `DASHBOARD_ORIGIN` (your Vercel URL, comma-separated if multiple).
-5. Deploy. Note the public URL.
+4. Add environment variables: `PORT` (Railway sets this automatically), `DASHBOARD_ORIGIN` (your Vercel URL, comma-separated if multiple), `OPENAI_UPSTREAM_URL` (optional), and `PROMPTLENS_DB_PATH` pointing at a mounted volume so the SQLite store persists across deploys.
+5. Deploy. Note the public URL. Run `npm run seed` (or create a key in the dashboard) once against the volume to mint a key.
 
 ### Dashboard → Vercel
 
@@ -212,7 +206,7 @@ Unset `OPENAI_UPSTREAM_URL` (or set it to `https://api.openai.com/v1/chat/comple
 2. Set the **root directory** to `packages/dashboard`.
 3. Build command: `npm run build` (Vercel detects Vite automatically).
 4. Output directory: `dist`.
-5. Environment variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_PROXY_URL` (your Railway URL).
+5. Environment variables: `VITE_PROXY_URL` (your Railway URL).
 6. Deploy.
 
 ### Update SDK consumers

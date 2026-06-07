@@ -1,10 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { AuthGate } from "./components/AuthGate";
 import { Layout } from "./components/Layout";
 import { Dashboard } from "./pages/Dashboard";
 import { Keys } from "./pages/Keys";
 import { Landing } from "./pages/Landing";
-import { Login } from "./pages/Login";
 import { Settings } from "./pages/Settings";
 
 export function App() {
@@ -12,36 +10,29 @@ export function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
 
         <Route
           path="/dashboard"
           element={
-            <AuthGate>
-              <Layout>
-                <Dashboard />
-              </Layout>
-            </AuthGate>
+            <Layout>
+              <Dashboard />
+            </Layout>
           }
         />
         <Route
           path="/keys"
           element={
-            <AuthGate>
-              <Layout>
-                <Keys />
-              </Layout>
-            </AuthGate>
+            <Layout>
+              <Keys />
+            </Layout>
           }
         />
         <Route
           path="/settings"
           element={
-            <AuthGate>
-              <Layout>
-                <Settings />
-              </Layout>
-            </AuthGate>
+            <Layout>
+              <Settings />
+            </Layout>
           }
         />
 

@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -14,7 +13,6 @@ import { DemoDashboard } from "../components/DemoDashboard";
 import { FeaturesSection } from "../components/FeaturesSection";
 import { HeroSection } from "../components/HeroSection";
 import { NavBar } from "@/components/ui/tubelight-navbar";
-import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
 const LANDING_NAV_ITEMS = [
   { name: "Home", url: "#top", icon: Home },
@@ -27,40 +25,22 @@ const LANDING_NAV_ITEMS = [
 const ACCENTS = ["#076EFF", "#4FABFF", "#B1C5FF"] as const;
 
 export function Landing() {
-  const [signedIn, setSignedIn] = useState(false);
-
-  useEffect(() => {
-    if (!isSupabaseConfigured) return;
-
-    let mounted = true;
-    void supabase.auth.getSession().then(({ data }) => {
-      if (mounted) setSignedIn(Boolean(data.session));
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      if (mounted) setSignedIn(Boolean(s));
-    });
-    return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
-    };
-  }, []);
-
   return (
     <div className="min-h-screen bg-black text-white">
-      <Header signedIn={signedIn} />
-      <HeroSection signedIn={signedIn} />
+      <Header />
+      <HeroSection signedIn />
       <HowItWorks />
       <ProductLayers />
       <FeaturesSection />
       <DemoSection />
       <BuiltForSection />
-      <FinalCta signedIn={signedIn} />
+      <FinalCta />
       <Footer />
     </div>
   );
 }
 
-function Header({ signedIn }: { signedIn: boolean }) {
+function Header() {
   return (
     <>
       <div className="pointer-events-none fixed inset-x-0 top-0 z-50">
@@ -76,29 +56,12 @@ function Header({ signedIn }: { signedIn: boolean }) {
         </div>
 
         <div className="pointer-events-auto absolute right-6 top-6 flex items-center gap-2">
-          {signedIn ? (
-            <Link
-              to="/dashboard"
-              className="border border-white bg-white px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
-            >
-              Open dashboard
-            </Link>
-          ) : (
-            <>
-              <Link
-                to="/login"
-                className="hidden px-3 py-2 text-sm font-medium text-neutral-400 transition-colors hover:text-white sm:inline"
-              >
-                Sign in
-              </Link>
-              <Link
-                to="/login"
-                className="border border-[#076EFF] bg-[#076EFF] px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-[#4FABFF] hover:border-[#4FABFF]"
-              >
-                Get started
-              </Link>
-            </>
-          )}
+          <Link
+            to="/dashboard"
+            className="border border-white bg-white px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
+          >
+            Open dashboard
+          </Link>
         </div>
       </div>
 
@@ -304,7 +267,7 @@ function BuiltForSection() {
   );
 }
 
-function FinalCta({ signedIn }: { signedIn: boolean }) {
+function FinalCta() {
   return (
     <section className="relative overflow-hidden border-t border-white/10 bg-black">
       <div className="pointer-events-none absolute inset-0">
@@ -320,15 +283,15 @@ function FinalCta({ signedIn }: { signedIn: boolean }) {
           Stop guessing what you&apos;re spending on.
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-base text-neutral-500">
-          Two lines of code, a free Supabase project, and you have full LLM
-          cost attribution for your team.
+          Two lines of code and a single seed command — full LLM cost
+          attribution for your team, running locally.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Link
-            to={signedIn ? "/dashboard" : "/login"}
+            to="/dashboard"
             className="inline-flex items-center gap-2 border border-white bg-white px-5 py-3 text-sm font-semibold text-black transition-colors hover:bg-neutral-200"
           >
-            {signedIn ? "Open your dashboard" : "Get started"}
+            Open your dashboard
             <ArrowRight className="h-4 w-4" />
           </Link>
           <a
@@ -369,8 +332,8 @@ function Footer() {
           <a href="#built-for" className="transition-colors hover:text-white">
             Built for
           </a>
-          <Link to="/login" className="transition-colors hover:text-white">
-            Sign in
+          <Link to="/dashboard" className="transition-colors hover:text-white">
+            Dashboard
           </Link>
         </div>
       </div>

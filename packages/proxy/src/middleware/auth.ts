@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import { getServiceClient } from "../utils/supabase.js";
+import { findApiKeysByPrefix, touchKeyLastUsed } from "../storage/store.js";
 import { cacheVerifiedKey, getCachedKey, keyPrefix } from "../utils/keys.js";
 
 declare module "express-serve-static-core" {
@@ -41,27 +41,16 @@ export async function apiKeyAuth(
   }
 
   try {
-    const supabase = getServiceClient();
     const prefix = keyPrefix(raw);
+    const candidates = findApiKeysByPrefix(prefix);
 
-    const { data, error } = await supabase
-      .from("api_keys")
-      .select("id, key_hash")
-      .eq("key_prefix", prefix);
-
-    if (error) {
-      console.error("[auth] supabase lookup failed:", error.message);
-      res.status(500).json({ error: "Internal authentication error" });
-      return;
-    }
-
-    if (!data || data.length === 0) {
+    if (candidates.length === 0) {
       res.status(401).json({ error: "Invalid API key" });
       return;
     }
 
     let matchedId: string | null = null;
-    for (const row of data) {
+    for (const row of candidates) {
       if (await bcrypt.compare(raw, row.key_hash)) {
         matchedId = row.id;
         break;
@@ -84,12 +73,9 @@ export async function apiKeyAuth(
 }
 
 function touchLastUsed(apiKeyId: string): void {
-  const supabase = getServiceClient();
-  void supabase
-    .from("api_keys")
-    .update({ last_used_at: new Date().toISOString() })
-    .eq("id", apiKeyId)
-    .then(({ error }) => {
-      if (error) console.error("[auth] last_used_at update failed:", error.message);
-    });
+  try {
+    touchKeyLastUsed(apiKeyId);
+  } catch (err) {
+    console.error("[auth] last_used_at update failed:", err);
+  }
 }

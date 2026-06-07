@@ -9,6 +9,7 @@
   "scripts": {
     "dev:proxy": "npm run dev --workspace=@promptlens/proxy",
     "dev:dashboard": "npm run dev --workspace=@promptlens/dashboard",
+    "seed": "npm run seed --workspace=@promptlens/proxy",
     "build": "npm run build --workspaces --if-present",
     "build:proxy": "npm run build --workspace=@promptlens/proxy",
     "build:dashboard": "npm run build --workspace=@promptlens/dashboard",
@@ -16,5 +17,8 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "openai": "^6.42.0"
   }
 }

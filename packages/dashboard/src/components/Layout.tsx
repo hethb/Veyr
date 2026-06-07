@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { GradientDots } from "@/components/ui/gradient-dots";
-import { supabase } from "../lib/supabase";
 
 interface LayoutProps {
   children: ReactNode;
@@ -14,13 +13,6 @@ const navItems = [
 ];
 
 export function Layout({ children }: LayoutProps) {
-  const navigate = useNavigate();
-
-  async function signOut() {
-    await supabase.auth.signOut();
-    navigate("/login", { replace: true });
-  }
-
   return (
     <div className="relative min-h-screen bg-black text-white">
       <GradientDots
@@ -66,16 +58,6 @@ export function Layout({ children }: LayoutProps) {
               </NavLink>
             ))}
           </nav>
-
-          <div className="border-t border-white/10 p-3">
-            <button
-              type="button"
-              onClick={signOut}
-              className="block w-full px-3 py-2 text-left text-sm font-medium text-neutral-400 transition-colors hover:bg-white/5 hover:text-white"
-            >
-              Sign out
-            </button>
-          </div>
         </aside>
 
         <main className="relative flex-1 overflow-auto">

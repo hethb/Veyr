@@ -1,15 +1,9 @@
-import { getServiceClient } from "../utils/supabase.js";
+import {
+  getFeaturePolicy as storeGetFeaturePolicy,
+  type FeaturePolicy,
+} from "../storage/store.js";
 
-export interface FeaturePolicy {
-  id: string;
-  api_key_id: string;
-  feature_tag: string;
-  monthly_budget_usd: number | null;
-  max_completion_tokens: number | null;
-  compress_prompts: boolean;
-  fallback_model: string | null;
-  rate_limit_per_minute: number | null;
-}
+export type { FeaturePolicy };
 
 const policyCache = new Map<string, { policy: FeaturePolicy | null; at: number }>();
 const CACHE_MS = 30_000;
@@ -28,22 +22,14 @@ export async function getFeaturePolicy(
     return hit.policy;
   }
 
-  const supabase = getServiceClient();
-  const { data, error } = await supabase
-    .from("feature_policies")
-    .select(
-      "id, api_key_id, feature_tag, monthly_budget_usd, max_completion_tokens, compress_prompts, fallback_model, rate_limit_per_minute"
-    )
-    .eq("api_key_id", apiKeyId)
-    .eq("feature_tag", featureTag)
-    .maybeSingle();
-
-  if (error) {
-    console.error("[governance] policy lookup failed:", error.message);
+  let policy: FeaturePolicy | null = null;
+  try {
+    policy = storeGetFeaturePolicy(apiKeyId, featureTag);
+  } catch (err) {
+    console.error("[governance] policy lookup failed:", err);
     return null;
   }
 
-  const policy = (data as FeaturePolicy | null) ?? null;
   policyCache.set(key, { policy, at: Date.now() });
   return policy;
 }
