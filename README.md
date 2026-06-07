@@ -107,6 +107,43 @@ available, it runs a deterministic, rule-based compression (collapse blank
 lines, strip XML/HTML comments, trim "You are an AI assistant…" boilerplate and
 filler words) and returns the original vs. compressed token counts.
 
+## Editor & browser integrations
+
+PromptLens surfaces its data where you actually work — not just the dashboard.
+
+### Browser extension (ChatGPT & Claude)
+
+`packages/browser-extension` is a Chrome MV3 overlay for **chatgpt.com** and
+**claude.ai**. Since web chats don't route through the proxy, it works two ways:
+
+- **Local estimate (always on)** — a floating widget shows live token counts for
+  the conversation and your draft, an estimated input cost, and rule-based
+  prompt-optimization tips as you type.
+- **Proxy data (when reachable)** — if the proxy is running, the widget and popup
+  also show your real logged spend and your top optimization suggestion.
+
+Load it via `chrome://extensions` → **Developer mode** → **Load unpacked** →
+select `packages/browser-extension`. No build step. See its
+[README](packages/browser-extension/README.md).
+
+### VSCode extension (+ Claude Code)
+
+`packages/vscode-extension` adds a **PromptLens** panel to the Activity Bar
+showing spend and optimization suggestions from the proxy, plus a command to
+**route Claude Code through PromptLens**:
+
+```bash
+PROMPTLENS_ALLOW_ANON=true npm run dev:proxy   # let key-less local tools log
+```
+
+Then run **PromptLens: Route Claude Code through proxy** — it sets
+`ANTHROPIC_BASE_URL=http://localhost:3001/anthropic` for new terminals, so
+`claude` traffic is captured. Open the folder in VSCode and press **F5** to try
+it. See its [README](packages/vscode-extension/README.md).
+
+> `PROMPTLENS_ALLOW_ANON=true` attributes traffic that arrives without an
+> `x-promptlens-key` to your default key. Intended for local single-tenant use.
+
 ## vs Helicone
 
 Helicone shows you that you're spending money. PromptLens tells you **which

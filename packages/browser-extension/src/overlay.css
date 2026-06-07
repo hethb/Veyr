@@ -1,0 +1,115 @@
+#promptlens-panel {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483647;
+  width: 280px;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #e5e5e5;
+  background: rgba(10, 10, 12, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+
+#promptlens-panel .pl-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+#promptlens-panel .pl-logo {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #4fabff;
+  border: 1px solid #076eff;
+  border-radius: 4px;
+}
+#promptlens-panel .pl-title {
+  font-size: 13px;
+  font-weight: 600;
+  flex: 1;
+}
+#promptlens-panel .pl-min {
+  all: unset;
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 4px;
+}
+#promptlens-panel .pl-min:hover { color: #fff; }
+
+#promptlens-panel .pl-body { padding: 10px 12px 12px; }
+#promptlens-panel .pl-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  padding: 3px 0;
+  color: #9ca3af;
+}
+#promptlens-panel .pl-row b { color: #f3f4f6; font-weight: 600; }
+#promptlens-panel .pl-total {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+#promptlens-panel .pl-total b { color: #34d399; }
+
+#promptlens-panel .pl-tips { margin-top: 8px; }
+#promptlens-panel .pl-tip {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #d1d5db;
+  padding: 2px 0;
+}
+#promptlens-panel .pl-tip.pl-ok { color: #6b7280; }
+
+#promptlens-panel .pl-proxy {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+#promptlens-panel .pl-proxy-head {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4fabff;
+  margin-bottom: 4px;
+}
+#promptlens-panel .pl-muted { color: #6b7280; font-size: 11.5px; }
+#promptlens-panel .pl-sugg {
+  margin-top: 6px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: #e5e7eb;
+}
+#promptlens-panel .pl-save { color: #34d399; }
+
+#promptlens-bubble {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483647;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #076eff;
+  background: rgba(10, 10, 12, 0.95);
+  color: #4fabff;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}

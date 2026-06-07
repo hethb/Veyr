@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        margin: 0;
+        width: 280px;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        background: #0a0a0c;
+        color: #e5e5e5;
+      }
+      .head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .logo {
+        display: grid;
+        place-items: center;
+        width: 22px;
+        height: 22px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #4fabff;
+        border: 1px solid #076eff;
+        border-radius: 4px;
+      }
+      .head b { font-size: 14px; }
+      .body { padding: 12px; }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        padding: 4px 0;
+        color: #9ca3af;
+      }
+      .row b { color: #f3f4f6; }
+      .muted { color: #6b7280; font-size: 12px; line-height: 1.5; }
+      label { font-size: 11px; color: #6b7280; display: block; margin: 10px 0 4px; }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        background: #111;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #e5e5e5;
+        border-radius: 6px;
+        padding: 6px 8px;
+        font-size: 12px;
+      }
+      a { color: #4fabff; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="head">
+      <span class="logo">PL</span>
+      <b>PromptLens</b>
+    </div>
+    <div class="body">
+      <div id="status" class="muted">Connecting to proxy…</div>
+      <div id="stats" style="display: none">
+        <div class="row"><span>Today</span><b id="today">–</b></div>
+        <div class="row"><span>This week</span><b id="week">–</b></div>
+        <div class="row"><span>This month</span><b id="month">–</b></div>
+      </div>
+      <label for="proxy">Proxy URL</label>
+      <input id="proxy" type="text" placeholder="http://localhost:3001" />
+      <p style="margin-top: 12px">
+        <a href="http://localhost:5173/dashboard" target="_blank">Open dashboard →</a>
+      </p>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>

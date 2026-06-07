@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "PromptLens",
+  "version": "0.1.0",
+  "description": "Live token/cost estimates and prompt-optimization tips on ChatGPT and Claude, plus your PromptLens proxy data.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "http://localhost:3001/*",
+    "http://127.0.0.1:3001/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "PromptLens",
+    "default_popup": "src/popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://claude.ai/*"
+      ],
+      "js": ["src/content.js"],
+      "css": ["src/overlay.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "name": "promptlens-vscode",
+  "displayName": "PromptLens",
+  "description": "LLM cost attribution and optimization suggestions in your editor, plus one-click routing of Claude Code through the PromptLens proxy.",
+  "version": "0.1.0",
+  "private": true,
+  "publisher": "promptlens",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "main": "./src/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "promptlens",
+          "title": "PromptLens",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "promptlens": [
+        {
+          "id": "promptlens.panel",
+          "name": "Cost & Suggestions",
+          "type": "webview"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "promptlens.refresh",
+        "title": "PromptLens: Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "promptlens.routeClaudeCode",
+        "title": "PromptLens: Route Claude Code through proxy"
+      },
+      {
+        "command": "promptlens.unrouteClaudeCode",
+        "title": "PromptLens: Stop routing Claude Code through proxy"
+      },
+      {
+        "command": "promptlens.openDashboard",
+        "title": "PromptLens: Open dashboard"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "promptlens.refresh",
+          "when": "view == promptlens.panel",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "PromptLens",
+      "properties": {
+        "promptlens.proxyUrl": {
+          "type": "string",
+          "default": "http://localhost:3001",
+          "description": "Base URL of your PromptLens proxy."
+        },
+        "promptlens.dashboardUrl": {
+          "type": "string",
+          "default": "http://localhost:5173/dashboard",
+          "description": "URL of the PromptLens dashboard."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "echo 'No build step — open this folder in VSCode and press F5, or package with vsce.'"
+  }
+}

@@ -74,6 +74,18 @@ export function findApiKeysByPrefix(
     .all(prefix) as { id: string; key_hash: string }[];
 }
 
+/**
+ * The oldest API key id, used as the implicit owner for anonymous local
+ * traffic (e.g. Claude Code) when `PROMPTLENS_ALLOW_ANON=true`. Returns null
+ * if no keys exist yet.
+ */
+export function getDefaultApiKeyId(): string | null {
+  const row = getDb()
+    .prepare("SELECT id FROM api_keys ORDER BY created_at ASC LIMIT 1")
+    .get() as { id: string } | undefined;
+  return row?.id ?? null;
+}
+
 export function touchKeyLastUsed(id: string): void {
   getDb()
     .prepare("UPDATE api_keys SET last_used_at = ? WHERE id = ?")

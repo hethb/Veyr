@@ -1,0 +1,9 @@
+{
+  "name": "@promptlens/browser-extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PromptLens overlay for ChatGPT and Claude (Chrome MV3, zero-build).",
+  "scripts": {
+    "build": "echo 'No build step — load packages/browser-extension as an unpacked extension.'"
+  }
+}

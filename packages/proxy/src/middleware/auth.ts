@@ -1,6 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import { findApiKeysByPrefix, touchKeyLastUsed } from "../storage/store.js";
+import {
+  findApiKeysByPrefix,
+  getDefaultApiKeyId,
+  touchKeyLastUsed,
+} from "../storage/store.js";
 import { cacheVerifiedKey, getCachedKey, keyPrefix } from "../utils/keys.js";
 
 declare module "express-serve-static-core" {
@@ -28,6 +32,17 @@ export async function apiKeyAuth(
   const raw = typeof headerVal === "string" ? headerVal.trim() : "";
 
   if (!raw) {
+    // Local single-tenant convenience: tools like Claude Code can't send a
+    // PromptLens key. When PROMPTLENS_ALLOW_ANON=true we attribute their
+    // traffic to the default (oldest) key so it still gets logged.
+    if (process.env.PROMPTLENS_ALLOW_ANON === "true") {
+      const fallbackId = getDefaultApiKeyId();
+      if (fallbackId) {
+        req.apiKeyId = fallbackId;
+        next();
+        return;
+      }
+    }
     res.status(401).json({ error: "Missing x-promptlens-key header" });
     return;
   }
