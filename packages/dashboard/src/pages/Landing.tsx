@@ -6,6 +6,7 @@ import {
   Code2,
   Home,
   Layers,
+  Terminal,
   Zap,
 } from "lucide-react";
 import { CopyCodeBlock } from "../components/CopyCodeBlock";
@@ -17,6 +18,7 @@ import { NavBar } from "@/components/ui/tubelight-navbar";
 const LANDING_NAV_ITEMS = [
   { name: "Home", url: "#top", icon: Home },
   { name: "How it works", url: "#how", icon: Zap },
+  { name: "Setup", url: "#setup", icon: Terminal },
   { name: "Features", url: "#features", icon: Layers },
   { name: "Demo", url: "#demo", icon: BarChart3 },
   { name: "Built for", url: "#built-for", icon: CheckCircle2 },
@@ -30,6 +32,7 @@ export function Landing() {
       <Header />
       <HeroSection signedIn />
       <HowItWorks />
+      <GetRunning />
       <ProductLayers />
       <FeaturesSection />
       <DemoSection />
@@ -127,6 +130,98 @@ function HowItWorks() {
               <CopyCodeBlock code={s.code} />
             </div>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function GetRunning() {
+  const realDataSteps = [
+    {
+      n: "1",
+      title: "Get your API key",
+      body: "It's printed when you seed, or create one on the Keys page in the dashboard.",
+    },
+    {
+      n: "2",
+      title: "Point your client at the proxy",
+      body: "Target http://localhost:3001 with header x-promptlens-key: pl_live_… and an x-feature-tag.",
+    },
+    {
+      n: "3",
+      title: "Make real chat.completions calls",
+      body: "Each call is logged with its true model, token usage, cost, and latency.",
+    },
+    {
+      n: "4",
+      title: "Watch the dashboard",
+      body: "Charts and optimization suggestions update to reflect your genuine usage.",
+    },
+  ];
+
+  return (
+    <section id="setup" className="border-t border-white/10 bg-black">
+      <div className="mx-auto max-w-6xl px-6 py-24">
+        <SectionHeader
+          eyebrow="Setup"
+          title="Get the app running"
+          subtitle="Everything runs locally — no Supabase, no cloud account. Run these from the repo root, then open the dashboard."
+        />
+
+        <div className="mt-14 grid gap-8 lg:grid-cols-2">
+          <div>
+            <h3 className="text-lg font-semibold text-white">
+              Start from scratch
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-neutral-500">
+              Installs deps, seeds the local SQLite database with demo traffic,
+              and boots the proxy and dashboard.
+            </p>
+            <CopyCodeBlock
+              code={[
+                "npm install                 # first time only",
+                "npm run seed -- --reset     # populate local SQLite with demo traffic",
+                "npm run dev:proxy           # terminal 1 -> proxy on :3001",
+                "npm run dev:dashboard       # terminal 2 -> dashboard on :5173",
+              ].join("\n")}
+            />
+            <p className="mt-4 text-sm text-neutral-500">
+              Then open{" "}
+              <span className="font-mono text-[#4FABFF]">
+                http://localhost:5173/dashboard
+              </span>
+              .
+            </p>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold text-white">
+              Send real traffic
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-neutral-500">
+              The seed data is synthetic. To see genuine usage, route real LLM
+              calls through the proxy:
+            </p>
+            <ol className="mt-5 space-y-4">
+              {realDataSteps.map((s) => (
+                <li key={s.n} className="flex gap-4">
+                  <span className="grid h-7 w-7 shrink-0 place-items-center border border-[#076EFF]/40 bg-[#076EFF]/10 text-xs font-bold text-[#4FABFF]">
+                    {s.n}
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-white">{s.title}</p>
+                    <p className="mt-0.5 text-sm leading-relaxed text-neutral-500">
+                      {s.body}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <CopyCodeBlock
+              code={"node examples/customer-demo.mjs   # fires real calls through the proxy"}
+            />
+          </div>
         </div>
       </div>
     </section>
@@ -322,6 +417,9 @@ function Footer() {
         <div className="flex items-center gap-5">
           <a href="#how" className="transition-colors hover:text-white">
             How it works
+          </a>
+          <a href="#setup" className="transition-colors hover:text-white">
+            Setup
           </a>
           <a href="#features" className="transition-colors hover:text-white">
             Features
