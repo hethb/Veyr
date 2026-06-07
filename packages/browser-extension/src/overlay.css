@@ -64,7 +64,14 @@
 }
 #promptlens-panel .pl-total b { color: #34d399; }
 
-#promptlens-panel .pl-tips { margin-top: 8px; }
+#promptlens-panel .pl-tips-head {
+  margin-top: 10px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4fabff;
+}
+#promptlens-panel .pl-tips { margin-top: 4px; }
 #promptlens-panel .pl-tip {
   font-size: 11.5px;
   line-height: 1.45;

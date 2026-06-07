@@ -248,8 +248,10 @@ function GetRunning() {
               Best if you use a CLI agent like{" "}
               <span className="text-neutral-300">Claude Code</span> or call the
               OpenAI/Anthropic APIs from your own code. The desktop app
-              auto-starts the proxy and dashboard and shows today&apos;s spend in
-              your menu bar — just route your traffic through it.
+              auto-starts the proxy and dashboard, shows today&apos;s spend in
+              your menu bar, and includes a{" "}
+              <span className="text-neutral-300">Prompt Helper</span> that
+              tightens your prompts before you send them.
             </p>
             <StepList steps={desktopSteps} />
             <p className="mt-6 text-xs text-neutral-600">
@@ -284,7 +286,8 @@ function GetRunning() {
               Want PromptLens right inside the{" "}
               <span className="text-neutral-300">ChatGPT and Claude</span> web
               apps? The extension overlays live token &amp; cost estimates and
-              prompt-optimization tips as you type — no proxy required.
+              suggests better prompts as you type — before you hit send. No proxy
+              required.
             </p>
             <StepList steps={browserSteps} />
             <p className="mt-6 text-xs text-neutral-600">

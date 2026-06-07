@@ -51,27 +51,48 @@
   }
 
   // ---- tips engine ---------------------------------------------------------
+  // Pre-send prompt suggestions, based on community best practices for keeping
+  // token usage down (name exact files, scope small, don't scan whole repo,
+  // state acceptance criteria, use a cheaper model for simple tasks).
+  const FILE_RE = /\b[\w./-]+\.(ts|tsx|js|jsx|py|go|rs|java|rb|php|c|cpp|h|cs|css|scss|html|json|ya?ml|md|sql|sh)\b/i;
+  const CODING_RE = /\b(fix|add|implement|refactor|debug|update|change|create|build|write|optimi|remove|delete|rename|migrate|handle|wire)\b/i;
+  const VAGUE_SCOPE_RE = /\b(whole|entire|all (the )?|every)\s*(code|codebase|repo|repository|project|files?|thing)\b|\beverything\b|\bthe codebase\b/i;
+  const ACCEPTANCE_RE = /\b(should|so that|expected|must|done when|returns?|output|pass(es|ing)?|test)\b/i;
+
   function buildTips(draft) {
     const tips = [];
     const lower = draft.toLowerCase();
-    const draftTokens = estimateTokens(draft);
+    const tokens = estimateTokens(draft);
+    const words = draft.split(/\s+/).filter(Boolean).length;
+    const hasFile = FILE_RE.test(draft) || /(^|\s)[\w-]+\/[\w./-]+/.test(draft);
+    const isCoding = CODING_RE.test(lower);
+    const tasks = Math.max(
+      (draft.match(/^\s*([-*]|\d+\.)\s+/gm) || []).length,
+      (draft.match(/\b(and then|then|also|additionally)\b/gi) || []).length + 1
+    );
 
+    if (isCoding && !hasFile) {
+      tips.push("Name the exact file(s) — e.g. \"in src/auth.ts\" — so it doesn't hunt the repo.");
+    }
+    if (VAGUE_SCOPE_RE.test(lower)) {
+      tips.push("Don't ask it to scan the whole codebase — point to specific files/functions.");
+    }
+    if (tasks >= 3 || words > 180) {
+      tips.push("Split this into smaller tasks — big prompts balloon context and cost.");
+    }
+    if (isCoding && !ACCEPTANCE_RE.test(lower)) {
+      tips.push("State what \"done\" looks like (e.g. \"the login test passes\").");
+    }
+    if (isCoding && tasks <= 1 && words <= 60) {
+      tips.push("Simple change — a cheaper model (Sonnet/Haiku) is likely enough.");
+    }
     if (/\b(please|kindly|could you|would you|feel free to)\b/.test(lower)) {
-      tips.push("Drop politeness filler (\"please\", \"could you\") — models don't need it.");
+      tips.push("Drop politeness filler — it just adds tokens.");
     }
-    if (/\b(very|really|just|basically|actually|simply|in order to)\b/.test(lower)) {
-      tips.push("Remove hedging/filler words (\"very\", \"just\", \"in order to\").");
+    if (tokens > 1500) {
+      tips.push(`~${tokens} tokens — move standing rules to CLAUDE.md instead of re-sending.`);
     }
-    if (/you are an? (ai|helpful) (assistant|language model)/.test(lower)) {
-      tips.push("Trim the \"You are an AI assistant…\" boilerplate to one line.");
-    }
-    if (/\n\s*\n\s*\n/.test(draft)) {
-      tips.push("Collapse repeated blank lines to shrink the prompt.");
-    }
-    if (draftTokens > 1500) {
-      tips.push(`This prompt is ~${draftTokens} tokens — consider splitting or summarizing context.`);
-    }
-    return tips;
+    return tips.slice(0, 4);
   }
 
   // ---- proxy data ----------------------------------------------------------
@@ -104,6 +125,7 @@
       <div class="pl-row"><span>Conversation</span><b id="pl-conv">0</b></div>
       <div class="pl-row"><span>Your draft</span><b id="pl-draft">0</b></div>
       <div class="pl-row pl-total"><span>Est. input cost</span><b id="pl-cost">$0.00</b></div>
+      <div class="pl-tips-head">Improve your prompt</div>
       <div class="pl-tips" id="pl-tips"></div>
       <div class="pl-proxy" id="pl-proxy">
         <div class="pl-proxy-head">Your PromptLens proxy</div>

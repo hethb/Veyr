@@ -108,6 +108,21 @@ export interface CompressionPreview {
   compressed_prompt: string;
 }
 
+export type PromptSeverity = "high" | "medium" | "low";
+
+export interface PromptSuggestion {
+  id: string;
+  severity: PromptSeverity;
+  title: string;
+  detail: string;
+}
+
+export interface PromptLintResult {
+  token_estimate: number;
+  suggestions: PromptSuggestion[];
+  improved_template: string;
+}
+
 // ---------------------------------------------------------------------------
 // Endpoints
 // ---------------------------------------------------------------------------
@@ -167,4 +182,12 @@ export async function previewCompression(
     body: JSON.stringify({ prompt_hash: promptHash }),
   });
   return (await res.json()) as CompressionPreview;
+}
+
+export async function lintPrompt(prompt: string): Promise<PromptLintResult> {
+  const res = await authedFetch("/api/analysis/prompt-lint", {
+    method: "POST",
+    body: JSON.stringify({ prompt }),
+  });
+  return (await res.json()) as PromptLintResult;
 }

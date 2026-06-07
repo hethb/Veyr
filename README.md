@@ -97,6 +97,26 @@ A suggestion is only surfaced when the evidence clears its threshold — no fals
 positives. Suggestions are most meaningful after **at least 7 days of traffic**;
 with little data the panel simply says there's nothing to suggest yet.
 
+### Pre-send prompt suggestions
+
+PromptLens also helps *before* a call is made. A rule-based prompt linter
+(`POST /api/analysis/prompt-lint`, stateless) flags common token wasters and
+suggests tighter phrasing, based on community best practices for agents like
+Claude Code:
+
+- Name the exact file(s) instead of a vague target ("fix auth in `src/auth.ts`")
+- Don't ask the agent to scan the whole repo — point at specific functions
+- Split large multi-task prompts into smaller ones
+- Ask for a plan first on complex work
+- State what "done" looks like (acceptance criteria)
+- Use a cheaper model (Sonnet/Haiku) for simple tasks
+- Drop politeness filler; move standing rules to `CLAUDE.md`
+
+It's surfaced in two places: the **Prompt Helper** page in the dashboard/desktop
+app (paste a prompt, get suggestions + a tighter template before sending to your
+CLI agent), and live in the **browser extension** overlay on chatgpt.com /
+claude.ai as you type.
+
 ### Prompt compression previews
 
 For redundant-template suggestions, a **Preview compression** button calls

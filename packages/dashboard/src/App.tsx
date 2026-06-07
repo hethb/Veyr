@@ -4,6 +4,7 @@ import { Layout } from "./components/Layout";
 import { Dashboard } from "./pages/Dashboard";
 import { Keys } from "./pages/Keys";
 import { Landing } from "./pages/Landing";
+import { PromptHelper } from "./pages/PromptHelper";
 import { Settings } from "./pages/Settings";
 import { Welcome } from "./pages/Welcome";
 
@@ -20,6 +21,16 @@ export function App() {
             <AuthGate>
               <Layout>
                 <Dashboard />
+              </Layout>
+            </AuthGate>
+          }
+        />
+        <Route
+          path="/prompt"
+          element={
+            <AuthGate>
+              <Layout>
+                <PromptHelper />
               </Layout>
             </AuthGate>
           }

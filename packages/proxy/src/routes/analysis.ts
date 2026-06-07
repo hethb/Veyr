@@ -5,6 +5,7 @@ import {
 } from "../storage/store.js";
 import { inputCostPerToken, outputCostPerToken } from "../utils/costs.js";
 import { compressSystemPrompt } from "../optimization/compressPrompt.js";
+import { lintPrompt } from "../optimization/promptLint.js";
 
 export const analysisRouter: Router = Router();
 
@@ -342,6 +343,15 @@ analysisRouter.get("/suggestions", (req: Request, res: Response): void => {
     console.error("[analysis/suggestions] failed:", err);
     res.status(500).json({ error: "Failed to analyze usage" });
   }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/analysis/prompt-lint
+//   Pre-send prompt suggestions. Stateless; runs the rule engine in-process.
+// ---------------------------------------------------------------------------
+analysisRouter.post("/prompt-lint", (req: Request, res: Response): void => {
+  const prompt = typeof req.body?.prompt === "string" ? req.body.prompt : "";
+  res.json(lintPrompt(prompt));
 });
 
 // ---------------------------------------------------------------------------
