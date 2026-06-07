@@ -46,10 +46,10 @@ function bucketKey(ts: string, granularity: Granularity): string {
 // GET /api/stats/overview
 // ---------------------------------------------------------------------------
 
-statsRouter.get("/overview", (_req: Request, res: Response): void => {
+statsRouter.get("/overview", (req: Request, res: Response): void => {
   try {
     const sinceMonth = new Date(Date.now() - periodMs("30d")).toISOString();
-    const rows = getRequestsSince(sinceMonth);
+    const rows = getRequestsSince(sinceMonth, req.userId);
 
     const now = Date.now();
     const startToday = new Date();
@@ -104,7 +104,7 @@ statsRouter.get("/by-tag", (req: Request, res: Response): void => {
   const period = parsePeriod(req.query.period);
   try {
     const since = new Date(Date.now() - periodMs(period)).toISOString();
-    const rows = getRequestsSince(since);
+    const rows = getRequestsSince(since, req.userId);
 
     const grouped = new Map<string, { cost: number; requests: number }>();
     for (const r of rows) {
@@ -140,7 +140,7 @@ statsRouter.get("/timeseries", (req: Request, res: Response): void => {
 
   try {
     const since = new Date(Date.now() - periodMs(period)).toISOString();
-    const rows = getRequestsSince(since);
+    const rows = getRequestsSince(since, req.userId);
 
     const grouped = new Map<string, { cost: number; requests: number }>();
     for (const r of rows) {
@@ -195,7 +195,7 @@ statsRouter.get("/top-templates", (req: Request, res: Response): void => {
 
   try {
     const since = new Date(Date.now() - periodMs("30d")).toISOString();
-    const rows: RequestRow[] = getRequestsSince(since);
+    const rows: RequestRow[] = getRequestsSince(since, req.userId);
 
     interface Agg {
       total_cost: number;

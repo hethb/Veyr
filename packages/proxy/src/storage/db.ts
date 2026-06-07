@@ -62,6 +62,20 @@ CREATE TABLE IF NOT EXISTS feature_policies (
 CREATE INDEX IF NOT EXISTS feature_policies_apikey_idx ON feature_policies (api_key_id);
 `;
 
+/**
+ * Idempotent column migrations for existing databases. SQLite has no
+ * ADD COLUMN IF NOT EXISTS, so we inspect the table first.
+ */
+function runMigrations(db: Database.Database): void {
+  const cols = db.prepare("PRAGMA table_info(api_keys)").all() as {
+    name: string;
+  }[];
+  if (!cols.some((c) => c.name === "user_id")) {
+    db.exec("ALTER TABLE api_keys ADD COLUMN user_id TEXT");
+  }
+  db.exec("CREATE INDEX IF NOT EXISTS api_keys_user_idx ON api_keys (user_id)");
+}
+
 /** Returns a process-wide SQLite connection, creating the schema on first use. */
 export function getDb(): Database.Database {
   if (cached) return cached;
@@ -71,6 +85,7 @@ export function getDb(): Database.Database {
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
   db.exec(SCHEMA);
+  runMigrations(db);
   cached = db;
   return cached;
 }

@@ -1,12 +1,19 @@
+import { authEnabled, getAccessToken } from "./auth";
+
 const baseUrl = (import.meta.env.VITE_PROXY_URL as string | undefined) ?? "http://localhost:3001";
 
-// Local mode: the proxy is single-tenant and unauthenticated, so we just hit
-// the /api routes directly. (Swap in a real auth header here when adding
-// multi-user support.)
+// In local mode the proxy is single-tenant and unauthenticated. When auth is
+// enabled we attach the Supabase access token so the proxy can scope data to
+// the signed-in user.
 async function authedFetch(path: string, init?: RequestInit): Promise<Response> {
   const headers = new Headers(init?.headers);
   if (init?.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
+  }
+
+  if (authEnabled) {
+    const token = await getAccessToken();
+    if (token) headers.set("Authorization", `Bearer ${token}`);
   }
 
   const res = await fetch(`${baseUrl}${path}`, { ...init, headers });

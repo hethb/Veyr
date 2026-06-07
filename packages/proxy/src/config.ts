@@ -12,3 +12,22 @@ export function getOpenAIUpstreamUrl(): string {
 export function isCompressionEnabledByDefault(): boolean {
   return process.env.ENABLE_COMPRESSION === "true";
 }
+
+/**
+ * When true, dashboard API routes require a Supabase access token and data is
+ * scoped per-user (multi-tenant). When false (default), the proxy is the
+ * zero-config single-tenant local tool.
+ */
+export function isAuthEnabled(): boolean {
+  return process.env.AUTH_ENABLED === "true";
+}
+
+/** Supabase project URL (no trailing slash), used to verify access tokens. */
+export function getSupabaseUrl(): string {
+  return (process.env.SUPABASE_URL ?? "").trim().replace(/\/$/, "");
+}
+
+/** Supabase anon (public) key — sent as the `apikey` header when verifying. */
+export function getSupabaseAnonKey(): string {
+  return (process.env.SUPABASE_ANON_KEY ?? "").trim();
+}

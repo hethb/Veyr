@@ -12,7 +12,8 @@ import { statsRouter } from "./routes/stats.js";
 import { keysRouter } from "./routes/keys.js";
 import { policiesRouter } from "./routes/policies.js";
 import { analysisRouter } from "./routes/analysis.js";
-import { getOpenAIUpstreamUrl } from "./config.js";
+import { dashboardAuth } from "./middleware/dashboardAuth.js";
+import { getOpenAIUpstreamUrl, isAuthEnabled } from "./config.js";
 
 const app = express();
 
@@ -46,10 +47,12 @@ app.get("/health", (_req: Request, res: Response) => {
 
 app.use("/openai", openaiRouter);
 app.use("/anthropic", anthropicRouter);
-app.use("/api/stats", statsRouter);
-app.use("/api/keys", keysRouter);
-app.use("/api/policies", policiesRouter);
-app.use("/api/analysis", analysisRouter);
+// dashboardAuth is a pass-through unless AUTH_ENABLED=true, in which case it
+// requires a Supabase token and scopes each request to req.userId.
+app.use("/api/stats", dashboardAuth, statsRouter);
+app.use("/api/keys", dashboardAuth, keysRouter);
+app.use("/api/policies", dashboardAuth, policiesRouter);
+app.use("/api/analysis", dashboardAuth, analysisRouter);
 
 // 404
 app.use((_req: Request, res: Response) => {
@@ -76,5 +79,8 @@ app.listen(port, () => {
   console.log(`OpenAI-compatible upstream: ${getOpenAIUpstreamUrl()}`);
   console.log(
     `Control plane: compression default=${process.env.ENABLE_COMPRESSION === "true" ? "on" : "off"}`
+  );
+  console.log(
+    `Auth: ${isAuthEnabled() ? "enabled (multi-tenant, Supabase)" : "disabled (local single-tenant)"}`
   );
 });

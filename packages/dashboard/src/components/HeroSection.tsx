@@ -5,10 +5,11 @@ import { Link } from "react-router-dom";
 import { GoogleGeminiEffect } from "@/components/ui/google-gemini-effect";
 
 interface HeroSectionProps {
-  signedIn: boolean;
+  /** When true, the primary CTA points at the email sign-up form. */
+  authEnabled: boolean;
 }
 
-export function HeroSection({ signedIn }: HeroSectionProps) {
+export function HeroSection({ authEnabled }: HeroSectionProps) {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -40,13 +41,23 @@ export function HeroSection({ signedIn }: HeroSectionProps) {
         cta={
           <div className="z-30 mx-auto mt-8 flex flex-col items-center gap-3 md:mt-24">
             <div className="flex flex-wrap items-center justify-center gap-3">
-              <Link
-                to={signedIn ? "/dashboard" : "/login"}
-                className="inline-flex items-center gap-2 border border-white bg-white px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-neutral-200"
-              >
-                {signedIn ? "Open dashboard" : "Get started"}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+              {authEnabled ? (
+                <a
+                  href="#get-started"
+                  className="inline-flex items-center gap-2 border border-white bg-white px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-neutral-200"
+                >
+                  Get started
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+              ) : (
+                <Link
+                  to="/dashboard"
+                  className="inline-flex items-center gap-2 border border-white bg-white px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-neutral-200"
+                >
+                  Open dashboard
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              )}
               <a
                 href="#demo"
                 className="inline-flex items-center gap-2 border border-white/20 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:border-[#4FABFF]/50 hover:bg-[#076EFF]/10"

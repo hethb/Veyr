@@ -107,6 +107,52 @@ available, it runs a deterministic, rule-based compression (collapse blank
 lines, strip XML/HTML comments, trim "You are an AI assistant…" boilerplate and
 filler words) and returns the original vs. compressed token counts.
 
+## Authentication (optional)
+
+PromptLens runs **no-login, single-tenant** by default. For a hosted,
+multi-tenant deployment you can turn on **passwordless magic-link auth**
+(Supabase) — fully gated behind a flag, so local dev is unaffected.
+
+### The onboarding flow
+
+1. A visitor enters their email on the landing page and hits **Get started**
+   (one field, one button — no password, no credit card).
+2. Supabase emails them a magic link.
+3. Clicking it lands them on `/welcome`, which **auto-generates their first API
+   key** and shows it with a copy button and a 2-line integration snippet.
+4. They paste the key into their code. Their dashboard populates on the first
+   API call.
+
+### Enabling it
+
+Set these on the **proxy** (so `/api/*` routes verify the Supabase token and
+scope all data per user):
+
+```bash
+AUTH_ENABLED=true
+SUPABASE_URL=https://<project>.supabase.co
+SUPABASE_ANON_KEY=<anon key>
+```
+
+…and on the **dashboard** (Vite):
+
+```bash
+VITE_AUTH_ENABLED=true
+VITE_SUPABASE_URL=https://<project>.supabase.co
+VITE_SUPABASE_ANON_KEY=<anon key>
+```
+
+Then, in the Supabase dashboard → **Authentication → URL Configuration**, add
+your app's `/welcome` page as a redirect URL (e.g.
+`http://localhost:5173/welcome` for local testing, plus your production URL).
+
+When the flags are off, the dashboard has no login and the proxy serves all data
+as a single tenant — the original zero-config experience.
+
+> Multi-tenancy: with auth on, each user owns their API keys and only sees their
+> own request logs and suggestions. API keys created before auth was enabled
+> have no owner and are treated as shared/legacy.
+
 ## Editor & browser integrations
 
 PromptLens surfaces its data where you actually work — not just the dashboard.

@@ -1,38 +1,47 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { AuthGate } from "./components/AuthGate";
 import { Layout } from "./components/Layout";
 import { Dashboard } from "./pages/Dashboard";
 import { Keys } from "./pages/Keys";
 import { Landing } from "./pages/Landing";
 import { Settings } from "./pages/Settings";
+import { Welcome } from "./pages/Welcome";
 
 export function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/welcome" element={<Welcome />} />
 
         <Route
           path="/dashboard"
           element={
-            <Layout>
-              <Dashboard />
-            </Layout>
+            <AuthGate>
+              <Layout>
+                <Dashboard />
+              </Layout>
+            </AuthGate>
           }
         />
         <Route
           path="/keys"
           element={
-            <Layout>
-              <Keys />
-            </Layout>
+            <AuthGate>
+              <Layout>
+                <Keys />
+              </Layout>
+            </AuthGate>
           }
         />
         <Route
           path="/settings"
           element={
-            <Layout>
-              <Settings />
-            </Layout>
+            <AuthGate>
+              <Layout>
+                <Settings />
+              </Layout>
+            </AuthGate>
           }
         />
 

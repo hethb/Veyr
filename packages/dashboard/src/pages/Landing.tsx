@@ -13,6 +13,8 @@ import { CopyCodeBlock } from "../components/CopyCodeBlock";
 import { DemoDashboard } from "../components/DemoDashboard";
 import { FeaturesSection } from "../components/FeaturesSection";
 import { HeroSection } from "../components/HeroSection";
+import { MagicLinkForm } from "../components/MagicLinkForm";
+import { authEnabled } from "../lib/auth";
 import { NavBar } from "@/components/ui/tubelight-navbar";
 
 const LANDING_NAV_ITEMS = [
@@ -30,7 +32,7 @@ export function Landing() {
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
-      <HeroSection signedIn />
+      <HeroSection authEnabled={authEnabled} />
       <HowItWorks />
       <GetRunning />
       <ProductLayers />
@@ -59,12 +61,21 @@ function Header() {
         </div>
 
         <div className="pointer-events-auto absolute right-6 top-6 flex items-center gap-2">
-          <Link
-            to="/dashboard"
-            className="border border-white bg-white px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
-          >
-            Open dashboard
-          </Link>
+          {authEnabled ? (
+            <a
+              href="#get-started"
+              className="border border-white bg-white px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
+            >
+              Get started
+            </a>
+          ) : (
+            <Link
+              to="/dashboard"
+              className="border border-white bg-white px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
+            >
+              Open dashboard
+            </Link>
+          )}
         </div>
       </div>
 
@@ -74,14 +85,24 @@ function Header() {
 }
 
 function HowItWorks() {
+  const firstStep = authEnabled
+    ? {
+        icon: Code2,
+        accent: ACCENTS[0],
+        title: "Sign up with your email",
+        body: "Enter your email, click the magic link — no password, no credit card. Your first API key is generated and shown instantly.",
+        code: "# magic link → API key in under 60 seconds",
+      }
+    : {
+        icon: Code2,
+        accent: ACCENTS[0],
+        title: "Get your API key",
+        body: "Run it locally with no account, or deploy with email sign-in. Create a key and you're set.",
+        code: "export PROMPTLENS_KEY=pl_live_…",
+      };
+
   const steps = [
-    {
-      icon: Code2,
-      accent: ACCENTS[0],
-      title: "Get your API key",
-      body: "Sign in once. Create a key in the dashboard. That’s the only account setup.",
-      code: "export PROMPTLENS_KEY=pl_live_…",
-    },
+    firstStep,
     {
       icon: Zap,
       accent: ACCENTS[1],
@@ -370,32 +391,46 @@ function FinalCta() {
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FFB7C5]/40 to-transparent opacity-40" />
       </div>
 
-      <div className="relative mx-auto max-w-3xl px-6 py-24 text-center">
+      <div id="get-started" className="relative mx-auto max-w-3xl px-6 py-24 text-center">
         <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#4FABFF]">
           Get started
         </p>
         <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
           Stop guessing what you&apos;re spending on.
         </h2>
-        <p className="mx-auto mt-4 max-w-xl text-base text-neutral-500">
-          Two lines of code and a single seed command — full LLM cost
-          attribution for your team, running locally.
-        </p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center gap-2 border border-white bg-white px-5 py-3 text-sm font-semibold text-black transition-colors hover:bg-neutral-200"
-          >
-            Open your dashboard
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-          <a
-            href="#demo"
-            className="border border-white/20 px-5 py-3 text-sm font-semibold text-white transition-colors hover:border-[#4FABFF]/50 hover:bg-[#076EFF]/10"
-          >
-            Replay the demo
-          </a>
-        </div>
+        {authEnabled ? (
+          <>
+            <p className="mx-auto mt-4 max-w-xl text-base text-neutral-500">
+              Enter your email — we&apos;ll send a magic link. No password, no
+              credit card. You&apos;ll have an API key in under a minute.
+            </p>
+            <div className="mt-8">
+              <MagicLinkForm />
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="mx-auto mt-4 max-w-xl text-base text-neutral-500">
+              Two lines of code and a single seed command — full LLM cost
+              attribution for your team, running locally.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <Link
+                to="/dashboard"
+                className="inline-flex items-center gap-2 border border-white bg-white px-5 py-3 text-sm font-semibold text-black transition-colors hover:bg-neutral-200"
+              >
+                Open your dashboard
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <a
+                href="#demo"
+                className="border border-white/20 px-5 py-3 text-sm font-semibold text-white transition-colors hover:border-[#4FABFF]/50 hover:bg-[#076EFF]/10"
+              >
+                Replay the demo
+              </a>
+            </div>
+          </>
+        )}
       </div>
     </section>
   );

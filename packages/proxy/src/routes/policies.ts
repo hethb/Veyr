@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { invalidatePolicyCache } from "../governance/policies.js";
 import {
+  apiKeyBelongsToUser,
   deletePolicyById,
   getPolicyById,
   listPolicies,
@@ -9,6 +10,15 @@ import {
 
 export const policiesRouter: Router = Router();
 
+/** When auth is on, ensure the caller owns the api key they're operating on. */
+function denyIfNotOwned(req: Request, res: Response, apiKeyId: string): boolean {
+  if (req.userId && !apiKeyBelongsToUser(apiKeyId, req.userId)) {
+    res.status(403).json({ error: "Forbidden" });
+    return true;
+  }
+  return false;
+}
+
 // GET /api/policies?api_key_id=...
 policiesRouter.get("/", (req: Request, res: Response): void => {
   const apiKeyId = typeof req.query.api_key_id === "string" ? req.query.api_key_id : "";
@@ -16,6 +26,7 @@ policiesRouter.get("/", (req: Request, res: Response): void => {
     res.status(400).json({ error: "api_key_id query param required" });
     return;
   }
+  if (denyIfNotOwned(req, res, apiKeyId)) return;
 
   try {
     res.json(listPolicies(apiKeyId));
@@ -33,6 +44,7 @@ policiesRouter.put("/", (req: Request, res: Response): void => {
     res.status(400).json({ error: "api_key_id and feature_tag required" });
     return;
   }
+  if (denyIfNotOwned(req, res, apiKeyId)) return;
 
   try {
     const policy = upsertPolicy({
@@ -69,6 +81,7 @@ policiesRouter.delete("/:id", (req: Request, res: Response): void => {
       res.status(404).json({ error: "Not found" });
       return;
     }
+    if (denyIfNotOwned(req, res, existing.api_key_id)) return;
 
     deletePolicyById(req.params.id);
     invalidatePolicyCache(existing.api_key_id, existing.feature_tag);

@@ -13,7 +13,7 @@ keysRouter.post("/", (req: Request, res: Response): void => {
 
   try {
     const { raw, hash, prefix } = generateApiKey();
-    const row = createApiKey({ name, hash, prefix });
+    const row = createApiKey({ name, hash, prefix, userId: req.userId });
 
     res.status(201).json({
       ...row,
@@ -29,9 +29,9 @@ keysRouter.post("/", (req: Request, res: Response): void => {
 // ---------------------------------------------------------------------------
 // GET /api/keys  — list
 // ---------------------------------------------------------------------------
-keysRouter.get("/", (_req: Request, res: Response): void => {
+keysRouter.get("/", (req: Request, res: Response): void => {
   try {
-    res.json(listApiKeys());
+    res.json(listApiKeys(req.userId));
   } catch (err) {
     console.error("[keys] list error:", err);
     res.status(500).json({ error: "Failed to list keys" });
@@ -49,7 +49,7 @@ keysRouter.delete("/:id", (req: Request, res: Response): void => {
   }
 
   try {
-    const deleted = deleteApiKey(id);
+    const deleted = deleteApiKey(id, req.userId);
     if (!deleted) {
       res.status(404).json({ error: "Key not found" });
       return;

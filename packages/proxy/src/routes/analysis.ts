@@ -333,10 +333,10 @@ function buildSuggestions(rows: AnalysisRow[]): Suggestion[] {
 // ---------------------------------------------------------------------------
 // GET /api/analysis/suggestions
 // ---------------------------------------------------------------------------
-analysisRouter.get("/suggestions", (_req: Request, res: Response): void => {
+analysisRouter.get("/suggestions", (req: Request, res: Response): void => {
   try {
     const since = new Date(Date.now() - WINDOW_30D_MS).toISOString();
-    const rows = getRequestsForAnalysis(since);
+    const rows = getRequestsForAnalysis(since, req.userId);
     res.json(buildSuggestions(rows));
   } catch (err) {
     console.error("[analysis/suggestions] failed:", err);

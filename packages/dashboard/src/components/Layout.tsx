@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { LogOut } from "lucide-react";
 import { GradientDots } from "@/components/ui/gradient-dots";
+import { authEnabled, signOut } from "../lib/auth";
 
 interface LayoutProps {
   children: ReactNode;
@@ -13,6 +15,13 @@ const navItems = [
 ];
 
 export function Layout({ children }: LayoutProps) {
+  const navigate = useNavigate();
+
+  async function handleSignOut() {
+    await signOut();
+    navigate("/", { replace: true });
+  }
+
   return (
     <div className="relative min-h-screen bg-black text-white">
       <GradientDots
@@ -58,6 +67,19 @@ export function Layout({ children }: LayoutProps) {
               </NavLink>
             ))}
           </nav>
+
+          {authEnabled && (
+            <div className="px-3 pb-5">
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-400 transition-colors hover:bg-white/5 hover:text-white"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </button>
+            </div>
+          )}
         </aside>
 
         <main className="relative flex-1 overflow-auto">
