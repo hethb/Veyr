@@ -85,11 +85,10 @@ what you spent."
 ```
 promptlens/
 ├── packages/
-│   ├── proxy/          # Express proxy server (Node, TypeScript)
+│   ├── proxy/          # Express proxy server (Node, TypeScript) — local SQLite store
 │   ├── dashboard/      # React + Vite + Tailwind + Recharts dashboard
 │   └── sdk/            # npm-publishable SDK wrapper (`promptlens`)
-├── supabase/
-│   └── migrations/     # SQL migrations
+├── examples/           # runnable customer integration demo
 ├── package.json        # workspace root
 └── .env.example
 ```

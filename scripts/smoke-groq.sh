@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-# End-to-end smoke test: PromptLens proxy → Groq → Supabase logging
+# End-to-end smoke test: PromptLens proxy → Groq → local SQLite logging
 #
 # Prerequisites:
-#   1. cp .env.example .env && cp .env packages/proxy/.env
-#   2. Set OPENAI_UPSTREAM_URL to Groq (see .env.example)
-#   3. npm run dev:proxy (or deployed proxy URL)
-#   4. Create a PromptLens API key in the dashboard → PROMPTLENS_KEY
-#   5. Get a free Groq key at https://console.groq.com → GROQ_API_KEY
+#   1. Set OPENAI_UPSTREAM_URL to Groq (see .env.example) — optional
+#   2. npm run seed (creates a demo PROMPTLENS_KEY) and npm run dev:proxy
+#   3. Use the seeded key, or create one in the dashboard → PROMPTLENS_KEY
+#   4. Get a free Groq key at https://console.groq.com → GROQ_API_KEY
 #
 # Usage:
 #   export PROMPTLENS_KEY=pl_live_...
@@ -56,4 +55,4 @@ content=$(echo "$response" | node -e "
 
 echo "  Assistant: ${content}"
 echo ""
-echo "✓ Request succeeded. Check Supabase → requests table and /dashboard for tag \"${FEATURE_TAG}\"."
+echo "✓ Request succeeded. Open /dashboard (or GET /api/stats/by-tag) for tag \"${FEATURE_TAG}\"."

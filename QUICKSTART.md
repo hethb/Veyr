@@ -42,17 +42,17 @@ You run TokenGuard on yourself. You plug PromptLens into **your app** so finance
 3. **Set env:** `PROMPTLENS_KEY=pl_live_…` (only new variable)
 4. **Open dashboard** → see cost by feature, top prompts, tokens over time
 
-**You operate:** hosted proxy + Supabase + dashboard (Render + Vercel per README Deployment). Customers never touch Supabase.
+**You operate:** hosted proxy + dashboard (Render + Vercel per README Deployment). The proxy persists data to a local SQLite store — no external database to run.
 
 ---
 
 ## Path B — Self-host (enterprise / dev)
 
-For teams that want data in their own Supabase project:
+For teams that want to run the proxy on their own infrastructure:
 
-1. One-time: Supabase project + run `supabase/migrations/001_initial.sql` + create a dashboard user
-2. Copy `.env.example` → `.env` (see root README)
-3. `npm install && npm run dev:proxy` + `npm run dev:dashboard`
+1. `npm install && npm run seed` (creates a demo key + sample data in a local SQLite store)
+2. Copy `.env.example` → `.env` (see root README) — optional
+3. `npm run dev:proxy` + `npm run dev:dashboard`
 4. Same SDK, with:
 
    ```ts

@@ -1,7 +1,7 @@
 /**
  * Seeds the local SQLite store with a fixed demo API key plus realistic request
- * history, so the dashboard is fully populated on first visit (no Supabase, no
- * login required).
+ * history, so the dashboard is fully populated on first visit (no external
+ * database, no login required).
  *
  *   npm run seed            # refresh demo data (keeps any other keys)
  *   npm run seed -- --reset # wipe ALL tables first

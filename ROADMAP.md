@@ -55,7 +55,7 @@ your app  →  PromptLens proxy  →  OpenAI / Anthropic
 
 ## Hosted vs self-host
 
-- **Sell:** Hosted proxy + dashboard (`PROMPTLENS_KEY`, no Supabase for customers)
+- **Sell:** Hosted proxy + dashboard (`PROMPTLENS_KEY`, no database for customers to run)
 - **Enterprise:** Self-host this repo; same proxy, their data plane
 
 See [QUICKSTART.md](./QUICKSTART.md).
