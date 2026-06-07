@@ -4,8 +4,10 @@ import {
   BarChart3,
   CheckCircle2,
   Code2,
+  Globe,
   Home,
   Layers,
+  Monitor,
   Terminal,
   Zap,
 } from "lucide-react";
@@ -157,91 +159,138 @@ function HowItWorks() {
   );
 }
 
+interface SetupStep {
+  title: string;
+  code?: string;
+}
+
+function StepList({ steps }: { steps: SetupStep[] }) {
+  return (
+    <ol className="mt-6 space-y-5">
+      {steps.map((s, i) => (
+        <li key={i} className="flex gap-3">
+          <span className="grid h-6 w-6 shrink-0 place-items-center border border-[#076EFF]/40 bg-[#076EFF]/10 text-xs font-bold text-[#4FABFF]">
+            {i + 1}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-white">{s.title}</p>
+            {s.code && <CopyCodeBlock code={s.code} className="mt-3" />}
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 function GetRunning() {
-  const realDataSteps = [
+  const desktopSteps: SetupStep[] = [
     {
-      n: "1",
-      title: "Get your API key",
-      body: "It's printed when you seed, or create one on the Keys page in the dashboard.",
+      title: "Install and launch the desktop app",
+      code: "npm install\nnpm run desktop",
     },
     {
-      n: "2",
-      title: "Point your client at the proxy",
-      body: "Target http://localhost:3001 with header x-promptlens-key: pl_live_… and an x-feature-tag.",
+      title: "Optional — load demo data to explore the dashboard",
+      code: "npm run seed -- --reset",
     },
     {
-      n: "3",
-      title: "Make real chat.completions calls",
-      body: "Each call is logged with its true model, token usage, cost, and latency.",
+      title: "Route a CLI agent like Claude Code through PromptLens",
+      code:
+        "# enable local logging (in .env)\nPROMPTLENS_ALLOW_ANON=true\n\n" +
+        "# point Claude Code at the proxy, then run it\nexport ANTHROPIC_BASE_URL=http://localhost:3001/anthropic\nclaude",
     },
     {
-      n: "4",
-      title: "Watch the dashboard",
-      body: "Charts and optimization suggestions update to reflect your genuine usage.",
+      title: "…or wrap your own OpenAI / Anthropic code",
+      code:
+        "import { createOpenAIConfig } from 'promptlens'\n\n" +
+        "const openai = new OpenAI({\n  apiKey: process.env.OPENAI_API_KEY,\n  ...createOpenAIConfig({ apiKey: 'pl_live_…' })\n})",
     },
+  ];
+
+  const browserSteps: SetupStep[] = [
+    { title: "Open chrome://extensions and turn on Developer mode" },
+    { title: "Click “Load unpacked” and select packages/browser-extension" },
+    { title: "Open chatgpt.com or claude.ai — the widget appears bottom-right" },
   ];
 
   return (
     <section id="setup" className="border-t border-white/10 bg-black">
       <div className="mx-auto max-w-6xl px-6 py-24">
         <SectionHeader
-          eyebrow="Setup"
-          title="Get the app running"
-          subtitle="Everything runs locally — no Supabase, no cloud account. Run these from the repo root, then open the dashboard."
+          eyebrow="Get started"
+          title="Two ways to run PromptLens"
+          subtitle="Pick the surface that matches how you use LLMs. Both run on your machine — no cloud account required."
         />
 
-        <div className="mt-14 grid gap-8 lg:grid-cols-2">
-          <div>
-            <h3 className="text-lg font-semibold text-white">
-              Start from scratch
-            </h3>
-            <p className="mt-2 text-sm leading-relaxed text-neutral-500">
-              Installs deps, seeds the local SQLite database with demo traffic,
-              and boots the proxy and dashboard.
+        <div className="mt-14 grid gap-6 lg:grid-cols-2">
+          {/* Option 1 — Desktop app + proxy */}
+          <div className="flex flex-col border border-white/10 bg-black p-6">
+            <div className="flex items-center gap-3">
+              <div
+                className="grid h-10 w-10 place-items-center border"
+                style={{
+                  borderColor: `${ACCENTS[0]}40`,
+                  backgroundColor: `${ACCENTS[0]}10`,
+                  color: ACCENTS[0],
+                }}
+              >
+                <Monitor className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#4FABFF]">
+                  For CLI agents &amp; code
+                </p>
+                <h3 className="text-lg font-semibold text-white">
+                  Desktop app + proxy
+                </h3>
+              </div>
+            </div>
+            <p className="mt-4 text-sm leading-relaxed text-neutral-500">
+              Best if you use a CLI agent like{" "}
+              <span className="text-neutral-300">Claude Code</span> or call the
+              OpenAI/Anthropic APIs from your own code. The desktop app
+              auto-starts the proxy and dashboard and shows today&apos;s spend in
+              your menu bar — just route your traffic through it.
             </p>
-            <CopyCodeBlock
-              code={[
-                "npm install                 # first time only",
-                "npm run seed -- --reset     # populate local SQLite with demo traffic",
-                "npm run dev:proxy           # terminal 1 -> proxy on :3001",
-                "npm run dev:dashboard       # terminal 2 -> dashboard on :5173",
-              ].join("\n")}
-            />
-            <p className="mt-4 text-sm text-neutral-500">
-              Then open{" "}
-              <span className="font-mono text-[#4FABFF]">
-                http://localhost:5173/dashboard
-              </span>
-              .
+            <StepList steps={desktopSteps} />
+            <p className="mt-6 text-xs text-neutral-600">
+              Prefer your editor? A VSCode extension offers the same panel and
+              one-click Claude Code routing.
             </p>
           </div>
 
-          <div>
-            <h3 className="text-lg font-semibold text-white">
-              Send real traffic
-            </h3>
-            <p className="mt-2 text-sm leading-relaxed text-neutral-500">
-              The seed data is synthetic. To see genuine usage, route real LLM
-              calls through the proxy:
+          {/* Option 2 — Browser extension */}
+          <div className="flex flex-col border border-white/10 bg-black p-6">
+            <div className="flex items-center gap-3">
+              <div
+                className="grid h-10 w-10 place-items-center border"
+                style={{
+                  borderColor: `${ACCENTS[1]}40`,
+                  backgroundColor: `${ACCENTS[1]}10`,
+                  color: ACCENTS[1],
+                }}
+              >
+                <Globe className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#4FABFF]">
+                  For chatgpt.com &amp; claude.ai
+                </p>
+                <h3 className="text-lg font-semibold text-white">
+                  Browser extension
+                </h3>
+              </div>
+            </div>
+            <p className="mt-4 text-sm leading-relaxed text-neutral-500">
+              Want PromptLens right inside the{" "}
+              <span className="text-neutral-300">ChatGPT and Claude</span> web
+              apps? The extension overlays live token &amp; cost estimates and
+              prompt-optimization tips as you type — no proxy required.
             </p>
-            <ol className="mt-5 space-y-4">
-              {realDataSteps.map((s) => (
-                <li key={s.n} className="flex gap-4">
-                  <span className="grid h-7 w-7 shrink-0 place-items-center border border-[#076EFF]/40 bg-[#076EFF]/10 text-xs font-bold text-[#4FABFF]">
-                    {s.n}
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium text-white">{s.title}</p>
-                    <p className="mt-0.5 text-sm leading-relaxed text-neutral-500">
-                      {s.body}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-            <CopyCodeBlock
-              code={"node examples/customer-demo.mjs   # fires real calls through the proxy"}
-            />
+            <StepList steps={browserSteps} />
+            <p className="mt-6 text-xs text-neutral-600">
+              Running the desktop app too? The widget will also surface your real
+              logged spend and top suggestion.
+            </p>
           </div>
         </div>
       </div>

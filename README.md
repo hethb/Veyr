@@ -172,6 +172,18 @@ Load it via `chrome://extensions` → **Developer mode** → **Load unpacked** �
 select `packages/browser-extension`. No build step. See its
 [README](packages/browser-extension/README.md).
 
+### Desktop app
+
+`packages/desktop` is an Electron app for a zero-terminal local experience: it
+auto-starts the proxy, opens the dashboard in a native window, and shows today's
+spend in the menu-bar tray. From the repo root:
+
+```bash
+npm run desktop
+```
+
+See its [README](packages/desktop/README.md).
+
 ### VSCode extension (+ Claude Code)
 
 `packages/vscode-extension` adds a **PromptLens** panel to the Activity Bar

@@ -1,0 +1,15 @@
+{
+  "name": "@promptlens/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PromptLens desktop app (Electron): auto-starts the proxy and opens the dashboard with a menu-bar spend readout.",
+  "main": "main.js",
+  "scripts": {
+    "build:deps": "npm run build --workspace=@promptlens/proxy && VITE_PROXY_URL= npm run build --workspace=@promptlens/dashboard",
+    "start": "electron .",
+    "app": "npm run build:deps && electron ."
+  },
+  "devDependencies": {
+    "electron": "^33.0.0"
+  }
+}
