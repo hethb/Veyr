@@ -25,13 +25,118 @@ async function fetchJson(path) {
   return res.json();
 }
 
+// ---------------------------------------------------------------------------
+// Local usage log
+//
+// Persisted in chrome.storage.local so chat/token history survives page
+// refreshes, new tabs, and browser restarts (it's shared across all tabs).
+// Shape: { recent: Entry[], days: { "YYYY-MM-DD": { prompts, tokens } } }
+//   Entry = { ts, site, tokens, chars, preview }
+// ---------------------------------------------------------------------------
+
+const USAGE_KEY = "usageLog";
+const MAX_RECENT = 200;
+const MAX_DAYS = 90;
+
+function dayKey(ts) {
+  const d = new Date(ts);
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+async function loadUsage() {
+  try {
+    const rec = await chrome.storage.local.get(USAGE_KEY);
+    const u = rec?.[USAGE_KEY];
+    return u && typeof u === "object" ? u : { recent: [], days: {} };
+  } catch {
+    return { recent: [], days: {} };
+  }
+}
+
+async function saveUsage(u) {
+  try {
+    await chrome.storage.local.set({ [USAGE_KEY]: u });
+  } catch {
+    /* storage full / unavailable — ignore */
+  }
+}
+
+async function logEntry(entry) {
+  const ts = Date.now();
+  const u = await loadUsage();
+  const tokens = Math.max(0, Number(entry.tokens) || 0);
+  const row = {
+    ts,
+    site: String(entry.site || "").slice(0, 16),
+    tokens,
+    chars: Math.max(0, Number(entry.chars) || 0),
+    preview: String(entry.preview || "").slice(0, 140),
+  };
+  u.recent = [row, ...(u.recent || [])].slice(0, MAX_RECENT);
+
+  const key = dayKey(ts);
+  const day = u.days[key] || { prompts: 0, tokens: 0 };
+  day.prompts += 1;
+  day.tokens += tokens;
+  u.days[key] = day;
+
+  // Trim old days.
+  const keys = Object.keys(u.days).sort();
+  if (keys.length > MAX_DAYS) {
+    for (const k of keys.slice(0, keys.length - MAX_DAYS)) delete u.days[k];
+  }
+
+  await saveUsage(u);
+  return summarize(u);
+}
+
+function summarize(u) {
+  const now = Date.now();
+  const todayKey = dayKey(now);
+  const today = u.days[todayKey] || { prompts: 0, tokens: 0 };
+  let last7 = { prompts: 0, tokens: 0 };
+  for (let i = 0; i < 7; i++) {
+    const k = dayKey(now - i * 86400000);
+    const d = u.days[k];
+    if (d) {
+      last7.prompts += d.prompts;
+      last7.tokens += d.tokens;
+    }
+  }
+  return { today, last7, recent: (u.recent || []).slice(0, 25) };
+}
+
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  if (!msg || msg.type !== "promptlens-fetch") return false;
+  if (!msg) return false;
 
-  fetchJson(msg.path)
-    .then((data) => sendResponse({ ok: true, data }))
-    .catch((err) => sendResponse({ ok: false, error: String(err && err.message) }));
+  if (msg.type === "promptlens-fetch") {
+    fetchJson(msg.path)
+      .then((data) => sendResponse({ ok: true, data }))
+      .catch((err) => sendResponse({ ok: false, error: String(err && err.message) }));
+    return true;
+  }
 
-  // Keep the message channel open for the async response.
-  return true;
+  if (msg.type === "promptlens-log") {
+    logEntry(msg.entry || {})
+      .then((summary) => sendResponse({ ok: true, data: summary }))
+      .catch(() => sendResponse({ ok: false }));
+    return true;
+  }
+
+  if (msg.type === "promptlens-usage") {
+    loadUsage()
+      .then((u) => sendResponse({ ok: true, data: summarize(u) }))
+      .catch(() => sendResponse({ ok: false }));
+    return true;
+  }
+
+  if (msg.type === "promptlens-clear") {
+    saveUsage({ recent: [], days: {} })
+      .then(() => sendResponse({ ok: true }))
+      .catch(() => sendResponse({ ok: false }));
+    return true;
+  }
+
+  return false;
 });

@@ -28,11 +28,23 @@ const PATH_RE = /(^|\s)[\w-]+\/[\w./-]+/; // a/b style path
 const CODING_INTENT_RE =
   /\b(fix|add|implement|refactor|debug|update|change|create|build|write|optimi[sz]e?|remove|delete|rename|migrate|wire|integrate|handle)\b/i;
 const VAGUE_SCOPE_RE =
-  /\b(whole|entire|all (the )?|every)\s*(code|codebase|repo|repository|project|files?|thing|everything)\b|\beverything\b|\bthe codebase\b/i;
-const POLITENESS_RE = /\b(please|kindly|could you|would you|feel free to|if you could)\b/i;
+  /\b(whole|entire|all (the )?|every|across the)\s*(code|codebase|repo|repository|project|files?|thing|everything|app|application)\b|\beverything\b|\bthe codebase\b|\bread (all|the) files?\b|\blook through\b/i;
+// Filler that wastes tokens on every message (input *and* output).
+const POLITENESS_RE =
+  /\b(please|kindly|could you|would you|feel free to|if you could|i was wondering|i want you to|i would like|can you|thanks in advance|hello|hi there|i need you to)\b/i;
+const HEDGE_RE = /\b(very|really|just|basically|actually|simply|in order to|kind of|sort of|maybe|perhaps)\b/i;
 const ACCEPTANCE_RE =
   /\b(should|so that|expected|must|done when|acceptance|returns?|output|result in|pass(es|ing)?|test)\b/i;
 const PLAN_RE = /\b(plan|step[- ]by[- ]step|first .* then|outline|design)\b/i;
+// Asks that tend to produce long output unless constrained.
+const GENERATION_RE =
+  /\b(write|generate|explain|describe|summari[sz]e|list|create|draft|give me|tell me|compare|analy[sz]e|review|outline|document)\b/i;
+// Length/format constraints that cap output size.
+const CONSTRAINT_RE =
+  /(\b\d+\s*(word|words|bullet|bullets|line|lines|sentence|sentences|paragraph|paragraphs|item|items|step|steps)\b|\bconcise\b|\bbrief(ly)?\b|\bshort\b|\btl;?dr\b|\bone[- ]?liner\b|\bin \d+\b|\bbullet points?\b|\bas a table\b|\bno (preamble|explanation|prose)\b)/i;
+// Vague verbs that send the agent exploring before it knows what to do.
+const VAGUE_START_RE =
+  /^\s*(fix|improve|optimi[sz]e|clean ?up|refactor|enhance|polish|tidy|make .* better|debug|sort out)\b/i;
 
 function estimateTokens(text: string): number {
   return text ? Math.ceil(text.length / 4) : 0;
@@ -70,91 +82,115 @@ export function lintPrompt(input: string): PromptLintResult {
   const tasks = countTasks(text);
   const words = text.split(/\s+/).filter(Boolean).length;
 
-  // 1 — Name the exact files (be specific).
+  // 1 — Vague opener: the agent has to guess, then explores (= burned tokens).
+  if (VAGUE_START_RE.test(text) && (!hasFile || words <= 12)) {
+    suggestions.push({
+      id: "be-specific",
+      severity: "high",
+      title: "Too vague — say exactly what's wrong and where",
+      detail:
+        'Openers like "fix the bug" or "clean this up" force the agent to read around the repo to figure out what you mean. Name the symptom, the file, and the function: "the login form in src/auth.ts throws on empty email — handle it".',
+    });
+  }
+
+  // 2 — Name the exact files (be specific).
   if (isCoding && !hasFile) {
     suggestions.push({
       id: "name-files",
       severity: "high",
-      title: "Name the exact file(s) to change",
+      title: "Name the exact file(s)",
       detail:
-        'Point the agent straight at the code, e.g. "fix the auth middleware in src/auth.ts" instead of "fix the auth issue". This avoids paying tokens for it to hunt around the repo.',
+        'Don\'t make it search. "fix the auth middleware in src/auth.ts" beats "fix the auth issue" — targeted prompts skip the expensive discovery phase.',
     });
   }
 
-  // 2 — Don't make it read the whole repo.
+  // 3 — Don't make it read the whole repo.
   if (VAGUE_SCOPE_RE.test(lower)) {
     suggestions.push({
       id: "avoid-whole-repo",
       severity: "high",
-      title: "Don't ask it to scan the whole codebase",
+      title: "Never say \"the whole codebase\"",
       detail:
-        "Reading entire files/repos is the biggest token sink. Reference the specific functions or files it needs (or paste them), so it gets just the relevant context.",
+        "Letting it read entire files/repos is the #1 token sink. Paste only the relevant functions, or list the 2-3 files that matter.",
     });
   }
 
-  // 3 — Scope the task small.
-  if (tasks >= 3 || words > 180) {
+  // 4 — Cap the output length/format.
+  if (GENERATION_RE.test(lower) && !CONSTRAINT_RE.test(lower) && words >= 5) {
+    suggestions.push({
+      id: "cap-output",
+      severity: "high",
+      title: "Cap the output length",
+      detail:
+        'Without a limit the model writes a bloated essay — and you pay for every output token. Add "in 3 bullets", "under 150 words", or "code only, no explanation".',
+    });
+  }
+
+  // 5 — State the expected outcome.
+  if (isCoding && !ACCEPTANCE_RE.test(lower)) {
+    suggestions.push({
+      id: "acceptance",
+      severity: "medium",
+      title: "Say what 'done' looks like",
+      detail:
+        'Add the target, e.g. "the login test should pass". Clear acceptance criteria kill the back-and-forth where tokens pile up.',
+    });
+  }
+
+  // 6 — Scope the task small.
+  if (tasks >= 2 || words > 120) {
     suggestions.push({
       id: "scope-small",
       severity: "medium",
       title: "Split this into smaller tasks",
       detail:
-        "Big multi-part prompts balloon context and cost. Several smaller, focused tasks (or separate sessions) consistently use fewer tokens than one large one.",
+        "Big multi-part prompts balloon context. Several small, focused asks (or fresh sessions) consistently cost less than one large one — and go off the rails less.",
     });
   }
 
-  // 4 — Ask for a plan first on complex work.
-  if ((tasks >= 3 || words > 180) && !PLAN_RE.test(lower)) {
+  // 7 — Ask for a plan first on complex work.
+  if ((tasks >= 3 || words > 160) && !PLAN_RE.test(lower)) {
     suggestions.push({
       id: "plan-first",
-      severity: "low",
-      title: "Ask for a plan before code",
-      detail:
-        "For anything non-trivial, have the agent produce a short plan (or use plan mode) and approve it before it writes code — it scopes the work and avoids wasted exploration.",
-    });
-  }
-
-  // 5 — State the expected outcome.
-  if (!ACCEPTANCE_RE.test(lower)) {
-    suggestions.push({
-      id: "acceptance",
       severity: "medium",
-      title: "State what 'done' looks like",
+      title: "Get a plan before any code",
       detail:
-        "Add the expected result or acceptance criteria (e.g. \"the login test should pass\"). Clear targets cut back-and-forth, which is where tokens add up.",
+        "For non-trivial work, make it output a short plan (or use plan mode) and approve it first. This scopes the change and prevents wasted exploration.",
     });
   }
 
-  // 6 — Use a cheaper model for simple work.
-  if (isCoding && tasks <= 1 && words <= 60) {
+  // 8 — Trim politeness/hedging filler.
+  if (POLITENESS_RE.test(lower) || HEDGE_RE.test(lower)) {
+    suggestions.push({
+      id: "be-direct",
+      severity: "medium",
+      title: "Cut the filler — be direct",
+      detail:
+        'Drop "please / could you / I was wondering" and hedges like "just / really / basically". They add input tokens and nudge the model toward chatty output. State the goal immediately.',
+    });
+  }
+
+  // 9 — Use a cheaper model for simple work.
+  if (isCoding && tasks <= 1 && words <= 80) {
     suggestions.push({
       id: "cheaper-model",
       severity: "low",
-      title: "A smaller model can likely handle this",
+      title: "Use a cheaper model for this",
       detail:
-        "This looks like a focused change — Sonnet/Haiku (or GPT-4o-mini) is usually plenty and far cheaper than a frontier model for simple tasks.",
+        "This is a focused change — Sonnet/Haiku (or GPT-4o-mini) handles it for a fraction of the cost. Save the frontier model for genuinely hard problems.",
     });
   }
 
-  // 7 — Trim politeness/filler.
-  if (POLITENESS_RE.test(lower)) {
-    suggestions.push({
-      id: "trim-filler",
-      severity: "low",
-      title: "Drop politeness filler",
-      detail:
-        'Words like "please" and "could you" don\'t help the model and add tokens on every message. Be direct.',
-    });
-  }
-
-  // 8 — Standing instructions belong in CLAUDE.md.
-  if (tokens > 1500) {
+  // 10 — Standing instructions belong in CLAUDE.md / custom instructions.
+  if (tokens > 800) {
     suggestions.push({
       id: "use-claude-md",
       severity: "medium",
-      title: "Move standing rules to CLAUDE.md",
+      title: "Move standing rules out of the prompt",
       detail:
-        "If this prompt restates project conventions/architecture, put that in CLAUDE.md once instead of re-sending it every message.",
+        "Long prompt (~" +
+        tokens +
+        " tokens). Anything you repeat every time — conventions, stack, formatting — belongs in CLAUDE.md or Custom Instructions, not re-sent on each message.",
     });
   }
 

@@ -104,13 +104,16 @@ PromptLens also helps *before* a call is made. A rule-based prompt linter
 suggests tighter phrasing, based on community best practices for agents like
 Claude Code:
 
+- Drop vague openers ("fix the bug") — name the symptom, file, and function
 - Name the exact file(s) instead of a vague target ("fix auth in `src/auth.ts`")
 - Don't ask the agent to scan the whole repo — point at specific functions
-- Split large multi-task prompts into smaller ones
-- Ask for a plan first on complex work
+- Cap the output length/format ("in 3 bullets", "under 150 words", "code only")
 - State what "done" looks like (acceptance criteria)
+- Split large multi-task prompts into smaller ones; get a plan first
+- Cut politeness/hedging filler — be direct
+- Start a fresh chat for unrelated tasks (the whole history re-sends each turn)
 - Use a cheaper model (Sonnet/Haiku) for simple tasks
-- Drop politeness filler; move standing rules to `CLAUDE.md`
+- Move repeated rules to `CLAUDE.md` / Custom Instructions
 
 It's surfaced in two places: the **Prompt Helper** page in the dashboard/desktop
 app (paste a prompt, get suggestions + a tighter template before sending to your

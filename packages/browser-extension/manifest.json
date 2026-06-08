@@ -24,7 +24,6 @@
         "https://claude.ai/*"
       ],
       "js": ["src/content.js"],
-      "css": ["src/overlay.css"],
       "run_at": "document_idle"
     }
   ]
