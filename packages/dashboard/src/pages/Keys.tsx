@@ -82,7 +82,7 @@ export function Keys() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#4FABFF]">
+          <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#7fa8ee]">
             Credentials
           </p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white">
@@ -98,7 +98,7 @@ export function Keys() {
             setShowCreate(true);
             setCreateError(null);
           }}
-          className="border border-[#076EFF] bg-[#076EFF] px-3 py-2 text-sm font-medium text-white transition-colors hover:border-[#4FABFF] hover:bg-[#4FABFF]"
+          className="rounded-md border border-[#3f6fd8] bg-[#3f6fd8] px-3 py-2 text-sm font-medium text-white transition-colors hover:border-[#4f7fe6] hover:bg-[#4f7fe6]"
         >
           Create new key
         </button>
@@ -109,11 +109,11 @@ export function Keys() {
       {keys === null ? (
         <Skeleton className="h-32 w-full" />
       ) : keys.length === 0 ? (
-        <div className="border border-dashed border-white/20 bg-black p-8 text-center text-sm text-neutral-500">
+        <div className="rounded-xl border border-dashed border-white/[0.12] bg-white/[0.015] p-8 text-center text-sm text-neutral-500">
           No API keys yet. Click <span className="font-medium text-neutral-300">Create new key</span> to make one.
         </div>
       ) : (
-        <div className="overflow-hidden border border-white/10 bg-black/50 backdrop-blur-md">
+        <div className="overflow-hidden rounded-xl border border-white/[0.07] bg-white/[0.025] backdrop-blur-md">
           <table className="w-full text-sm">
             <thead className="border-b border-white/10 bg-white/[0.03] text-xs uppercase tracking-wider text-neutral-500">
               <tr>
@@ -137,7 +137,7 @@ export function Keys() {
                     <button
                       type="button"
                       onClick={() => setConfirmDeleteId(k.id)}
-                      className="border border-red-500/30 px-2.5 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10"
+                      className="rounded-md border border-rose-400/30 px-2.5 py-1 text-xs font-medium text-rose-200 transition-colors hover:bg-rose-400/10"
                     >
                       Delete
                     </button>
@@ -165,7 +165,7 @@ export function Keys() {
                 value={createName}
                 onChange={(e) => setCreateName(e.target.value)}
                 placeholder="e.g. Production"
-                className="mt-1 block w-full border border-white/10 bg-neutral-950 px-3 py-2 text-sm text-white placeholder:text-neutral-600 focus:border-[#4FABFF]/50 focus:outline-none focus:ring-1 focus:ring-[#4FABFF]/30"
+                className="mt-1 block w-full rounded-md border border-white/[0.08] bg-white/[0.02] px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600 focus:border-[#5b8def]/40 focus:outline-none focus:ring-1 focus:ring-[#5b8def]/25"
               />
             </div>
 
@@ -182,7 +182,7 @@ export function Keys() {
               <button
                 type="submit"
                 disabled={creating}
-                className="border border-[#076EFF] bg-[#076EFF] px-3 py-2 text-sm font-medium text-white transition-colors hover:border-[#4FABFF] hover:bg-[#4FABFF] disabled:opacity-50"
+                className="rounded-md border border-[#3f6fd8] bg-[#3f6fd8] px-3 py-2 text-sm font-medium text-white transition-colors hover:border-[#4f7fe6] hover:bg-[#4f7fe6] disabled:opacity-50"
               >
                 {creating ? "Creating…" : "Create key"}
               </button>
@@ -194,11 +194,11 @@ export function Keys() {
       {createdKey && (
         <Modal onClose={() => setCreatedKey(null)} title="Your new API key">
           <div className="space-y-4">
-            <div className="border border-[#4FABFF]/30 bg-[#076EFF]/5 px-3 py-2 text-xs text-neutral-300">
+            <div className="rounded-md border border-[#5b8def]/25 bg-[#5b8def]/[0.06] px-3 py-2 text-xs text-neutral-300">
               This key will not be shown again. Copy it now.
             </div>
             <div className="flex items-center gap-2">
-              <code className="flex-1 break-all border border-white/10 bg-neutral-950 px-3 py-2 font-mono text-xs text-[#4FABFF]">
+              <code className="flex-1 break-all rounded-md border border-white/[0.08] bg-white/[0.02] px-3 py-2 font-mono text-xs text-[#9cc0ff]">
                 {createdKey.key}
               </code>
               <button
@@ -213,7 +213,7 @@ export function Keys() {
               <button
                 type="button"
                 onClick={() => setCreatedKey(null)}
-                className="border border-[#076EFF] bg-[#076EFF] px-3 py-2 text-sm font-medium text-white transition-colors hover:border-[#4FABFF] hover:bg-[#4FABFF]"
+                className="rounded-md border border-[#3f6fd8] bg-[#3f6fd8] px-3 py-2 text-sm font-medium text-white transition-colors hover:border-[#4f7fe6] hover:bg-[#4f7fe6]"
               >
                 Done
               </button>
@@ -241,7 +241,7 @@ export function Keys() {
                 type="button"
                 onClick={() => void handleDelete()}
                 disabled={deleting}
-                className="border border-red-500/50 bg-red-500/20 px-3 py-2 text-sm font-medium text-red-300 transition-colors hover:bg-red-500/30 disabled:opacity-50"
+                className="rounded-md border border-rose-400/40 bg-rose-400/15 px-3 py-2 text-sm font-medium text-rose-200 transition-colors hover:bg-rose-400/25 disabled:opacity-50"
               >
                 {deleting ? "Deleting…" : "Delete"}
               </button>
@@ -261,8 +261,8 @@ interface ModalProps {
 
 function Modal({ title, onClose, children }: ModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-      <div className="w-full max-w-md border border-white/10 bg-black p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-xl border border-white/[0.08] bg-[#0e1018] p-6 shadow-2xl">
         <div className="flex items-start justify-between">
           <h3 className="text-base font-semibold text-white">{title}</h3>
           <button
@@ -282,7 +282,7 @@ function Modal({ title, onClose, children }: ModalProps) {
 
 function ErrorBanner({ message }: { message: string }) {
   return (
-    <div className="border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+    <div className="rounded-lg border border-rose-400/25 bg-rose-400/[0.08] px-3 py-2 text-xs text-rose-200">
       {message}
     </div>
   );

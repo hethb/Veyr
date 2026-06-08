@@ -31,10 +31,10 @@ export function TopTemplatesTable({
   return (
     <div
       className={cn(
-        "overflow-hidden border",
+        "overflow-hidden rounded-xl border",
         dark
-          ? "border-white/10 bg-black/65 backdrop-blur-md"
-          : "rounded-xl border-slate-200 bg-white shadow-sm"
+          ? "border-white/[0.07] bg-white/[0.025] backdrop-blur-md"
+          : "border-slate-200 bg-white shadow-sm"
       )}
     >
       <table className="w-full text-sm">

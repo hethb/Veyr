@@ -33,9 +33,9 @@ function saveDismissed(ids: Set<string>): void {
 }
 
 const SEVERITY_BORDER: Record<SuggestionSeverity, string> = {
-  high: "border-l-red-500",
-  medium: "border-l-amber-500",
-  low: "border-l-[#4FABFF]",
+  high: "border-l-rose-400/70",
+  medium: "border-l-amber-400/70",
+  low: "border-l-sky-400/60",
 };
 
 const CATEGORY_LABEL: Record<SuggestionCategory, string> = {
@@ -112,7 +112,7 @@ export function SuggestionsPanel() {
           <Skeleton className="h-28 w-full" />
         </div>
       ) : visible.length === 0 ? (
-        <div className="border border-dashed border-white/15 bg-black/40 px-4 py-8 text-center text-sm text-neutral-500">
+        <div className="rounded-lg border border-dashed border-white/[0.12] bg-white/[0.015] px-4 py-8 text-center text-sm text-neutral-500">
           No suggestions yet — keep sending traffic and we'll analyze your patterns.
         </div>
       ) : (
@@ -141,7 +141,7 @@ function SuggestionCard({ suggestion: s, onDismiss }: CardProps) {
   return (
     <div
       className={cn(
-        "border border-white/10 border-l-4 bg-black/65 p-4 backdrop-blur-md",
+        "rounded-lg border border-white/[0.07] border-l-4 bg-white/[0.025] p-4 backdrop-blur-md",
         SEVERITY_BORDER[s.severity]
       )}
     >
@@ -212,13 +212,13 @@ function CompressionPreviewBlock({ promptHash }: { promptHash: string }) {
       <button
         type="button"
         onClick={() => void run()}
-        className="border border-[#076EFF]/40 bg-[#076EFF]/10 px-3 py-1.5 text-xs font-medium text-[#4FABFF] transition-colors hover:bg-[#076EFF]/20"
+        className="rounded-md border border-[#5b8def]/30 bg-[#5b8def]/10 px-3 py-1.5 text-xs font-medium text-[#9cc0ff] transition-colors hover:bg-[#5b8def]/20"
       >
         {open ? "Hide compression preview" : "Preview compression"}
       </button>
 
       {open && (
-        <div className="mt-3 border border-white/10 bg-black/50 p-3 text-xs">
+        <div className="mt-3 rounded-lg border border-white/[0.07] bg-white/[0.02] p-3 text-xs">
           {loading ? (
             <Skeleton className="h-16 w-full" />
           ) : error ? (

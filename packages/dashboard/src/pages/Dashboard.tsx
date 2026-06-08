@@ -18,7 +18,8 @@ import {
   type TopTemplateRow,
 } from "../lib/api";
 
-const panelClass = "border border-white/10 bg-black/65 p-5 backdrop-blur-md";
+const panelClass =
+  "rounded-xl border border-white/[0.07] bg-white/[0.025] p-5 backdrop-blur-md";
 
 export function Dashboard() {
   const [overview, setOverview] = useState<Overview | null>(null);
@@ -115,7 +116,7 @@ export function Dashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#4FABFF]">
+        <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#7fa8ee]">
           Overview
         </p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white">
@@ -175,7 +176,7 @@ export function Dashboard() {
             <button
               type="button"
               onClick={() => setSelectedTag(null)}
-              className="text-xs font-medium text-[#4FABFF] transition-colors hover:text-[#B1C5FF]"
+              className="text-xs font-medium text-[#7fa8ee] transition-colors hover:text-[#b1c9ff]"
             >
               Clear filter ({selectedTag})
             </button>
@@ -228,7 +229,7 @@ interface PeriodToggleProps {
 function PeriodToggle({ value, onChange }: PeriodToggleProps) {
   const opts: Period[] = ["7d", "30d"];
   return (
-    <div className="inline-flex overflow-hidden border border-white/10 bg-black text-xs font-medium">
+    <div className="inline-flex overflow-hidden rounded-lg border border-white/[0.08] bg-white/[0.03] text-xs font-medium">
       {opts.map((p) => (
         <button
           key={p}
@@ -237,8 +238,8 @@ function PeriodToggle({ value, onChange }: PeriodToggleProps) {
           className={cn(
             "px-3 py-1.5 transition-colors",
             value === p
-              ? "bg-[#076EFF] text-white"
-              : "text-neutral-400 hover:bg-white/5 hover:text-white"
+              ? "bg-[#3f6fd8] text-white"
+              : "text-neutral-400 hover:bg-white/[0.05] hover:text-neutral-100"
           )}
         >
           {p}
@@ -250,7 +251,7 @@ function PeriodToggle({ value, onChange }: PeriodToggleProps) {
 
 function ErrorBanner({ message }: { message: string }) {
   return (
-    <div className="border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+    <div className="rounded-lg border border-rose-400/25 bg-rose-400/[0.08] px-4 py-3 text-sm text-rose-200">
       {message}
     </div>
   );

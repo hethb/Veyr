@@ -4,17 +4,29 @@
 
 @layer base {
   :root {
-    --background: #000000;
-    --foreground: 0 0% 98%;
-    --primary: 214 100% 51%;
+    --background: #0a0b10;
+    --foreground: 0 0% 96%;
+    --primary: 217 80% 62%;
     --primary-foreground: 0 0% 100%;
-    --muted: 0 0% 12%;
+    --muted: 222 14% 14%;
     --muted-foreground: 0 0% 63%;
-    --border: 0 0% 100% / 0.12;
+    --border: 0 0% 100% / 0.08;
   }
 }
 
 html, body, #root {
   height: 100%;
-  background-color: #000000;
+  background-color: #0a0b10;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* Soft overhead wash for depth, instead of a flat pure-black field. */
+  background-image: radial-gradient(
+    1100px 560px at 50% -12%,
+    rgba(70, 100, 170, 0.10),
+    transparent 70%
+  );
+  background-attachment: fixed;
 }

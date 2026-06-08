@@ -22,10 +22,10 @@ export function MetricCard({
   return (
     <div
       className={cn(
-        "border p-5",
+        "rounded-xl border p-5",
         dark
-          ? "border-white/10 bg-black/65 backdrop-blur-md"
-          : "rounded-xl border-slate-200 bg-white shadow-sm"
+          ? "border-white/[0.07] bg-white/[0.025] backdrop-blur-md"
+          : "border-slate-200 bg-white shadow-sm"
       )}
     >
       <div

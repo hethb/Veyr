@@ -5,9 +5,9 @@ import { lintPrompt, type PromptLintResult, type PromptSeverity } from "../lib/a
 import { copyToClipboard } from "../lib/clipboard";
 
 const SEVERITY_BORDER: Record<PromptSeverity, string> = {
-  high: "border-l-red-500",
-  medium: "border-l-amber-500",
-  low: "border-l-[#4FABFF]",
+  high: "border-l-rose-400/70",
+  medium: "border-l-amber-400/70",
+  low: "border-l-sky-400/60",
 };
 
 const EXAMPLE =
@@ -43,7 +43,7 @@ export function PromptHelper() {
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#4FABFF]">
+        <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#7fa8ee]">
           Before you send
         </p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white">
@@ -64,7 +64,7 @@ export function PromptHelper() {
             <button
               type="button"
               onClick={() => setPrompt(EXAMPLE)}
-              className="text-xs font-medium text-[#4FABFF] hover:text-[#B1C5FF]"
+              className="text-xs font-medium text-[#7fa8ee] hover:text-[#b1c9ff]"
             >
               Try an example
             </button>
@@ -74,7 +74,7 @@ export function PromptHelper() {
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="e.g. fix the auth middleware in src/auth.ts so the login test passes"
-            className="h-72 w-full resize-none border border-white/10 bg-black/65 p-4 font-mono text-sm text-white placeholder:text-neutral-600 focus:border-[#4FABFF]/50 focus:outline-none"
+            className="h-72 w-full resize-none rounded-lg border border-white/[0.08] bg-white/[0.02] p-4 font-mono text-sm text-neutral-100 placeholder:text-neutral-600 focus:border-[#5b8def]/40 focus:outline-none"
           />
           {result && (
             <p className="mt-2 text-xs text-neutral-500">
@@ -85,13 +85,13 @@ export function PromptHelper() {
 
         <div className="space-y-4">
           {!prompt.trim() ? (
-            <div className="border border-dashed border-white/15 bg-black/40 px-4 py-10 text-center text-sm text-neutral-500">
+            <div className="rounded-lg border border-dashed border-white/[0.12] bg-white/[0.015] px-4 py-10 text-center text-sm text-neutral-500">
               Start typing to get suggestions.
             </div>
           ) : loading && !result ? (
             <div className="text-sm text-neutral-500">Analyzing…</div>
           ) : result && result.suggestions.length === 0 ? (
-            <div className="border border-emerald-500/30 bg-emerald-500/10 px-4 py-6 text-sm text-emerald-200">
+            <div className="rounded-lg border border-emerald-400/25 bg-emerald-400/[0.08] px-4 py-6 text-sm text-emerald-200">
               Looks tight — no obvious ways to cut tokens here.
             </div>
           ) : (
@@ -99,7 +99,7 @@ export function PromptHelper() {
               <div
                 key={s.id}
                 className={cn(
-                  "border border-white/10 border-l-4 bg-black/65 p-4",
+                  "rounded-lg border border-white/[0.07] border-l-4 bg-white/[0.025] p-4 backdrop-blur-md",
                   SEVERITY_BORDER[s.severity]
                 )}
               >
@@ -129,17 +129,17 @@ function ImprovedTemplate({ template }: { template: string }) {
     }
   }
   return (
-    <div className="border border-[#076EFF]/30 bg-[#076EFF]/[0.06]">
-      <div className="flex items-center justify-between border-b border-white/10 px-4 py-2">
-        <span className="text-xs font-medium uppercase tracking-[0.16em] text-[#4FABFF]">
+    <div className="rounded-lg border border-[#5b8def]/25 bg-[#5b8def]/[0.06]">
+      <div className="flex items-center justify-between border-b border-white/[0.07] px-4 py-2">
+        <span className="text-xs font-medium uppercase tracking-[0.16em] text-[#7fa8ee]">
           Suggested structure
         </span>
         <button
           type="button"
           onClick={copy}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-300 hover:text-[#4FABFF]"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-300 hover:text-[#9cc0ff]"
         >
-          {copied ? <Check className="h-3.5 w-3.5 text-[#4FABFF]" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? <Check className="h-3.5 w-3.5 text-[#9cc0ff]" /> : <Copy className="h-3.5 w-3.5" />}
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
