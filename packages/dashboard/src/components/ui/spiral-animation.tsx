@@ -34,17 +34,21 @@ class AnimationController {
   public readonly viewZoom = 100;
   private readonly numberOfStars: number;
   private readonly trailLength = 80;
+  private readonly duration: number;
+  private readonly onComplete?: () => void;
 
   constructor(
     _canvas: HTMLCanvasElement,
     ctx: CanvasRenderingContext2D,
     _dpr: number,
     size: number,
-    starCount = 5000
+    opts: { starCount?: number; duration?: number; onComplete?: () => void } = {}
   ) {
     this.ctx = ctx;
     this.size = size;
-    this.numberOfStars = starCount;
+    this.numberOfStars = opts.starCount ?? 5000;
+    this.duration = opts.duration ?? 15;
+    this.onComplete = opts.onComplete;
     // Plays a single time on load (no repeat) and then holds the final frame.
     this.timeline = gsap.timeline();
 
@@ -77,10 +81,13 @@ class AnimationController {
   private setupTimeline() {
     this.timeline.to(this, {
       time: 1,
-      duration: 15,
+      duration: this.duration,
       ease: "none",
       onUpdate: () => this.render(),
-      onComplete: () => this.timeline.pause(),
+      onComplete: () => {
+        this.timeline.pause();
+        this.onComplete?.();
+      },
     });
   }
 
@@ -339,14 +346,23 @@ class Star {
 
 export function SpiralAnimation({
   starCount = 5000,
+  duration = 15,
+  onComplete,
   className,
 }: {
   /** Lower this for an always-on background; the full 5000 is best for a splash. */
   starCount?: number;
+  /** Seconds for one play-through. */
+  duration?: number;
+  /** Fires once the single play-through finishes. */
+  onComplete?: () => void;
   className?: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<AnimationController | null>(null);
+  // Keep the latest callback without re-running the controller effect.
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
   const [dimensions, setDimensions] = useState({
     width: typeof window !== "undefined" ? window.innerWidth : 1280,
     height: typeof window !== "undefined" ? window.innerHeight : 800,
@@ -379,7 +395,11 @@ export function SpiralAnimation({
 
     ctx.scale(dpr, dpr);
 
-    animationRef.current = new AnimationController(canvas, ctx, dpr, size, starCount);
+    animationRef.current = new AnimationController(canvas, ctx, dpr, size, {
+      starCount,
+      duration,
+      onComplete: () => onCompleteRef.current?.(),
+    });
 
     return () => {
       if (animationRef.current) {
@@ -387,7 +407,7 @@ export function SpiralAnimation({
         animationRef.current = null;
       }
     };
-  }, [dimensions, starCount]);
+  }, [dimensions, starCount, duration]);
 
   return (
     <div className={className ?? "relative h-full w-full"}>

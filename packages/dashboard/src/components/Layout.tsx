@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import { SpiralAnimation } from "@/components/ui/spiral-animation";
@@ -15,8 +15,34 @@ const navItems = [
   { to: "/settings", label: "Settings" },
 ];
 
+// Once per browser session: play the intro splash a single time.
+const INTRO_KEY = "promptlens:intro-played";
+
+function introAlreadyPlayed() {
+  try {
+    return sessionStorage.getItem(INTRO_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
+  // `intro` = spiral is full-screen and content is hidden.
+  // `splashMounted` keeps the canvas in the DOM until its fade-out finishes.
+  const [intro, setIntro] = useState(() => !introAlreadyPlayed());
+  const [splashMounted, setSplashMounted] = useState(() => !introAlreadyPlayed());
+
+  function finishIntro() {
+    try {
+      sessionStorage.setItem(INTRO_KEY, "1");
+    } catch {
+      // ignore
+    }
+    setIntro(false);
+    // Unmount the canvas once the fade-out transition has completed.
+    window.setTimeout(() => setSplashMounted(false), 1200);
+  }
 
   async function handleSignOut() {
     await signOut();
@@ -25,25 +51,30 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="relative min-h-screen bg-[#0a0b10] text-neutral-100">
-      {/* Live spiral background. Dimmed + scrimmed so content stays readable. */}
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <SpiralAnimation
-          starCount={2200}
-          className="absolute inset-0 h-full w-full opacity-[0.28]"
-        />
-        <div className="absolute inset-0 bg-[#0a0b10]/72" />
+      {/* Full-strength intro spiral. Sits on top and hides everything, then
+          fades out to reveal the dashboard once the play-through completes. */}
+      {splashMounted && (
         <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(circle at 50% 45%, rgba(10,11,16,0) 0%, rgba(10,11,16,0.55) 70%, rgba(10,11,16,0.9) 100%)",
-          }}
-        />
-      </div>
+          className={`pointer-events-none fixed inset-0 z-50 bg-black transition-opacity duration-1000 ${
+            intro ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <SpiralAnimation
+            starCount={5000}
+            duration={7}
+            onComplete={finishIntro}
+            className="absolute inset-0 h-full w-full"
+          />
+        </div>
+      )}
 
       <div className="pointer-events-none fixed inset-x-0 top-0 z-30 h-px bg-gradient-to-r from-transparent via-[#5b8def]/25 to-transparent" />
 
-      <div className="relative z-10 flex min-h-screen">
+      <div
+        className={`relative z-10 flex min-h-screen transition-opacity duration-1000 ${
+          intro ? "pointer-events-none opacity-0" : "opacity-100"
+        }`}
+      >
         <aside className="flex w-60 shrink-0 flex-col border-r border-white/[0.06] bg-[#0c0e15]/70 backdrop-blur-md">
           <div className="px-6 py-5">
             <Link to="/" className="flex items-center gap-3">
