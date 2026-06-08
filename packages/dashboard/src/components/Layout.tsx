@@ -1,22 +1,11 @@
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
-import { GradientDots } from "@/components/ui/gradient-dots";
-import { IntroSplash } from "@/components/IntroSplash";
+import { SpiralAnimation } from "@/components/ui/spiral-animation";
 import { authEnabled, signOut } from "../lib/auth";
 
 interface LayoutProps {
   children: ReactNode;
-}
-
-const INTRO_KEY = "promptlens:intro-seen";
-
-function introAlreadySeen(): boolean {
-  try {
-    return sessionStorage.getItem(INTRO_KEY) === "1";
-  } catch {
-    return true;
-  }
 }
 
 const navItems = [
@@ -28,32 +17,29 @@ const navItems = [
 
 export function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
-  const [showIntro, setShowIntro] = useState(() => !introAlreadySeen());
 
   async function handleSignOut() {
     await signOut();
     navigate("/", { replace: true });
   }
 
-  function dismissIntro() {
-    try {
-      sessionStorage.setItem(INTRO_KEY, "1");
-    } catch {
-      /* ignore */
-    }
-    setShowIntro(false);
-  }
-
   return (
     <div className="relative min-h-screen bg-[#0a0b10] text-neutral-100">
-      {showIntro && <IntroSplash onEnter={dismissIntro} />}
-      <GradientDots
-        dotSize={1.6}
-        spacing={20}
-        spotlightRadius={240}
-        backgroundColor="#0a0b10"
-        className="pointer-events-none fixed inset-0 z-0"
-      />
+      {/* Live spiral background. Dimmed + scrimmed so content stays readable. */}
+      <div className="pointer-events-none fixed inset-0 z-0">
+        <SpiralAnimation
+          starCount={2200}
+          className="absolute inset-0 h-full w-full opacity-[0.28]"
+        />
+        <div className="absolute inset-0 bg-[#0a0b10]/72" />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 45%, rgba(10,11,16,0) 0%, rgba(10,11,16,0.55) 70%, rgba(10,11,16,0.9) 100%)",
+          }}
+        />
+      </div>
 
       <div className="pointer-events-none fixed inset-x-0 top-0 z-30 h-px bg-gradient-to-r from-transparent via-[#5b8def]/25 to-transparent" />
 

@@ -32,13 +32,21 @@ class AnimationController {
   private readonly cameraTravelDistance = 3400;
   private readonly startDotYOffset = 28;
   public readonly viewZoom = 100;
-  private readonly numberOfStars = 5000;
+  private readonly numberOfStars: number;
   private readonly trailLength = 80;
 
-  constructor(_canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, _dpr: number, size: number) {
+  constructor(
+    _canvas: HTMLCanvasElement,
+    ctx: CanvasRenderingContext2D,
+    _dpr: number,
+    size: number,
+    starCount = 5000
+  ) {
     this.ctx = ctx;
     this.size = size;
-    this.timeline = gsap.timeline({ repeat: -1 });
+    this.numberOfStars = starCount;
+    // Plays a single time on load (no repeat) and then holds the final frame.
+    this.timeline = gsap.timeline();
 
     this.setupRandomGenerator();
     this.setupTimeline();
@@ -70,9 +78,9 @@ class AnimationController {
     this.timeline.to(this, {
       time: 1,
       duration: 15,
-      repeat: -1,
       ease: "none",
       onUpdate: () => this.render(),
+      onComplete: () => this.timeline.pause(),
     });
   }
 
@@ -329,7 +337,14 @@ class Star {
   }
 }
 
-export function SpiralAnimation() {
+export function SpiralAnimation({
+  starCount = 5000,
+  className,
+}: {
+  /** Lower this for an always-on background; the full 5000 is best for a splash. */
+  starCount?: number;
+  className?: string;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<AnimationController | null>(null);
   const [dimensions, setDimensions] = useState({
@@ -364,7 +379,7 @@ export function SpiralAnimation() {
 
     ctx.scale(dpr, dpr);
 
-    animationRef.current = new AnimationController(canvas, ctx, dpr, size);
+    animationRef.current = new AnimationController(canvas, ctx, dpr, size, starCount);
 
     return () => {
       if (animationRef.current) {
@@ -372,10 +387,10 @@ export function SpiralAnimation() {
         animationRef.current = null;
       }
     };
-  }, [dimensions]);
+  }, [dimensions, starCount]);
 
   return (
-    <div className="relative h-full w-full">
+    <div className={className ?? "relative h-full w-full"}>
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
     </div>
   );
