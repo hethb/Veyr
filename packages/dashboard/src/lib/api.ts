@@ -242,3 +242,46 @@ export async function lintPrompt(prompt: string): Promise<PromptLintResult> {
   });
   return (await res.json()) as PromptLintResult;
 }
+
+// ---------------------------------------------------------------------------
+// Document → Markdown
+// ---------------------------------------------------------------------------
+
+export interface ConvertResult {
+  format: string;
+  notes: string[];
+  markdown: string;
+  original_bytes: number;
+  original_tokens: number;
+  markdown_chars: number;
+  markdown_tokens: number;
+  tokens_saved: number;
+  savings_pct: number;
+  cost_saved_per_call_usd: Record<string, number>;
+}
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result);
+      const comma = dataUrl.indexOf(",");
+      resolve(comma >= 0 ? dataUrl.slice(comma + 1) : "");
+    };
+    reader.onerror = () => reject(reader.error ?? new Error("Read failed"));
+    reader.readAsDataURL(file);
+  });
+}
+
+export async function convertDocument(file: File): Promise<ConvertResult> {
+  const dataB64 = await fileToBase64(file);
+  const res = await authedFetch("/api/convert", {
+    method: "POST",
+    body: JSON.stringify({
+      filename: file.name,
+      mime: file.type || null,
+      data_b64: dataB64,
+    }),
+  });
+  return (await res.json()) as ConvertResult;
+}

@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthGate } from "./components/AuthGate";
 import { Layout } from "./components/Layout";
 import { Dashboard } from "./pages/Dashboard";
+import { Documents } from "./pages/Documents";
 import { Keys } from "./pages/Keys";
 import { Landing } from "./pages/Landing";
 import { PromptHelper } from "./pages/PromptHelper";
@@ -31,6 +32,16 @@ export function App() {
             <AuthGate>
               <Layout>
                 <PromptHelper />
+              </Layout>
+            </AuthGate>
+          }
+        />
+        <Route
+          path="/documents"
+          element={
+            <AuthGate>
+              <Layout>
+                <Documents />
               </Layout>
             </AuthGate>
           }

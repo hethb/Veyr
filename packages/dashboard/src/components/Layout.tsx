@@ -11,6 +11,7 @@ interface LayoutProps {
 const navItems = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/prompt", label: "Prompt Helper" },
+  { to: "/documents", label: "Documents" },
   { to: "/keys", label: "API Keys" },
   { to: "/settings", label: "Settings" },
 ];

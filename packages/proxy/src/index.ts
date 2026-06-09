@@ -12,6 +12,7 @@ import { statsRouter } from "./routes/stats.js";
 import { keysRouter } from "./routes/keys.js";
 import { policiesRouter } from "./routes/policies.js";
 import { analysisRouter } from "./routes/analysis.js";
+import { convertRouter } from "./routes/convert.js";
 import { dashboardAuth } from "./middleware/dashboardAuth.js";
 import { getOpenAIUpstreamUrl, isAuthEnabled } from "./config.js";
 
@@ -35,8 +36,9 @@ app.use(
 );
 
 // JSON body parsing. We need the parsed body for prompt-hash extraction and
-// for forwarding upstream. 10MB is generous — adjust if needed.
-app.use(express.json({ limit: "10mb" }));
+// for forwarding upstream. Bumped to 30MB so the /api/convert endpoint can
+// accept base64-encoded files up to ~20MB (base64 inflates by ~33%).
+app.use(express.json({ limit: "30mb" }));
 
 // ---------------------------------------------------------------------------
 // Routes
@@ -53,6 +55,7 @@ app.use("/api/stats", dashboardAuth, statsRouter);
 app.use("/api/keys", dashboardAuth, keysRouter);
 app.use("/api/policies", dashboardAuth, policiesRouter);
 app.use("/api/analysis", dashboardAuth, analysisRouter);
+app.use("/api/convert", dashboardAuth, convertRouter);
 
 // 404
 app.use((_req: Request, res: Response) => {

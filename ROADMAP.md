@@ -32,6 +32,10 @@ your app  →  PromptLens proxy  →  OpenAI / Anthropic
   prompts (`x-promptlens-cache: 1` or policy `enable_prompt_caching`). Tracks
   `cached_tokens` and `cache_creation_tokens` per request and discounts cost
   accordingly. Up to 90% input cost reduction on repeated calls.
+- **Document → Markdown** (`/api/convert`, **Documents** page) — turn PDFs,
+  DOCX, HTML, CSV, JSON, and XML into compact Markdown before sending to an
+  LLM. Inspired by Microsoft MarkItDown; reimplemented in pure TypeScript.
+  Typical 70–90% input-token reduction on bloated source formats.
 - Pre-send linter flags cache-busters (live timestamps, wrong ordering)
 - Response headers report estimated tokens saved
 - *Next:* LLM-assisted rewrite tier, template-level savings report in dashboard

@@ -202,6 +202,58 @@ The dashboard surfaces a `caching` suggestion when a feature averages ≥1024
 prompt tokens across ≥20 calls but shows <20% cache reads. The fix is one
 header flip.
 
+## Document → Markdown
+
+PromptLens ships a built-in document converter that turns PDFs, Word docs,
+HTML pages, CSV/TSV, JSON, and XML into compact, LLM-friendly Markdown —
+typically **70–90% fewer input tokens** than feeding the raw file (or naïve
+text extraction) to a model.
+
+Inspired by Microsoft's [MarkItDown](https://github.com/microsoft/markitdown)
+(MIT-licensed). PromptLens does **not** bundle MarkItDown — the conversion
+code is a clean-room TypeScript reimplementation so it runs inside the
+existing proxy process with no Python runtime. See
+[ATTRIBUTIONS.md](./ATTRIBUTIONS.md) for full credit.
+
+### Supported formats
+
+| Source | Notes |
+|---|---|
+| PDF | via `pdf-parse`; page boundaries become `<!-- page N -->` markers |
+| DOCX | via `mammoth` → HTML → Markdown; images dropped |
+| HTML | headings, lists, links, tables, code, images; `<script>`/`<style>` stripped |
+| CSV / TSV | RFC 4180 quoting; emitted as a Markdown table |
+| JSON | flat object arrays → table; everything else → fenced code block |
+| XML / SVG | markup stripped, entities decoded |
+| Markdown / text | normalised passthrough |
+
+PPTX, XLSX, EPUB, audio/video, and OCR are **not** supported — use the
+original MarkItDown for those.
+
+### Use it from the dashboard
+
+Open **Documents** in the sidebar, drop a file. PromptLens shows:
+
+- Converted Markdown with a copy button
+- Before/after token counts and percentage saved
+- Estimated USD saved per call across GPT-4o, GPT-4o-mini, and Claude 3.5 Sonnet
+- A cache-friendly system prompt scaffold (static doc up top, dynamic
+  question last — primed for prompt caching)
+
+### Use it from the API
+
+```bash
+curl -X POST http://localhost:3001/api/convert \
+  -H "Content-Type: application/json" \
+  -d "{\"filename\":\"report.pdf\",\"data_b64\":\"$(base64 -i report.pdf)\"}"
+```
+
+Returns the converted Markdown plus `original_tokens`, `markdown_tokens`,
+`tokens_saved`, `savings_pct`, and `cost_saved_per_call_usd` per model.
+
+Files never leave the proxy. By default the proxy stores nothing about
+conversions — they're stateless.
+
 ### Prompt compression previews
 
 For redundant-template suggestions, a **Preview compression** button calls
