@@ -66,15 +66,50 @@ export interface TopTemplateRow {
   feature_tag: string | null;
 }
 
+export interface CacheFeatureRow {
+  feature_tag: string;
+  prompt_tokens: number;
+  cached_tokens: number;
+  cache_creation_tokens: number;
+  hit_rate: number;
+  savings_usd: number;
+  write_premium_usd: number;
+  net_savings_usd: number;
+}
+
+export interface CacheTimePoint {
+  date: string;
+  cached_tokens: number;
+  prompt_tokens: number;
+  savings_usd: number;
+}
+
 export interface CacheStats {
+  period: Period;
+  /** Overall cache hit rate across all logged input tokens (0..1). */
+  hit_rate: number;
   /** Total prompt tokens served from a provider cache HIT. */
   cached_tokens: number;
   /** Total prompt tokens WRITTEN to a provider cache. */
   cache_creation_tokens: number;
-  /** Total prompt tokens (regular + cached + creation). */
+  /** Prompt tokens that paid full input price (regular = total - cached - creation). */
+  regular_input_tokens: number;
+  /** Sum of prompt_tokens across the period. */
   total_prompt_tokens: number;
-  /** Estimated USD saved versus paying full input price on every call. */
+  /** Gross USD saved by cache reads (before write premium). */
   savings_usd: number;
+  /** Extra USD paid for cache writes vs. regular input. */
+  write_premium_usd: number;
+  /** Net USD saved (savings - write_premium). */
+  net_savings_usd: number;
+  /** What the input bill would have been at FULL price (no caching). */
+  baseline_input_cost_usd: number;
+  /** Requests that touched the cache (read or write). */
+  cache_using_requests: number;
+  /** Total requests in the window. */
+  total_requests: number;
+  by_feature: CacheFeatureRow[];
+  timeseries: CacheTimePoint[];
 }
 
 export interface ApiKey {
@@ -161,6 +196,11 @@ export async function getTimeseries(
 export async function getTopTemplates(limit = 10): Promise<TopTemplateRow[]> {
   const res = await authedFetch(`/api/stats/top-templates?limit=${limit}`);
   return (await res.json()) as TopTemplateRow[];
+}
+
+export async function getCacheStats(period: Period = "30d"): Promise<CacheStats> {
+  const res = await authedFetch(`/api/stats/cache?period=${period}`);
+  return (await res.json()) as CacheStats;
 }
 
 export async function listKeys(): Promise<ApiKey[]> {

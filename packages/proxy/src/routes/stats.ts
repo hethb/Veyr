@@ -1,5 +1,11 @@
 import { Router, type Request, type Response } from "express";
-import { getRequestsSince, type RequestRow } from "../storage/store.js";
+import {
+  getRequestsForAnalysis,
+  getRequestsSince,
+  type AnalysisRow,
+  type RequestRow,
+} from "../storage/store.js";
+import { inputCostPerToken } from "../utils/costs.js";
 
 type Period = "1d" | "7d" | "30d";
 type Granularity = "hour" | "day";
@@ -243,3 +249,174 @@ statsRouter.get("/top-templates", (req: Request, res: Response): void => {
 function round(n: number): number {
   return Math.round(n * 1e6) / 1e6;
 }
+
+// ---------------------------------------------------------------------------
+// GET /api/stats/cache
+//   Aggregated prompt-caching impact: tokens served from cache, tokens
+//   written, net dollar savings, hit rate, and a per-feature / daily
+//   breakdown so the dashboard can show concretely what caching is doing.
+// ---------------------------------------------------------------------------
+
+/**
+ * Provider-side multipliers (mirror utils/costs.ts):
+ *   - Anthropic ephemeral cache: read = 0.10x input, write = 1.25x input
+ *   - OpenAI auto cache: read = 0.50x input (no write premium)
+ *
+ * We compute "savings" as (1 - readMultiplier) * pricePerToken for cache
+ * reads, and write premium as (writeMultiplier - 1) * pricePerToken. Net
+ * savings = reads_savings - write_premium.
+ */
+const CACHE_WRITE_MULT = 1.25;
+const CACHE_READ_MULT_ANTHROPIC = 0.10;
+const CACHE_READ_MULT_OPENAI = 0.50;
+
+function cacheReadMultiplier(model: string): number {
+  return model.toLowerCase().includes("claude")
+    ? CACHE_READ_MULT_ANTHROPIC
+    : CACHE_READ_MULT_OPENAI;
+}
+
+interface CacheRowAgg {
+  feature_tag: string;
+  prompt_tokens: number;
+  cached_tokens: number;
+  cache_creation_tokens: number;
+  savings_usd: number;
+  write_premium_usd: number;
+}
+
+interface CacheTimePoint {
+  date: string;
+  cached_tokens: number;
+  prompt_tokens: number;
+  savings_usd: number;
+}
+
+statsRouter.get("/cache", (req: Request, res: Response): void => {
+  const period = parsePeriod(req.query.period, "30d");
+  try {
+    const since = new Date(Date.now() - periodMs(period)).toISOString();
+    // We need the model on each row to apply provider-specific multipliers,
+    // so reuse the richer analysis row shape.
+    const rows: AnalysisRow[] = getRequestsForAnalysis(since, req.userId);
+
+    let totalPrompt = 0;
+    let totalCached = 0;
+    let totalCreation = 0;
+    let totalSavings = 0;
+    let totalWritePremium = 0;
+    // Hypothetical cost of input tokens at FULL price (what you'd pay without
+    // caching) — useful for showing "without caching, this would cost X".
+    let baselineInputCost = 0;
+    let cacheUsingRequests = 0;
+
+    const byTag = new Map<string, CacheRowAgg>();
+    const byDay = new Map<string, CacheTimePoint>();
+
+    for (const r of rows) {
+      const cached = r.cached_tokens ?? 0;
+      const creation = r.cache_creation_tokens ?? 0;
+      const pricePerInputToken = inputCostPerToken(r.model);
+      const readMult = cacheReadMultiplier(r.model);
+
+      const rowSavings = cached * pricePerInputToken * (1 - readMult);
+      const rowPremium = creation * pricePerInputToken * (CACHE_WRITE_MULT - 1);
+
+      totalPrompt += r.prompt_tokens;
+      totalCached += cached;
+      totalCreation += creation;
+      totalSavings += rowSavings;
+      totalWritePremium += rowPremium;
+      baselineInputCost += r.prompt_tokens * pricePerInputToken;
+      if (cached > 0 || creation > 0) cacheUsingRequests += 1;
+
+      const tag = r.feature_tag ?? "untagged";
+      let tagAgg = byTag.get(tag);
+      if (!tagAgg) {
+        tagAgg = {
+          feature_tag: tag,
+          prompt_tokens: 0,
+          cached_tokens: 0,
+          cache_creation_tokens: 0,
+          savings_usd: 0,
+          write_premium_usd: 0,
+        };
+        byTag.set(tag, tagAgg);
+      }
+      tagAgg.prompt_tokens += r.prompt_tokens;
+      tagAgg.cached_tokens += cached;
+      tagAgg.cache_creation_tokens += creation;
+      tagAgg.savings_usd += rowSavings;
+      tagAgg.write_premium_usd += rowPremium;
+
+      const day = r.timestamp.slice(0, 10);
+      let dayAgg = byDay.get(day);
+      if (!dayAgg) {
+        dayAgg = { date: day, cached_tokens: 0, prompt_tokens: 0, savings_usd: 0 };
+        byDay.set(day, dayAgg);
+      }
+      dayAgg.cached_tokens += cached;
+      dayAgg.prompt_tokens += r.prompt_tokens;
+      dayAgg.savings_usd += rowSavings - rowPremium;
+    }
+
+    const netSavings = totalSavings - totalWritePremium;
+    const hitRate = totalPrompt > 0 ? totalCached / totalPrompt : 0;
+
+    // Top tags ordered by absolute savings (positive impact first), then by
+    // potential — tags with high prompt volume but zero cache reads — so the
+    // panel surfaces "you're caching this well" AND "you could be caching this".
+    const tagsArr = [...byTag.values()].sort((a, b) => {
+      const aImpact = a.savings_usd - a.write_premium_usd;
+      const bImpact = b.savings_usd - b.write_premium_usd;
+      if (aImpact !== bImpact) return bImpact - aImpact;
+      return b.prompt_tokens - a.prompt_tokens;
+    });
+
+    // Fill in the daily timeseries between since and now.
+    const series: CacheTimePoint[] = [];
+    const start = Date.now() - periodMs(period);
+    for (let t = start; t <= Date.now(); t += 24 * 60 * 60 * 1000) {
+      const key = new Date(t).toISOString().slice(0, 10);
+      const point = byDay.get(key);
+      series.push({
+        date: key,
+        cached_tokens: point?.cached_tokens ?? 0,
+        prompt_tokens: point?.prompt_tokens ?? 0,
+        savings_usd: round(point?.savings_usd ?? 0),
+      });
+    }
+
+    res.json({
+      period,
+      hit_rate: round(hitRate),
+      cached_tokens: totalCached,
+      cache_creation_tokens: totalCreation,
+      regular_input_tokens: Math.max(0, totalPrompt - totalCached - totalCreation),
+      total_prompt_tokens: totalPrompt,
+      savings_usd: round(totalSavings),
+      write_premium_usd: round(totalWritePremium),
+      net_savings_usd: round(netSavings),
+      baseline_input_cost_usd: round(baselineInputCost),
+      cache_using_requests: cacheUsingRequests,
+      total_requests: rows.length,
+      by_feature: tagsArr.slice(0, 12).map((t) => {
+        const tagHit = t.prompt_tokens > 0 ? t.cached_tokens / t.prompt_tokens : 0;
+        return {
+          feature_tag: t.feature_tag,
+          prompt_tokens: t.prompt_tokens,
+          cached_tokens: t.cached_tokens,
+          cache_creation_tokens: t.cache_creation_tokens,
+          hit_rate: round(tagHit),
+          savings_usd: round(t.savings_usd),
+          write_premium_usd: round(t.write_premium_usd),
+          net_savings_usd: round(t.savings_usd - t.write_premium_usd),
+        };
+      }),
+      timeseries: series,
+    });
+  } catch (err) {
+    console.error("[stats/cache] failed:", err);
+    res.status(500).json({ error: "Failed to load cache stats" });
+  }
+});
