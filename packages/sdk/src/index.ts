@@ -25,6 +25,14 @@ export interface PromptLensConfig {
   feature?: string;
   /** Layer 2: compress system/user prompts before upstream (proxy). */
   compress?: boolean;
+  /**
+   * Layer 2: enable provider prompt caching. On Anthropic, PromptLens wraps
+   * long system prompts with `cache_control: { type: "ephemeral" }` so
+   * subsequent calls reuse the cached prefix (~90% cheaper input). On OpenAI
+   * the cache is automatic above ~1024 tokens of stable prefix — this flag
+   * just opts you in to cache telemetry headers.
+   */
+  enablePromptCaching?: boolean;
   /** Layer 3: cap max_tokens on outbound requests. */
   maxCompletionTokens?: number;
 }
@@ -67,6 +75,9 @@ export function resolvePromptLensConfig(
     apiKey: apiKey.trim(),
     baseUrl: overrides?.baseUrl,
     feature: overrides?.feature,
+    compress: overrides?.compress,
+    enablePromptCaching: overrides?.enablePromptCaching,
+    maxCompletionTokens: overrides?.maxCompletionTokens,
   };
 }
 
@@ -79,6 +90,7 @@ function controlPlaneHeaders(config: PromptLensConfig): Record<string, string> {
   };
   if (config.feature) headers["x-feature-tag"] = config.feature;
   if (config.compress) headers["x-promptlens-compress"] = "1";
+  if (config.enablePromptCaching) headers["x-promptlens-cache"] = "1";
   if (config.maxCompletionTokens != null && config.maxCompletionTokens > 0) {
     headers["x-promptlens-max-tokens"] = String(config.maxCompletionTokens);
   }
@@ -117,6 +129,7 @@ export interface ProviderOpenAIOptions {
   /** Tag spend in the dashboard (e.g. "billing-bot"). */
   feature?: string;
   compress?: boolean;
+  enablePromptCaching?: boolean;
   maxCompletionTokens?: number;
 }
 
@@ -135,6 +148,7 @@ export function promptlensOpenAI(options: ProviderOpenAIOptions): {
     baseUrl: options.baseUrl,
     feature: options.feature,
     compress: options.compress,
+    enablePromptCaching: options.enablePromptCaching,
     maxCompletionTokens: options.maxCompletionTokens,
   });
 
@@ -150,6 +164,7 @@ export interface ProviderAnthropicOptions {
   baseUrl?: string;
   feature?: string;
   compress?: boolean;
+  enablePromptCaching?: boolean;
   maxCompletionTokens?: number;
 }
 
@@ -166,6 +181,7 @@ export function promptlensAnthropic(options: ProviderAnthropicOptions): {
     baseUrl: options.baseUrl,
     feature: options.feature,
     compress: options.compress,
+    enablePromptCaching: options.enablePromptCaching,
     maxCompletionTokens: options.maxCompletionTokens,
   });
 

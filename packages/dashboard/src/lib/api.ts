@@ -66,6 +66,17 @@ export interface TopTemplateRow {
   feature_tag: string | null;
 }
 
+export interface CacheStats {
+  /** Total prompt tokens served from a provider cache HIT. */
+  cached_tokens: number;
+  /** Total prompt tokens WRITTEN to a provider cache. */
+  cache_creation_tokens: number;
+  /** Total prompt tokens (regular + cached + creation). */
+  total_prompt_tokens: number;
+  /** Estimated USD saved versus paying full input price on every call. */
+  savings_usd: number;
+}
+
 export interface ApiKey {
   id: string;
   key_prefix: string;

@@ -15,6 +15,10 @@ export interface LogRequestInput {
   errorMessage: string | null;
   compressionApplied?: boolean;
   tokensSavedEstimate?: number;
+  /** Subset of promptTokens served from a provider prompt cache (read hit). */
+  cachedTokens?: number;
+  /** Subset of promptTokens that were written into the cache this turn. */
+  cacheCreationTokens?: number;
 }
 
 /**
@@ -22,7 +26,15 @@ export interface LogRequestInput {
  * to keep proxy latency minimal. Errors are logged to stderr.
  */
 export function logRequest(input: LogRequestInput): void {
-  const cost = calculateCost(input.model, input.promptTokens, input.completionTokens);
+  const cached = input.cachedTokens ?? 0;
+  const cacheCreation = input.cacheCreationTokens ?? 0;
+  const cost = calculateCost(
+    input.model,
+    input.promptTokens,
+    input.completionTokens,
+    cached,
+    cacheCreation
+  );
   const total = input.promptTokens + input.completionTokens;
 
   try {
@@ -42,6 +54,8 @@ export function logRequest(input: LogRequestInput): void {
       errorMessage: input.errorMessage,
       compressionApplied: input.compressionApplied ?? false,
       tokensSavedEstimate: input.tokensSavedEstimate ?? 0,
+      cachedTokens: cached,
+      cacheCreationTokens: cacheCreation,
     });
   } catch (err) {
     console.error("[logRequest] insert failed:", err);

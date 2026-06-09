@@ -59,6 +59,8 @@ interface TagAgg {
   count: number;
   promptTokens: number;
   completionTokens: number;
+  cachedTokens: number;
+  cacheCreationTokens: number;
   cost: number;
   successCount: number;
   errorCount: number;
@@ -69,6 +71,7 @@ interface HashAgg {
   hash: string;
   count: number;
   promptTokens: number;
+  cachedTokens: number;
   featureTag: string | null;
   modelCounts: Map<string, number>;
 }
@@ -140,6 +143,8 @@ function buildSuggestions(rows: AnalysisRow[]): Suggestion[] {
         count: 0,
         promptTokens: 0,
         completionTokens: 0,
+        cachedTokens: 0,
+        cacheCreationTokens: 0,
         cost: 0,
         successCount: 0,
         errorCount: 0,
@@ -151,6 +156,8 @@ function buildSuggestions(rows: AnalysisRow[]): Suggestion[] {
     agg.count += 1;
     agg.promptTokens += r.prompt_tokens;
     agg.completionTokens += r.completion_tokens;
+    agg.cachedTokens += r.cached_tokens ?? 0;
+    agg.cacheCreationTokens += r.cache_creation_tokens ?? 0;
     agg.cost += r.cost_usd;
     if (r.status === "error") agg.errorCount += 1;
     else agg.successCount += 1;
@@ -164,6 +171,7 @@ function buildSuggestions(rows: AnalysisRow[]): Suggestion[] {
           hash: r.prompt_hash,
           count: 0,
           promptTokens: 0,
+          cachedTokens: 0,
           featureTag: tag,
           modelCounts: new Map(),
         };
@@ -171,6 +179,7 @@ function buildSuggestions(rows: AnalysisRow[]): Suggestion[] {
       }
       h.count += 1;
       h.promptTokens += r.prompt_tokens;
+      h.cachedTokens += r.cached_tokens ?? 0;
       h.modelCounts.set(r.model, (h.modelCounts.get(r.model) ?? 0) + 1);
     }
   }
@@ -273,28 +282,70 @@ function buildSuggestions(rows: AnalysisRow[]): Suggestion[] {
       });
     }
 
-    // --- Rule 6: Low cache efficiency (bursts, 7d) --------------------------
-    const burstTs = rows7d.map((r) => new Date(r.timestamp).getTime());
-    const { bursts, maxCalls } = detectBursts(burstTs);
-    if (bursts > BURST_MIN_OCCURRENCES) {
+    // --- Rule 6: Low cache hit rate on a cache-eligible feature -------------
+    //
+    // Evidence has two flavours:
+    //   (a) We can SEE cache misses directly because the request stream
+    //       includes cache token fields. If the read share is low on a
+    //       feature with long, repeated prompts → suggest caching.
+    //   (b) No cache fields at all + repeated bursts → fall back to the burst
+    //       heuristic so older traffic (pre-cache-instrumentation) still gets
+    //       a suggestion.
+    const totalInputTokens = agg.promptTokens;
+    const cacheHitRate =
+      totalInputTokens > 0 ? agg.cachedTokens / totalInputTokens : 0;
+    const avgPromptTokens = agg.count ? agg.promptTokens / agg.count : 0;
+    const longRepeated =
+      agg.count >= 20 && avgPromptTokens >= 1024 && agg.cost > 2;
+
+    if (longRepeated && cacheHitRate < 0.2) {
+      // Cache reads cost ~10% (Anthropic) / ~50% (OpenAI) of full input. Take
+      // the conservative 50% per-token saving on the static portion we expect
+      // to recover (~70% of the prompt is static for a long system block).
       let promptCost = 0;
       for (const r of agg.rows) {
         promptCost += r.prompt_tokens * inputCostPerToken(r.model);
       }
       out.push({
-        id: `low-cache-efficiency:${agg.tag}`,
-        severity: "low",
+        id: `enable-prompt-caching:${agg.tag}`,
+        severity: "high",
         category: "caching",
         title: `Enable prompt caching for ${agg.tag}`,
-        description: `Your ${agg.tag} feature sends repeated bursts of similar requests. Adding Anthropic prompt caching or OpenAI cached inputs on your system prompt could cut costs by up to 90% on repeated calls.`,
+        description: `Your ${agg.tag} feature averages ${Math.round(avgPromptTokens)} prompt tokens across ${agg.count} calls, but only ${(cacheHitRate * 100).toFixed(0)}% of input is served from cache. Marking the static system prompt with cache_control (Anthropic) or front-loading it consistently (OpenAI) would cut input cost by up to 90% on repeated calls.`,
         impact_usd: round2(promptCost * 0.5),
         evidence: {
           feature_tag: agg.tag,
-          burst_count: bursts,
-          calls_per_burst: maxCalls,
+          avg_prompt_tokens: Math.round(avgPromptTokens),
+          cache_hit_rate: round2(cacheHitRate),
+          calls: agg.count,
         },
-        action: `Enable provider prompt caching (Anthropic cache_control / OpenAI cached inputs) on the "${agg.tag}" system prompt.`,
+        action: `Set x-promptlens-cache: 1 on requests for "${agg.tag}" (or enable_prompt_caching=true in the feature policy) so PromptLens injects Anthropic cache_control automatically.`,
       });
+    } else {
+      // Burst-only fallback for pre-instrumentation traffic.
+      const burstTs = rows7d.map((r) => new Date(r.timestamp).getTime());
+      const { bursts, maxCalls } = detectBursts(burstTs);
+      const noCacheData = agg.cachedTokens === 0 && agg.cacheCreationTokens === 0;
+      if (noCacheData && bursts > BURST_MIN_OCCURRENCES) {
+        let promptCost = 0;
+        for (const r of agg.rows) {
+          promptCost += r.prompt_tokens * inputCostPerToken(r.model);
+        }
+        out.push({
+          id: `low-cache-efficiency:${agg.tag}`,
+          severity: "low",
+          category: "caching",
+          title: `Enable prompt caching for ${agg.tag}`,
+          description: `Your ${agg.tag} feature sends repeated bursts of similar requests. Adding Anthropic prompt caching or OpenAI cached inputs on your system prompt could cut costs by up to 90% on repeated calls.`,
+          impact_usd: round2(promptCost * 0.5),
+          evidence: {
+            feature_tag: agg.tag,
+            burst_count: bursts,
+            calls_per_burst: maxCalls,
+          },
+          action: `Set x-promptlens-cache: 1 on requests for "${agg.tag}" (or enable_prompt_caching=true in the feature policy) so PromptLens injects Anthropic cache_control automatically.`,
+        });
+      }
     }
   }
 

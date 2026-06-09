@@ -46,6 +46,25 @@ const CONSTRAINT_RE =
 const VAGUE_START_RE =
   /^\s*(fix|improve|optimi[sz]e|clean ?up|refactor|enhance|polish|tidy|make .* better|debug|sort out)\b/i;
 
+// --- Cache-friendliness ---------------------------------------------------
+// Real-time values that would bust a cached prefix on every send. Matches
+// explicit dates (2025-06-09), ISO timestamps, "current time", "today is …",
+// HH:MM clock readings, and Date.now()-style template tokens.
+const TIMESTAMP_RE =
+  /(\b\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2})?(Z|[+-]\d{2}:?\d{2})?)?\b|\b\d{1,2}:\d{2}(:\d{2})?\s*(am|pm)?\b|\b(current (date|time|day|timestamp|year|month)|today(?:'s)? date|right now|as of now|now is)\b|\{\{?\s*(date|now|timestamp|current_time|today)\s*\}?\}|\b(date|now|timestamp)\s*[:=]\s*new Date)/i;
+// Heuristic: dynamic-looking placeholder/variable mid-prompt suggests user
+// data interpolated inline. {{var}}, {var}, <var>, ${var}, %s.
+const PLACEHOLDER_RE = /(\{\{[^}]+\}\}|\$\{[^}]+\}|<[A-Z_]{3,}>|%[sd])/;
+// Phrases that usually mark dynamic/per-call content (user question, real-time
+// data). Whichever side of the prompt these end up on, the OTHER side is the
+// stable, cacheable prefix.
+const DYNAMIC_MARKER_RE =
+  /\b(user (question|input|query|message)|the user said|user:|<question>|<input>|here is the question|now answer|user's request|today's (data|news|prices))\b/i;
+// Phrases that usually mark the static, cacheable prefix (instructions, docs,
+// few-shot examples). We want these at the TOP of the prompt.
+const STATIC_MARKER_RE =
+  /\b(you are|your task|system instructions|guidelines|rules|policy|few[- ]shot|examples?:|reference (document|material|data)|context document|knowledge base|<documents?>|<context>)\b/i;
+
 function estimateTokens(text: string): number {
   return text ? Math.ceil(text.length / 4) : 0;
 }
@@ -191,6 +210,70 @@ export function lintPrompt(input: string): PromptLintResult {
         "Long prompt (~" +
         tokens +
         " tokens). Anything you repeat every time — conventions, stack, formatting — belongs in CLAUDE.md or Custom Instructions, not re-sent on each message.",
+    });
+  }
+
+  // 11 — Cache buster: live timestamp/date sitting in the prompt prefix.
+  //      Anything that changes per-minute invalidates the cached prefix every
+  //      single call. Only flag on prompts long enough to actually benefit
+  //      from caching (~256 tokens / 1k chars).
+  if (TIMESTAMP_RE.test(text) && tokens >= 256) {
+    suggestions.push({
+      id: "cache-buster-timestamp",
+      severity: "high",
+      title: "Remove the live timestamp — it's busting your cache",
+      detail:
+        "A real-time date/time in the prompt invalidates prompt-caching every minute, so you re-pay full input cost on every call. Move the timestamp to the LAST user message, or inject it as a tool call result, not into the static system prefix.",
+    });
+  }
+
+  // 12 — Wrong order: dynamic content shows up before the static block. Cache
+  //      hits are sequential — the first change invalidates everything after.
+  //      Heuristic: dynamic marker appears in the first 25% of the prompt AND
+  //      the static block sits later. The "where" matters more than the gap
+  //      size — even a small user question at the top busts the cache.
+  if (tokens >= 512 && DYNAMIC_MARKER_RE.test(text) && STATIC_MARKER_RE.test(text)) {
+    const firstDynamic = text.search(DYNAMIC_MARKER_RE);
+    const firstStatic = text.search(STATIC_MARKER_RE);
+    if (
+      firstDynamic >= 0 &&
+      firstStatic > firstDynamic &&
+      firstDynamic < text.length * 0.25
+    ) {
+      suggestions.push({
+        id: "cache-order",
+        severity: "high",
+        title: "Front-load the static content for prompt caching",
+        detail:
+          "The user question / dynamic data appears before your reference material and instructions. Cache hits are sequential — anything before the change is wasted. Put system instructions, docs, and few-shot examples FIRST, dynamic input LAST.",
+      });
+    }
+  }
+
+  // 13 — Long prompt that also includes per-call placeholders interleaved
+  //      throughout — likely a single string concatenating static + dynamic.
+  if (tokens >= 512 && PLACEHOLDER_RE.test(text) && STATIC_MARKER_RE.test(text)) {
+    suggestions.push({
+      id: "cache-isolate-dynamic",
+      severity: "medium",
+      title: "Isolate the dynamic variables at the end",
+      detail:
+        "Looks like static instructions and per-call variables are interleaved (e.g. {{user_id}}, ${query}). Move every dynamic placeholder to the tail of the prompt so the long static prefix stays bit-identical and can be cached across calls.",
+    });
+  }
+
+  // 14 — Just under the Anthropic ephemeral-cache minimum (~1024 tokens). On
+  //      Anthropic, anything shorter can't be cached at all. Worth flagging so
+  //      the user knows the threshold.
+  if (tokens >= 700 && tokens < 1024 && STATIC_MARKER_RE.test(text)) {
+    suggestions.push({
+      id: "cache-too-short",
+      severity: "low",
+      title: "Just below Anthropic's cache threshold",
+      detail:
+        "Anthropic requires ~1024 tokens of stable prefix to cache (~512 for Haiku). You're at ~" +
+        tokens +
+        ". A bit more reference material in the static block — or a bigger few-shot set — could unlock cache hits and drop input cost by up to 90%.",
     });
   }
 

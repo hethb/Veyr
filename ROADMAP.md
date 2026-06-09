@@ -28,6 +28,11 @@ your app  →  PromptLens proxy  →  OpenAI / Anthropic
 
 - Rule-based system-prompt compression before upstream (ported from TokenGuard)
 - Opt-in per request: `x-promptlens-compress: 1` or policy `compress_prompts`
+- **Provider prompt caching** — auto-inject Anthropic `cache_control` on long
+  prompts (`x-promptlens-cache: 1` or policy `enable_prompt_caching`). Tracks
+  `cached_tokens` and `cache_creation_tokens` per request and discounts cost
+  accordingly. Up to 90% input cost reduction on repeated calls.
+- Pre-send linter flags cache-busters (live timestamps, wrong ordering)
 - Response headers report estimated tokens saved
 - *Next:* LLM-assisted rewrite tier, template-level savings report in dashboard
 

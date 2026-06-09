@@ -8,8 +8,20 @@
 
 export interface ParsedUsage {
   model: string | null;
+  /**
+   * Total input tokens billed (regular + cached + cache-creation). Normalized
+   * so cost calculations and per-feature reporting stay provider-agnostic.
+   *
+   * Anthropic reports the three buckets separately and `input_tokens` does NOT
+   * include cached/cache-creation tokens — we sum them here. OpenAI reports
+   * the total and breaks out the cached portion in `prompt_tokens_details`.
+   */
   promptTokens: number;
   completionTokens: number;
+  /** Subset of promptTokens that came from a cache HIT (read). */
+  cachedTokens: number;
+  /** Subset of promptTokens that were WRITTEN to the cache this turn. */
+  cacheCreationTokens: number;
   finishReason: string | null;
   errorMessage: string | null;
 }
@@ -18,6 +30,8 @@ const EMPTY: ParsedUsage = {
   model: null,
   promptTokens: 0,
   completionTokens: 0,
+  cachedTokens: 0,
+  cacheCreationTokens: 0,
   finishReason: null,
   errorMessage: null,
 };
@@ -83,11 +97,14 @@ export function parseOpenAI(
     const usage = asObject(json.usage);
     const choices = Array.isArray(json.choices) ? json.choices : [];
     const firstChoice = asObject(choices[0]);
+    const details = asObject(usage?.prompt_tokens_details);
 
     return {
       model: asString(json.model),
       promptTokens: asNumber(usage?.prompt_tokens),
       completionTokens: asNumber(usage?.completion_tokens),
+      cachedTokens: asNumber(details?.cached_tokens),
+      cacheCreationTokens: 0, // OpenAI doesn't bill cache creation explicitly.
       finishReason: asString(firstChoice?.finish_reason),
       errorMessage: null,
     };
@@ -97,6 +114,7 @@ export function parseOpenAI(
     let model: string | null = null;
     let promptTokens = 0;
     let completionTokens = 0;
+    let cachedTokens = 0;
     let finishReason: string | null = null;
 
     for (const event of iterateSseEvents(body)) {
@@ -105,6 +123,8 @@ export function parseOpenAI(
       if (usage) {
         promptTokens = asNumber(usage.prompt_tokens) || promptTokens;
         completionTokens = asNumber(usage.completion_tokens) || completionTokens;
+        const details = asObject(usage.prompt_tokens_details);
+        if (details) cachedTokens = asNumber(details.cached_tokens) || cachedTokens;
       }
       const choices = Array.isArray(event.choices) ? event.choices : [];
       const firstChoice = asObject(choices[0]);
@@ -116,6 +136,8 @@ export function parseOpenAI(
       model,
       promptTokens,
       completionTokens,
+      cachedTokens,
+      cacheCreationTokens: 0,
       finishReason,
       errorMessage: null,
     };
@@ -146,10 +168,18 @@ export function parseAnthropic(
     }
 
     const usage = asObject(json.usage);
+    const cachedTokens = asNumber(usage?.cache_read_input_tokens);
+    const cacheCreationTokens = asNumber(usage?.cache_creation_input_tokens);
+    // Anthropic's `input_tokens` excludes cached + cache-creation tokens.
+    // Sum them so downstream cost/aggregation sees the true input bill.
+    const totalInput =
+      asNumber(usage?.input_tokens) + cachedTokens + cacheCreationTokens;
     return {
       model: asString(json.model),
-      promptTokens: asNumber(usage?.input_tokens),
+      promptTokens: totalInput,
       completionTokens: asNumber(usage?.output_tokens),
+      cachedTokens,
+      cacheCreationTokens,
       finishReason: asString(json.stop_reason),
       errorMessage: null,
     };
@@ -159,6 +189,8 @@ export function parseAnthropic(
     let model: string | null = null;
     let promptTokens = 0;
     let completionTokens = 0;
+    let cachedTokens = 0;
+    let cacheCreationTokens = 0;
     let finishReason: string | null = null;
 
     for (const event of iterateSseEvents(body)) {
@@ -168,7 +200,12 @@ export function parseAnthropic(
         if (message) {
           model = asString(message.model) ?? model;
           const usage = asObject(message.usage);
-          if (usage) promptTokens = asNumber(usage.input_tokens);
+          if (usage) {
+            const base = asNumber(usage.input_tokens);
+            cachedTokens = asNumber(usage.cache_read_input_tokens);
+            cacheCreationTokens = asNumber(usage.cache_creation_input_tokens);
+            promptTokens = base + cachedTokens + cacheCreationTokens;
+          }
         }
       } else if (type === "message_delta") {
         const usage = asObject(event.usage);
@@ -185,6 +222,8 @@ export function parseAnthropic(
       model,
       promptTokens,
       completionTokens,
+      cachedTokens,
+      cacheCreationTokens,
       finishReason,
       errorMessage: null,
     };

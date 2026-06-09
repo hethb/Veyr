@@ -10,6 +10,8 @@ declare module "express-serve-static-core" {
     promptLens?: {
       compressionApplied: boolean;
       tokensSavedEstimate: number;
+      /** True when we injected provider-side prompt caching into the request. */
+      cachingApplied?: boolean;
     };
   }
 }
@@ -20,6 +22,13 @@ function wantsCompression(req: Request, policyCompress: boolean): boolean {
   if (header === "0" || header === "false") return false;
   if (policyCompress) return true;
   return isCompressionEnabledByDefault();
+}
+
+function wantsCaching(req: Request, policyCache: boolean): boolean {
+  const header = req.header("x-promptlens-cache");
+  if (header === "1" || header === "true") return true;
+  if (header === "0" || header === "false") return false;
+  return policyCache;
 }
 
 function headerMaxTokens(req: Request): number | null {
@@ -61,6 +70,7 @@ export async function controlPlane(
   }
 
   const compress = wantsCompression(req, policy?.compress_prompts ?? false);
+  const enablePromptCaching = wantsCaching(req, policy?.enable_prompt_caching ?? false);
   const maxFromHeader = headerMaxTokens(req);
   const maxFromPolicy = policy?.max_completion_tokens ?? null;
   const maxCompletionTokens =
@@ -74,13 +84,18 @@ export async function controlPlane(
     const result = transformAnthropicBody(req.body, {
       compress,
       maxCompletionTokens,
+      enablePromptCaching,
     });
     req.body = result.body;
     req.promptLens = {
       compressionApplied: result.compressionApplied,
       tokensSavedEstimate: result.tokensSavedEstimate,
+      cachingApplied: result.cachingApplied,
     };
   } else {
+    // OpenAI's prompt cache is automatic above ~1024 tokens of stable prefix —
+    // no marker injection needed. We still surface the intent on the response
+    // so observability is consistent across providers.
     const result = transformOpenAIBody(req.body, {
       compress,
       maxCompletionTokens,
@@ -89,6 +104,7 @@ export async function controlPlane(
     req.promptLens = {
       compressionApplied: result.compressionApplied,
       tokensSavedEstimate: result.tokensSavedEstimate,
+      cachingApplied: enablePromptCaching,
     };
   }
 
@@ -97,6 +113,12 @@ export async function controlPlane(
     res.setHeader(
       "x-promptlens-tokens-saved-estimate",
       String(req.promptLens.tokensSavedEstimate)
+    );
+  }
+  if (req.promptLens.cachingApplied) {
+    res.setHeader(
+      "x-promptlens-cache",
+      isAnthropic ? "applied" : "passthrough"
     );
   }
 

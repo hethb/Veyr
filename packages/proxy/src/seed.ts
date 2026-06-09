@@ -86,6 +86,8 @@ interface Scenario {
   withinDays?: number;
   /** Emit clustered bursts instead of uniform spread (for the caching rule). */
   bursts?: { windows: number; callsPerWindow: number; spreadDays: number };
+  /** 0..1 — fraction of prompt tokens that should appear as cache reads. */
+  cacheHitRate?: number;
 }
 
 const SCENARIOS: Scenario[] = [
@@ -144,6 +146,35 @@ const SCENARIOS: Scenario[] = [
     withinDays: 7,
     bursts: { windows: 4, callsPerWindow: 25, spreadDays: 6 },
   },
+  // Cache-miss opportunity: long repeated system prompt on Claude with NO
+  // cache hits → triggers the upgraded "enable prompt caching" rule.
+  {
+    featureTag: "policy-qa",
+    systemPrompt:
+      "You are a compliance assistant. Use ONLY the policy excerpts below to answer. " +
+      "Cite the section id for every claim. If the answer is not in the policy, say so. " +
+      "Policy excerpts: ".repeat(12),
+    model: "claude-3-5-sonnet-20241022",
+    count: 280,
+    promptRange: [1400, 2200],
+    completionRange: [150, 300],
+    errorRate: 0,
+    cacheHitRate: 0,
+  },
+  // Already-caching feature: same Claude template but reads from cache ~85%
+  // of the time. Demonstrates the cached_tokens column + cost discount working.
+  {
+    featureTag: "docs-search",
+    systemPrompt:
+      "You are a documentation assistant for Acme Inc. Search the indexed pages " +
+      "below and return the best match with a quoted snippet. ".repeat(10),
+    model: "claude-3-5-sonnet-20241022",
+    count: 120,
+    promptRange: [1500, 2500],
+    completionRange: [100, 250],
+    errorRate: 0.02,
+    cacheHitRate: 0.85,
+  },
 ];
 
 function weightedTemplate(): Template {
@@ -185,11 +216,21 @@ function main(): void {
     completionTokens: number;
     isError: boolean;
     ts: string;
+    cachedTokens?: number;
+    cacheCreationTokens?: number;
   }): void {
     const provider = opts.model.startsWith("claude") ? "anthropic" : "openai";
+    const cached = opts.cachedTokens ?? 0;
+    const cacheCreation = opts.cacheCreationTokens ?? 0;
     const cost = opts.isError
       ? 0
-      : calculateCost(opts.model, opts.promptTokens, opts.completionTokens);
+      : calculateCost(
+          opts.model,
+          opts.promptTokens,
+          opts.completionTokens,
+          cached,
+          cacheCreation
+        );
     totalCost += cost;
     totalRequests += 1;
     insertRequest({
@@ -208,6 +249,8 @@ function main(): void {
       errorMessage: opts.isError ? "upstream_rate_limited" : null,
       compressionApplied: false,
       tokensSavedEstimate: 0,
+      cachedTokens: opts.isError ? 0 : cached,
+      cacheCreationTokens: opts.isError ? 0 : cacheCreation,
       timestamp: opts.ts,
     });
   }
@@ -251,14 +294,30 @@ function main(): void {
 
       const windowMs = (s.withinDays ?? DAYS) * DAY_MS;
       for (let i = 0; i < s.count; i++) {
+        const promptTokens = randInt(s.promptRange[0], s.promptRange[1]);
+        const hitRate = s.cacheHitRate ?? 0;
+        // First call writes the cache (i === 0), rest read at the configured
+        // hit rate. We model "the static prefix is ~70% of the prompt".
+        const staticShare = Math.floor(promptTokens * 0.7);
+        let cachedTokens = 0;
+        let cacheCreationTokens = 0;
+        if (hitRate > 0) {
+          if (i === 0) {
+            cacheCreationTokens = staticShare;
+          } else if (Math.random() < hitRate) {
+            cachedTokens = staticShare;
+          }
+        }
         emit({
           featureTag: s.featureTag,
           systemPrompt: s.systemPrompt,
           model: s.model,
-          promptTokens: randInt(s.promptRange[0], s.promptRange[1]),
+          promptTokens,
           completionTokens: randInt(s.completionRange[0], s.completionRange[1]),
           isError: Math.random() < s.errorRate,
           ts: new Date(now - Math.random() * windowMs).toISOString(),
+          cachedTokens,
+          cacheCreationTokens,
         });
       }
     }

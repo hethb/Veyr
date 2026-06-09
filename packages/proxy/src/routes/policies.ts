@@ -63,6 +63,7 @@ policiesRouter.put("/", (req: Request, res: Response): void => {
         typeof req.body?.rate_limit_per_minute === "number"
           ? req.body.rate_limit_per_minute
           : null,
+      enablePromptCaching: Boolean(req.body?.enable_prompt_caching),
     });
 
     invalidatePolicyCache(apiKeyId, featureTag.slice(0, 64));

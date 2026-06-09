@@ -52,12 +52,14 @@ const openai = new OpenAI(
 Per-request headers (or SDK flags):
 
 - `x-promptlens-compress: 1` — rule-based prompt compression (TokenGuard-style)
+- `x-promptlens-cache: 1` — provider prompt caching (see [Prompt caching](#prompt-caching))
 - `x-promptlens-max-tokens: 512` — cap completion tokens on outbound requests
 
 Per-feature policies (dashboard API `PUT /api/policies`):
 
 - `monthly_budget_usd` — returns `429` when feature spend exceeds cap
 - `compress_prompts` — always compress for that feature
+- `enable_prompt_caching` — auto-inject Anthropic `cache_control` on long prompts
 - `max_completion_tokens` — enforced server-side
 
 For local development or enterprise self-host, see [Local development](#local-development) below.
@@ -87,9 +89,12 @@ flagged as a **quick win**.
    spend. A risk alert to add a budget cap or model override.
 5. **Redundant long prompt template** — the same system prompt hash is sent 50+
    times/month averaging over 800 tokens. Compress it (~30% saving).
-6. **Bursty traffic / low cache efficiency** — a feature sends repeated bursts
-   (20+ calls within 10 minutes, more than 3 times in 7 days). Enable provider
-   prompt caching.
+6. **Low cache hit rate on cache-eligible traffic** — a feature averages ≥1024
+   prompt tokens across 20+ calls and >$2/month, but less than 20% of its
+   input bytes are served from cache. Enable provider prompt caching (see
+   [Prompt caching](#prompt-caching)). For older traffic with no cache
+   instrumentation yet, the rule falls back to detecting repeated bursts (20+
+   calls within 10 minutes, 3+ times in 7 days).
 7. **Quick win** — whichever live suggestion has the highest estimated saving is
    highlighted so you know where to start.
 
@@ -119,6 +124,83 @@ It's surfaced in two places: the **Prompt Helper** page in the dashboard/desktop
 app (paste a prompt, get suggestions + a tighter template before sending to your
 CLI agent), and live in the **browser extension** overlay on chatgpt.com /
 claude.ai as you type.
+
+## Prompt caching
+
+Provider prompt caching reuses the model's intermediate processing of a static
+prompt prefix across calls, dropping input cost by **up to 90%** and cutting
+latency. PromptLens treats it as a first-class control: we detect when your
+prompts are cache-eligible, auto-inject `cache_control` for Anthropic, and
+track cache hit rate alongside spend.
+
+**How it works.** Both providers cache the *prefix* of your prompt — the part
+that's bit-identical across requests. The first call writes the cache (a small
+premium); subsequent calls within the TTL read from it (Anthropic ≈ 10% of
+input price, OpenAI ≈ 50%). Anything that changes — a timestamp, the user's
+question, a random nonce — invalidates everything after it.
+
+### Opt in
+
+Per-request:
+
+```bash
+curl … -H "x-promptlens-cache: 1" …
+```
+
+Or in the SDK:
+
+```ts
+const openai = new OpenAI(
+  promptlensOpenAI({
+    apiKey: process.env.OPENAI_API_KEY!,
+    feature: "policy-qa",
+    enablePromptCaching: true, // 90% cheaper input on warm cache
+  })
+);
+```
+
+Or per-feature on the dashboard / `PUT /api/policies`:
+
+```json
+{ "api_key_id": "…", "feature_tag": "policy-qa", "enable_prompt_caching": true }
+```
+
+When enabled on Anthropic, PromptLens wraps your `system` prompt as a single
+text block with `cache_control: { type: "ephemeral" }` — **only** when it's at
+least 1024 tokens (Anthropic's cache minimum). Below that it's a no-op.
+
+OpenAI prompt caching is automatic above ~1024 tokens of stable prefix — the
+flag is still useful because it opts your feature into the dashboard's cache
+telemetry headers (`x-promptlens-cache: applied`).
+
+### What gets tracked
+
+Every request now logs:
+
+- `cached_tokens` — input tokens served from a cache HIT this call
+- `cache_creation_tokens` — input tokens WRITTEN to the cache this call
+
+Cost is computed accordingly: regular input at list price, cached reads
+discounted, cache writes at the small write premium.
+
+### Pre-send cache-friendliness linting
+
+The Prompt Helper page and `POST /api/analysis/prompt-lint` flag the four
+patterns most likely to leave caching savings on the table:
+
+- **Live timestamp in the static prompt** — invalidates the cache every minute
+- **Dynamic content placed before static instructions** — cache hits are
+  sequential; the first change wipes everything after
+- **Static and dynamic interleaved** with `{{placeholders}}` — move them to
+  the tail so the prefix stays bit-identical
+- **Just below the 1024-token Anthropic cache minimum** — a touch more
+  reference material unlocks the discount
+
+### Optimization rule
+
+The dashboard surfaces a `caching` suggestion when a feature averages ≥1024
+prompt tokens across ≥20 calls but shows <20% cache reads. The fix is one
+header flip.
 
 ### Prompt compression previews
 

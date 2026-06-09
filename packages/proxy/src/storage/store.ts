@@ -28,6 +28,10 @@ export interface RequestInsert {
   errorMessage: string | null;
   compressionApplied: boolean;
   tokensSavedEstimate: number;
+  /** Subset of promptTokens served from a provider prompt cache (read hit). */
+  cachedTokens?: number;
+  /** Subset of promptTokens that were written into the cache this turn. */
+  cacheCreationTokens?: number;
   /** Optional explicit timestamp (ISO). Defaults to now. Used by the seeder. */
   timestamp?: string;
 }
@@ -38,6 +42,8 @@ export interface RequestRow {
   total_tokens: number;
   prompt_tokens: number;
   completion_tokens: number;
+  cached_tokens: number;
+  cache_creation_tokens: number;
   feature_tag: string | null;
   prompt_hash: string | null;
 }
@@ -51,6 +57,7 @@ export interface FeaturePolicy {
   compress_prompts: boolean;
   fallback_model: string | null;
   rate_limit_per_minute: number | null;
+  enable_prompt_caching: boolean;
 }
 
 export interface PolicyUpsert {
@@ -61,6 +68,7 @@ export interface PolicyUpsert {
   compressPrompts: boolean;
   fallbackModel: string | null;
   rateLimitPerMinute: number | null;
+  enablePromptCaching: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -162,12 +170,14 @@ export function insertRequest(input: RequestInsert): void {
          id, api_key_id, timestamp, model, provider, feature_tag,
          prompt_tokens, completion_tokens, total_tokens, cost_usd, latency_ms,
          status, finish_reason, prompt_hash, error_message,
-         compression_applied, tokens_saved_estimate
+         compression_applied, tokens_saved_estimate,
+         cached_tokens, cache_creation_tokens
        ) VALUES (
          @id, @api_key_id, @timestamp, @model, @provider, @feature_tag,
          @prompt_tokens, @completion_tokens, @total_tokens, @cost_usd, @latency_ms,
          @status, @finish_reason, @prompt_hash, @error_message,
-         @compression_applied, @tokens_saved_estimate
+         @compression_applied, @tokens_saved_estimate,
+         @cached_tokens, @cache_creation_tokens
        )`
     )
     .run({
@@ -188,6 +198,8 @@ export function insertRequest(input: RequestInsert): void {
       error_message: input.errorMessage,
       compression_applied: input.compressionApplied ? 1 : 0,
       tokens_saved_estimate: input.tokensSavedEstimate,
+      cached_tokens: input.cachedTokens ?? 0,
+      cache_creation_tokens: input.cacheCreationTokens ?? 0,
     });
 }
 
@@ -202,6 +214,8 @@ export interface AnalysisRow {
   cost_usd: number;
   status: string;
   prompt_hash: string | null;
+  cached_tokens: number;
+  cache_creation_tokens: number;
 }
 
 /**
@@ -218,7 +232,8 @@ export function getRequestsForAnalysis(
     return db
       .prepare(
         `SELECT timestamp, model, feature_tag, prompt_tokens, completion_tokens,
-                total_tokens, cost_usd, status, prompt_hash
+                total_tokens, cost_usd, status, prompt_hash,
+                cached_tokens, cache_creation_tokens
          FROM requests
          WHERE timestamp >= ?
            AND api_key_id IN (SELECT id FROM api_keys WHERE user_id = ?)
@@ -230,7 +245,8 @@ export function getRequestsForAnalysis(
   return db
     .prepare(
       `SELECT timestamp, model, feature_tag, prompt_tokens, completion_tokens,
-              total_tokens, cost_usd, status, prompt_hash
+              total_tokens, cost_usd, status, prompt_hash,
+              cached_tokens, cache_creation_tokens
        FROM requests
        WHERE timestamp >= ?
        ORDER BY timestamp ASC
@@ -252,7 +268,8 @@ export function getRequestsSince(
     return db
       .prepare(
         `SELECT timestamp, cost_usd, total_tokens, prompt_tokens,
-                completion_tokens, feature_tag, prompt_hash
+                completion_tokens, cached_tokens, cache_creation_tokens,
+                feature_tag, prompt_hash
          FROM requests
          WHERE timestamp >= ?
            AND api_key_id IN (SELECT id FROM api_keys WHERE user_id = ?)
@@ -264,7 +281,8 @@ export function getRequestsSince(
   return db
     .prepare(
       `SELECT timestamp, cost_usd, total_tokens, prompt_tokens,
-              completion_tokens, feature_tag, prompt_hash
+              completion_tokens, cached_tokens, cache_creation_tokens,
+              feature_tag, prompt_hash
        FROM requests
        WHERE timestamp >= ?
        ORDER BY timestamp DESC
@@ -304,6 +322,7 @@ function rowToPolicy(row: Record<string, unknown> | undefined): FeaturePolicy | 
     compress_prompts: Boolean(row.compress_prompts),
     fallback_model: (row.fallback_model as string | null) ?? null,
     rate_limit_per_minute: (row.rate_limit_per_minute as number | null) ?? null,
+    enable_prompt_caching: Boolean(row.enable_prompt_caching),
   };
 }
 
@@ -340,10 +359,12 @@ export function upsertPolicy(input: PolicyUpsert): FeaturePolicy {
   db.prepare(
     `INSERT INTO feature_policies (
        id, api_key_id, feature_tag, monthly_budget_usd, max_completion_tokens,
-       compress_prompts, fallback_model, rate_limit_per_minute, created_at, updated_at
+       compress_prompts, fallback_model, rate_limit_per_minute,
+       enable_prompt_caching, created_at, updated_at
      ) VALUES (
        @id, @api_key_id, @feature_tag, @monthly_budget_usd, @max_completion_tokens,
-       @compress_prompts, @fallback_model, @rate_limit_per_minute, @created_at, @updated_at
+       @compress_prompts, @fallback_model, @rate_limit_per_minute,
+       @enable_prompt_caching, @created_at, @updated_at
      )
      ON CONFLICT (api_key_id, feature_tag) DO UPDATE SET
        monthly_budget_usd = excluded.monthly_budget_usd,
@@ -351,6 +372,7 @@ export function upsertPolicy(input: PolicyUpsert): FeaturePolicy {
        compress_prompts = excluded.compress_prompts,
        fallback_model = excluded.fallback_model,
        rate_limit_per_minute = excluded.rate_limit_per_minute,
+       enable_prompt_caching = excluded.enable_prompt_caching,
        updated_at = excluded.updated_at`
   ).run({
     id,
@@ -361,6 +383,7 @@ export function upsertPolicy(input: PolicyUpsert): FeaturePolicy {
     compress_prompts: input.compressPrompts ? 1 : 0,
     fallback_model: input.fallbackModel,
     rate_limit_per_minute: input.rateLimitPerMinute,
+    enable_prompt_caching: input.enablePromptCaching ? 1 : 0,
     created_at: now,
     updated_at: now,
   });

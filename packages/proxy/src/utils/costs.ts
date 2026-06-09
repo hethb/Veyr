@@ -62,17 +62,51 @@ export function outputCostPerToken(model: string): number {
 }
 
 /**
- * Calculates total cost in USD for a single request.
+ * Provider multipliers on the base input price for prompt-cache token classes.
+ * Anthropic: cache writes cost 1.25x input, cache reads cost 0.10x input.
+ * OpenAI: cached input costs roughly 0.50x input (no separate write fee).
+ * We treat OpenAI's cache as the "ephemeral" Anthropic profile for any
+ * provider we don't recognise, biasing toward the customer's wallet.
+ */
+const CACHE_WRITE_MULTIPLIER = 1.25;
+const CACHE_READ_MULTIPLIER_ANTHROPIC = 0.10;
+const CACHE_READ_MULTIPLIER_OPENAI = 0.50;
+
+function cacheReadMultiplier(model: string): number {
+  return model.toLowerCase().includes("claude")
+    ? CACHE_READ_MULTIPLIER_ANTHROPIC
+    : CACHE_READ_MULTIPLIER_OPENAI;
+}
+
+/**
+ * Calculates total cost in USD for a single request, accounting for prompt
+ * cache reads (cheaper) and cache creations (slightly more expensive than
+ * regular input).
+ *
+ * `promptTokens` is the TOTAL input bill (regular + cache read + cache write);
+ * we subtract the two cache buckets to derive regular input.
+ *
  * Result is rounded to 8 decimal places to fit numeric(10, 8).
  */
 export function calculateCost(
   model: string,
   promptTokens: number,
-  completionTokens: number
+  completionTokens: number,
+  cachedTokens = 0,
+  cacheCreationTokens = 0
 ): number {
   const price = resolvePrice(model);
-  const inputCost  = (promptTokens     / 1000) * price.input;
+  const safeCached = Math.max(0, cachedTokens);
+  const safeCreation = Math.max(0, cacheCreationTokens);
+  const regularInput = Math.max(0, promptTokens - safeCached - safeCreation);
+
+  const baseInputCost = (regularInput / 1000) * price.input;
+  const cachedReadCost =
+    (safeCached / 1000) * price.input * cacheReadMultiplier(model);
+  const cacheWriteCost =
+    (safeCreation / 1000) * price.input * CACHE_WRITE_MULTIPLIER;
   const outputCost = (completionTokens / 1000) * price.output;
-  const total = inputCost + outputCost;
+
+  const total = baseInputCost + cachedReadCost + cacheWriteCost + outputCost;
   return Math.round(total * 1e8) / 1e8;
 }

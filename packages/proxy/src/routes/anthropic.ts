@@ -49,6 +49,8 @@ anthropicRouter.post(
         errorMessage: result.ok ? null : usage.errorMessage ?? `HTTP ${result.status}`,
         compressionApplied: req.promptLens?.compressionApplied,
         tokensSavedEstimate: req.promptLens?.tokensSavedEstimate,
+        cachedTokens: usage.cachedTokens,
+        cacheCreationTokens: usage.cacheCreationTokens,
       });
     } catch (err) {
       console.error("[anthropic] upstream error:", err);
