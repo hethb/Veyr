@@ -87,7 +87,17 @@ async function initProxyInput() {
   });
 }
 
+async function initKeyInput() {
+  const input = document.getElementById("key");
+  const { promptlensKey } = await chrome.storage.local.get("promptlensKey");
+  input.value = promptlensKey || "";
+  input.addEventListener("change", () => {
+    chrome.storage.local.set({ promptlensKey: input.value.trim() });
+  });
+}
+
 initProxyInput();
+initKeyInput();
 initClear();
 load();
 loadHistory();

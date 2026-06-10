@@ -40,31 +40,78 @@ export function Dashboard() {
   const [templatesLoading, setTemplatesLoading] = useState(true);
   const [templatesError, setTemplatesError] = useState<string | null>(null);
 
+  // Bumping `tick` triggers all four data fetches. We start it at 0 (initial
+  // load → shows skeletons), then a 5s timer increments it so any new traffic
+  // (browser-extension web chats, SDK calls, CLI traffic) appears live without
+  // a manual refresh. Polling pauses when the tab is hidden to save battery.
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    let timer: number | undefined;
+    const start = () => {
+      if (timer === undefined) {
+        timer = window.setInterval(() => setTick((n) => n + 1), 5000);
+      }
+    };
+    const stop = () => {
+      if (timer !== undefined) {
+        window.clearInterval(timer);
+        timer = undefined;
+      }
+    };
+    if (document.visibilityState === "visible") start();
+    const onVis = () => {
+      if (document.visibilityState === "visible") {
+        setTick((n) => n + 1); // immediate refresh on focus
+        start();
+      } else {
+        stop();
+      }
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, []);
+
+  // On subsequent ticks (tick > 0) we refetch silently — no skeleton flicker.
+  const isInitial = tick === 0;
+
   useEffect(() => {
     let cancel = false;
-    setOverviewError(null);
+    if (isInitial) setOverviewError(null);
     getOverview()
       .then((d) => {
-        if (!cancel) setOverview(d);
+        if (!cancel) {
+          setOverview(d);
+          setOverviewError(null);
+        }
       })
       .catch((e: unknown) => {
-        if (!cancel) setOverviewError(e instanceof Error ? e.message : "Failed");
+        if (!cancel && isInitial) {
+          setOverviewError(e instanceof Error ? e.message : "Failed");
+        }
       });
     return () => {
       cancel = true;
     };
-  }, []);
+  }, [tick, isInitial]);
 
   useEffect(() => {
     let cancel = false;
-    setSeriesLoading(true);
-    setSeriesError(null);
+    if (isInitial) {
+      setSeriesLoading(true);
+      setSeriesError(null);
+    }
     getTimeseries(period, "day")
       .then((d) => {
-        if (!cancel) setSeries(d);
+        if (!cancel) {
+          setSeries(d);
+          setSeriesError(null);
+        }
       })
       .catch((e: unknown) => {
-        if (!cancel) setSeriesError(e instanceof Error ? e.message : "Failed");
+        if (!cancel && isInitial) setSeriesError(e instanceof Error ? e.message : "Failed");
       })
       .finally(() => {
         if (!cancel) setSeriesLoading(false);
@@ -72,18 +119,23 @@ export function Dashboard() {
     return () => {
       cancel = true;
     };
-  }, [period]);
+  }, [period, tick, isInitial]);
 
   useEffect(() => {
     let cancel = false;
-    setTagLoading(true);
-    setTagError(null);
+    if (isInitial) {
+      setTagLoading(true);
+      setTagError(null);
+    }
     getByTag(period)
       .then((d) => {
-        if (!cancel) setTagData(d);
+        if (!cancel) {
+          setTagData(d);
+          setTagError(null);
+        }
       })
       .catch((e: unknown) => {
-        if (!cancel) setTagError(e instanceof Error ? e.message : "Failed");
+        if (!cancel && isInitial) setTagError(e instanceof Error ? e.message : "Failed");
       })
       .finally(() => {
         if (!cancel) setTagLoading(false);
@@ -91,18 +143,23 @@ export function Dashboard() {
     return () => {
       cancel = true;
     };
-  }, [period]);
+  }, [period, tick, isInitial]);
 
   useEffect(() => {
     let cancel = false;
-    setTemplatesLoading(true);
-    setTemplatesError(null);
+    if (isInitial) {
+      setTemplatesLoading(true);
+      setTemplatesError(null);
+    }
     getTopTemplates(10)
       .then((d) => {
-        if (!cancel) setTemplates(d);
+        if (!cancel) {
+          setTemplates(d);
+          setTemplatesError(null);
+        }
       })
       .catch((e: unknown) => {
-        if (!cancel) setTemplatesError(e instanceof Error ? e.message : "Failed");
+        if (!cancel && isInitial) setTemplatesError(e instanceof Error ? e.message : "Failed");
       })
       .finally(() => {
         if (!cancel) setTemplatesLoading(false);
@@ -110,7 +167,7 @@ export function Dashboard() {
     return () => {
       cancel = true;
     };
-  }, []);
+  }, [tick, isInitial]);
 
   const overviewLoading = overview === null && overviewError === null;
 

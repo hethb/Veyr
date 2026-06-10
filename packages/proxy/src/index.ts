@@ -13,6 +13,7 @@ import { keysRouter } from "./routes/keys.js";
 import { policiesRouter } from "./routes/policies.js";
 import { analysisRouter } from "./routes/analysis.js";
 import { convertRouter } from "./routes/convert.js";
+import { ingestRouter } from "./routes/ingest.js";
 import { dashboardAuth } from "./middleware/dashboardAuth.js";
 import { getOpenAIUpstreamUrl, isAuthEnabled } from "./config.js";
 
@@ -49,6 +50,11 @@ app.get("/health", (_req: Request, res: Response) => {
 
 app.use("/openai", openaiRouter);
 app.use("/anthropic", anthropicRouter);
+// /ingest is for clients that didn't go through the proxy (e.g. the browser
+// extension capturing chats on chatgpt.com / claude.ai). Same key auth as the
+// LLM routes — NOT dashboardAuth — so it works with PROMPTLENS_ALLOW_ANON in
+// local single-tenant mode.
+app.use("/ingest", ingestRouter);
 // dashboardAuth is a pass-through unless AUTH_ENABLED=true, in which case it
 // requires a Supabase token and scopes each request to req.userId.
 app.use("/api/stats", dashboardAuth, statsRouter);
