@@ -336,17 +336,42 @@ Load it via `chrome://extensions` → **Developer mode** → **Load unpacked** �
 select `packages/browser-extension`. No build step. See its
 [README](packages/browser-extension/README.md).
 
+### Terminal CLI
+
+`packages/cli` is the `promptlens` command — spend, suggestions, policies, and
+request logs from your terminal:
+
+```bash
+npm install -g @promptlens/cli   # or: npx @promptlens/cli init
+
+promptlens status                # proxy health + today/week/month spend
+promptlens suggestions           # optimization tips with ready-to-run commands
+promptlens policy set summarizer --model gpt-4o-mini --budget 50
+promptlens logs --follow         # tail requests as they hit the proxy
+promptlens integrate claude-code # route Claude Code through the proxy
+```
+
+`promptlens init` walks new users through local/hosted setup, key verification,
+and an integration (OpenAI SDK, Anthropic SDK, Claude Code, Cursor, or plain
+env vars). Config lives in `~/.promptlens/config.json`, shared with the desktop
+app. See its [README](packages/cli/README.md).
+
 ### Desktop app
 
 `packages/desktop` is an Electron app for a zero-terminal local experience: it
-auto-starts the proxy, opens the dashboard in a native window, and shows today's
-spend in the menu-bar tray. From the repo root:
+auto-starts the proxy (ports 3001-3010, first free wins), opens the dashboard
+in a native window, and lives in the menu-bar tray with live today/month spend,
+proxy status, copy-key/URL actions, and a start-at-login toggle. First launch
+shows a setup window with a freshly minted demo API key. From the repo root:
 
 ```bash
 npm run desktop
 ```
 
-See its [README](packages/desktop/README.md).
+Distributables (dmg/zip, nsis, AppImage/deb) build with `npm run dist:mac` /
+`dist:win` / `dist:linux` inside `packages/desktop` — replace the placeholder
+icons in `packages/desktop/assets/` before publishing. See its
+[README](packages/desktop/README.md).
 
 ### VSCode extension (+ Claude Code)
 
@@ -364,7 +389,9 @@ Then run **PromptLens: Route Claude Code through proxy** — it sets
 it. See its [README](packages/vscode-extension/README.md).
 
 > `PROMPTLENS_ALLOW_ANON=true` attributes traffic that arrives without an
-> `x-promptlens-key` to your default key. Intended for local single-tenant use.
+> `x-promptlens-key` to a dedicated "Anonymous (local tools)" key, tagged by
+> User-Agent (`claude-code-cli`, `cursor`, `python-script`, `node-script`).
+> Intended for local single-tenant use.
 
 ## vs Helicone
 
@@ -389,9 +416,13 @@ what you spent."
 ```
 promptlens/
 ├── packages/
-│   ├── proxy/          # Express proxy server (Node, TypeScript) — local SQLite store
-│   ├── dashboard/      # React + Vite + Tailwind + Recharts dashboard
-│   └── sdk/            # npm-publishable SDK wrapper (`promptlens`)
+│   ├── proxy/              # Express proxy server (Node, TypeScript) — local SQLite store
+│   ├── dashboard/          # React + Vite + Tailwind + Recharts dashboard
+│   ├── sdk/                # npm-publishable SDK wrapper (`promptlens`)
+│   ├── cli/                # `promptlens` terminal CLI (status, policies, logs, integrations)
+│   ├── desktop/            # Electron app: tray spend, auto-started proxy, installers
+│   ├── vscode-extension/   # PromptLens panel + Claude Code routing for VSCode
+│   └── browser-extension/  # Chrome MV3 overlay for chatgpt.com / claude.ai
 ├── examples/           # runnable customer integration demo
 ├── package.json        # workspace root
 └── .env.example
