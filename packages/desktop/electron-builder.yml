@@ -1,0 +1,50 @@
+# PromptLens desktop packaging.
+#
+# The proxy's runtime deps (express, better-sqlite3, ...) are declared as
+# dependencies of this package so electron-builder bundles them; the proxy and
+# dashboard builds themselves are copied in via extraResources. main.ts points
+# the forked proxy at them with NODE_PATH when app.isPackaged.
+#
+# asar is disabled for now so the forked proxy child can resolve modules from
+# plain files; revisit (asar + asarUnpack) once packaging is battle-tested.
+
+appId: dev.promptlens.app
+productName: PromptLens
+directories:
+  output: dist-electron
+asar: false
+files:
+  - dist/**
+  - setup.html
+  - node_modules/**
+extraResources:
+  - from: ../proxy/dist
+    to: proxy
+  - from: ../dashboard/dist
+    to: dashboard
+  - from: setup.html
+    to: setup.html
+mac:
+  category: public.app-category.developer-tools
+  icon: assets/icon.icns
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+    - target: zip
+      arch: [x64, arm64]
+win:
+  icon: assets/icon.ico
+  target:
+    - target: nsis
+      arch: [x64]
+linux:
+  icon: assets/icon.png
+  target:
+    - target: AppImage
+      arch: [x64]
+    - target: deb
+      arch: [x64]
+publish:
+  provider: github
+  owner: YOUR_GITHUB_USERNAME
+  repo: promptlens
