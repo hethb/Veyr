@@ -488,22 +488,18 @@ Unset `OPENAI_UPSTREAM_URL` (or set it to `https://api.openai.com/v1/chat/comple
 
 ## Deployment
 
-### Proxy → Railway
+For a full, copy-paste step-by-step (Supabase + Fly.io + Vercel), see
+[**DEPLOY.md**](./DEPLOY.md). Headline summary:
 
-1. Create a new Railway project. Add the PromptLens repo and set the **root directory** to `packages/proxy`.
-2. Set the **Build command** to `npm install --workspaces && npm run build:proxy` (run from repo root).
-3. Set the **Start command** to `node packages/proxy/dist/index.js`.
-4. Add environment variables: `PORT` (Railway sets this automatically), `DASHBOARD_ORIGIN` (your Vercel URL, comma-separated if multiple), `OPENAI_UPSTREAM_URL` (optional), and `PROMPTLENS_DB_PATH` pointing at a mounted volume so the SQLite store persists across deploys.
-5. Deploy. Note the public URL. Run `npm run seed` (or create a key in the dashboard) once against the volume to mint a key.
+| Component | Platform | Config file |
+|---|---|---|
+| Proxy (Node + SQLite) | Fly.io | `Dockerfile`, `fly.toml` |
+| Dashboard (Vite SPA) | Vercel | `packages/dashboard/vercel.json` |
+| Auth (multi-tenant) | Supabase | env vars only |
 
-### Dashboard → Vercel
-
-1. Import the repo into Vercel.
-2. Set the **root directory** to `packages/dashboard`.
-3. Build command: `npm run build` (Vercel detects Vite automatically).
-4. Output directory: `dist`.
-5. Environment variables: `VITE_PROXY_URL` (your Railway URL).
-6. Deploy.
+Alternative: `render.yaml` is kept in the repo for one-click Render
+deployments — same shape (Node web service + persistent disk for SQLite),
+just a different host.
 
 ### Update SDK consumers
 

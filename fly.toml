@@ -1,0 +1,63 @@
+# Fly.io configuration for the PromptLens proxy.
+#
+# This is a template — change `app` to your own app name before `fly deploy`.
+# See DEPLOY.md for the full step-by-step.
+#
+# Architecture note: PromptLens stores keys + request logs in a local SQLite
+# file. To keep the DB consistent we run a single machine in one region with
+# `min_machines_running = 1`. If you outgrow that, migrate to Postgres first.
+
+app = "promptlens-proxy"          # change me — must be globally unique on Fly
+primary_region = "iad"            # us-east; pick the region closest to your users
+
+# The image is built from the repo's Dockerfile.
+[build]
+  dockerfile = "Dockerfile"
+
+# Public HTTP service. Fly terminates TLS at the edge and forwards to PORT.
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "off"      # keep the machine warm so SQLite stays open
+  auto_start_machines = true
+  min_machines_running = 1        # single-writer SQLite — never scale > 1
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 80
+    hard_limit = 200
+
+# Health check uses the existing /health endpoint.
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "30s"
+  method = "get"
+  path = "/health"
+  protocol = "http"
+  timeout = "5s"
+
+# Persistent volume for SQLite. Create it once with:
+#   fly volumes create promptlens_data --size 1 --region <primary_region>
+[mounts]
+  source = "promptlens_data"
+  destination = "/data"
+
+# Non-secret env. Secrets (Supabase keys, etc.) are set via `fly secrets set`.
+[env]
+  NODE_ENV = "production"
+  PORT = "8080"
+  PROMPTLENS_DB_PATH = "/data/promptlens.db"
+  # Default OpenAI-compatible upstream. Groq's free tier is a sensible default
+  # so new signups can hit "send" without bringing their own provider key.
+  OPENAI_UPSTREAM_URL = "https://api.groq.com/openai/v1/chat/completions"
+  # Keep raw prompts off the disk by default (privacy / disk-budget).
+  STORE_PROMPTS = "false"
+  AUTH_ENABLED = "true"
+  # DASHBOARD_ORIGIN is set as a secret after the dashboard URL is known.
+
+# Smallest reasonable VM. Bump cpu_kind to "performance" if you see CPU pressure.
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

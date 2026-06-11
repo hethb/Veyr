@@ -1,0 +1,35 @@
+# Keep the build context small and reproducible.
+.git
+.gitignore
+.env
+.env.*
+.promptlens-dev-key
+
+# Locally-built artefacts — the image builds these from source.
+**/node_modules
+**/dist
+**/.promptlens
+**/*.tsbuildinfo
+
+# IDE / OS noise
+.vscode
+.idea
+.DS_Store
+
+# Docs / examples / scripts — none are needed in the runtime image.
+README.md
+QUICKSTART.md
+ROADMAP.md
+ATTRIBUTIONS.md
+DEPLOY.md
+examples
+scripts
+
+# Other packages aren't needed in the proxy image (dashboard ships on Vercel).
+packages/dashboard/dist
+packages/dashboard/src
+packages/sdk/dist
+packages/sdk/src
+
+# The nested checkout of this repo inside itself (one user's local quirk).
+PromptLens
