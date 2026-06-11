@@ -16,6 +16,7 @@ import {
   integrateShell,
   type ClaudeCodeOptions,
 } from "./commands/integrate.js";
+import { initCommand } from "./commands/init.js";
 
 const require = createRequire(import.meta.url);
 const { version } = require("../package.json") as { version: string };
@@ -26,6 +27,11 @@ program
   .name("promptlens")
   .description("PromptLens terminal CLI — monitor LLM costs from your terminal")
   .version(version);
+
+program
+  .command("init")
+  .description("Interactive setup — connect to a proxy and pick an integration")
+  .action(() => run(initCommand));
 
 program
   .command("status")
