@@ -1,0 +1,35 @@
+{
+  "name": "@promptlens/cli",
+  "version": "0.1.0",
+  "description": "PromptLens terminal CLI — monitor LLM costs from your terminal",
+  "type": "module",
+  "bin": {
+    "promptlens": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "commander": "^12.0.0",
+    "chalk": "^5.3.0",
+    "ora": "^8.0.0",
+    "cli-table3": "^0.6.3",
+    "node-fetch": "^3.3.2",
+    "inquirer": "^9.0.0",
+    "open": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^22.7.0",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

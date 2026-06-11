@@ -291,6 +291,39 @@ export function getRequestsSince(
     .all(sinceIso) as RequestRow[];
 }
 
+export interface RecentRequestRow {
+  id: string;
+  timestamp: string;
+  model: string;
+  feature_tag: string | null;
+  total_tokens: number;
+  cost_usd: number;
+}
+
+/** Most recent requests, newest first — backs `GET /api/stats/recent`. */
+export function getRecentRequests(opts: {
+  limit: number;
+  tag?: string | null;
+  userId?: string | null;
+}): RecentRequestRow[] {
+  const where: string[] = [];
+  const params: unknown[] = [];
+  if (opts.tag) {
+    where.push("feature_tag = ?");
+    params.push(opts.tag);
+  }
+  if (opts.userId) {
+    where.push("api_key_id IN (SELECT id FROM api_keys WHERE user_id = ?)");
+    params.push(opts.userId);
+  }
+  const sql = `SELECT id, timestamp, model, feature_tag, total_tokens, cost_usd
+       FROM requests
+       ${where.length > 0 ? `WHERE ${where.join(" AND ")}` : ""}
+       ORDER BY timestamp DESC
+       LIMIT ?`;
+  return getDb().prepare(sql).all(...params, opts.limit) as RecentRequestRow[];
+}
+
 // ---------------------------------------------------------------------------
 // Governance
 // ---------------------------------------------------------------------------

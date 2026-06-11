@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import {
+  getRecentRequests,
   getRequestsForAnalysis,
   getRequestsSince,
   type AnalysisRow,
@@ -99,6 +100,24 @@ statsRouter.get("/overview", (req: Request, res: Response): void => {
   } catch (err) {
     console.error("[stats/overview] failed:", err);
     res.status(500).json({ error: "Failed to load overview" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/stats/recent?limit=20&tag=<feature-tag>
+//   Most recent requests, newest first. Backs `promptlens logs [--follow]`.
+// ---------------------------------------------------------------------------
+
+statsRouter.get("/recent", (req: Request, res: Response): void => {
+  const rawLimit = Number(req.query.limit);
+  const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(Math.trunc(rawLimit), 1), 200) : 20;
+  const tag = typeof req.query.tag === "string" && req.query.tag.trim() ? req.query.tag.trim() : null;
+
+  try {
+    res.json(getRecentRequests({ limit, tag, userId: req.userId }));
+  } catch (err) {
+    console.error("[stats/recent] failed:", err);
+    res.status(500).json({ error: "Failed to load recent requests" });
   }
 });
 
