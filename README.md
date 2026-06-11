@@ -317,13 +317,20 @@ PromptLens surfaces its data where you actually work — not just the dashboard.
 ### Browser extension (ChatGPT & Claude)
 
 `packages/browser-extension` is a Chrome MV3 overlay for **chatgpt.com** and
-**claude.ai**. Since web chats don't route through the proxy, it works two ways:
+**claude.ai**. Since web chats don't route through the proxy, it works three
+ways:
 
 - **Local estimate (always on)** — a floating widget shows live token counts for
   the conversation and your draft, an estimated input cost, and rule-based
   prompt-optimization tips as you type.
-- **Proxy data (when reachable)** — if the proxy is running, the widget and popup
-  also show your real logged spend and your top optimization suggestion.
+- **Live ingest into the dashboard** — every send is also POSTed to
+  `/ingest/web-chat` on the proxy. The dashboard polls every 5s, so web chats
+  show up in the cost-by-feature and time-series charts immediately
+  (tagged `web-chatgpt` / `web-claude`). Single-tenant mode needs
+  `PROMPTLENS_ALLOW_ANON=true` on the proxy and at least one API key minted;
+  hosted/multi-tenant deployments use the **API key** field in the popup.
+- **Proxy data (when reachable)** — the widget and popup also show your real
+  logged spend and your top optimization suggestion.
 
 Load it via `chrome://extensions` → **Developer mode** → **Load unpacked** →
 select `packages/browser-extension`. No build step. See its

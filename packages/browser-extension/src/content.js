@@ -41,6 +41,7 @@
         );
       },
       conversationSelectors: ["[data-message-author-role]"],
+      assistantSelectors: ['[data-message-author-role="assistant"]'],
     },
     claude: {
       name: "Claude",
@@ -58,6 +59,9 @@
         );
       },
       conversationSelectors: ["[data-testid='user-message']", ".font-claude-message"],
+      // Claude wraps each assistant turn in `.font-claude-message`; the legacy
+      // `[data-testid="claude-message"]` covers older layouts.
+      assistantSelectors: ['.font-claude-message', '[data-testid="claude-message"]'],
     },
   };
   const P = PLATFORMS[SITE];
@@ -181,16 +185,105 @@
     const now = Date.now();
     if (now - lastLoggedAt < 1200) return;
     lastLoggedAt = now;
+    const promptTokens = estimateTokens(text);
     const summary = await sendBg({
       type: "promptlens-log",
       entry: {
         site: SITE,
-        tokens: estimateTokens(text),
+        tokens: promptTokens,
         chars: text.length,
         preview: text.slice(0, 140),
       },
     });
     if (summary) renderHistory(summary);
+
+    // Kick off response capture in the background. Once the assistant message
+    // stops growing, we ingest a single proxy row with both prompt and
+    // completion tokens — gives the dashboard accurate cost, not just input.
+    captureAssistantResponse((completionText) => {
+      const completionTokens = estimateTokens(completionText);
+      void sendBg({
+        type: "promptlens-ingest",
+        entry: {
+          site: SITE,
+          prompt: text.slice(0, 4000),
+          promptTokens,
+          completionTokens,
+          preview: text.slice(0, 140),
+        },
+      });
+    });
+  }
+
+  // ---- assistant-response capture ------------------------------------------
+  //
+  // After we log a send, the LLM's response streams into the DOM. We watch the
+  // assistant message that didn't exist before we sent, debounce on its text
+  // length stabilizing (1.5s of no change), and call back with the final text.
+  // Hard timeout caps wait at 45s so a never-finishing response can't pile up
+  // dangling observers.
+  function captureAssistantResponse(onComplete) {
+    const selectors = P.assistantSelectors || [];
+    if (selectors.length === 0) {
+      onComplete("");
+      return;
+    }
+
+    // Snapshot existing assistant messages so we only watch the new one(s).
+    const existing = new Set();
+    for (const sel of selectors) {
+      for (const node of document.querySelectorAll(sel)) existing.add(node);
+    }
+
+    let lastText = "";
+    let lastChangedAt = Date.now();
+    let resolved = false;
+    const STABLE_MS = 1500;
+    const HARD_TIMEOUT_MS = 45000;
+    const POLL_MS = 400;
+
+    const observer = new MutationObserver(() => {
+      if (resolved) return;
+      let combined = "";
+      for (const sel of selectors) {
+        for (const node of document.querySelectorAll(sel)) {
+          if (existing.has(node)) continue;
+          combined += (node.innerText || "") + "\n";
+        }
+      }
+      const text = combined.trim();
+      if (text && text !== lastText) {
+        lastText = text;
+        lastChangedAt = Date.now();
+      }
+    });
+
+    try {
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    } catch {
+      onComplete("");
+      return;
+    }
+
+    const poll = setInterval(() => {
+      if (resolved) return;
+      if (lastText && Date.now() - lastChangedAt > STABLE_MS) finish(lastText);
+    }, POLL_MS);
+
+    const hard = setTimeout(() => finish(lastText), HARD_TIMEOUT_MS);
+
+    function finish(text) {
+      if (resolved) return;
+      resolved = true;
+      try { observer.disconnect(); } catch { /* ignore */ }
+      clearInterval(poll);
+      clearTimeout(hard);
+      onComplete(text || "");
+    }
   }
 
   const fmtTok = (t) => (t >= 1000 ? `${(t / 1000).toFixed(1)}k` : `${t}`);

@@ -16,6 +16,15 @@ async function getBase() {
   }
 }
 
+async function getKey() {
+  try {
+    const { promptlensKey } = await chrome.storage.local.get("promptlensKey");
+    return typeof promptlensKey === "string" ? promptlensKey.trim() : "";
+  } catch {
+    return "";
+  }
+}
+
 async function fetchJson(path) {
   const base = await getBase();
   const res = await fetch(`${base}${path}`, {
@@ -23,6 +32,35 @@ async function fetchJson(path) {
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
+}
+
+/**
+ * Forward a web-chat send to the proxy so it lands in the dashboard. Fully
+ * silent on failure — the proxy might be offline (local dev) or unreachable
+ * (hosted), and the user's chat must never be blocked by us. Called by the
+ * content script AFTER its MutationObserver has captured the assistant
+ * response, so we have both prompt and completion token counts.
+ */
+async function ingestWebChat(entry) {
+  try {
+    const base = await getBase();
+    const key = await getKey();
+    const headers = { "content-type": "application/json", accept: "application/json" };
+    if (key) headers["x-promptlens-key"] = key;
+    await fetch(`${base}/ingest/web-chat`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        site: entry.site,
+        prompt: entry.prompt || entry.preview || "",
+        promptTokens: entry.promptTokens ?? entry.tokens ?? 0,
+        completionTokens: entry.completionTokens ?? 0,
+        featureTag: entry.site === "claude" ? "web-claude" : "web-chatgpt",
+      }),
+    });
+  } catch {
+    /* proxy offline or unreachable — fine, history is still kept locally */
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -88,6 +126,9 @@ async function logEntry(entry) {
   }
 
   await saveUsage(u);
+  // NOTE: we no longer auto-ingest here. The content script triggers ingest
+  // explicitly (via `promptlens-ingest`) once the assistant response has
+  // stabilized — giving the proxy accurate prompt + completion tokens.
   return summarize(u);
 }
 
@@ -122,6 +163,13 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       .then((summary) => sendResponse({ ok: true, data: summary }))
       .catch(() => sendResponse({ ok: false }));
     return true;
+  }
+
+  if (msg.type === "promptlens-ingest") {
+    // Fire-and-forget; we don't block the content script on proxy availability.
+    void ingestWebChat(msg.entry || {});
+    sendResponse({ ok: true });
+    return false;
   }
 
   if (msg.type === "promptlens-usage") {
