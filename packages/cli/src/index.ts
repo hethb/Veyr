@@ -10,6 +10,12 @@ import { suggestionsCommand } from "./commands/suggestions.js";
 import { policyListCommand, policySetCommand, type PolicySetOptions } from "./commands/policy.js";
 import { logsCommand, type LogsOptions } from "./commands/logs.js";
 import { configCommand } from "./commands/configCmd.js";
+import {
+  integrateClaudeCode,
+  integrateCursor,
+  integrateShell,
+  type ClaudeCodeOptions,
+} from "./commands/integrate.js";
 
 const require = createRequire(import.meta.url);
 const { version } = require("../package.json") as { version: string };
@@ -57,6 +63,27 @@ program
   .option("--limit <n>", "number of rows", "20")
   .option("--follow", "poll for new requests every 2s, like tail -f")
   .action((opts: LogsOptions) => run(() => logsCommand(opts)));
+
+const integrate = program
+  .command("integrate")
+  .description("Route terminal tools (Claude Code, Cursor, shell scripts) through PromptLens");
+
+integrate
+  .command("claude-code")
+  .description("Route Claude Code through the PromptLens proxy")
+  .option("--write", "append the export line to your shell profile")
+  .option("--check", "verify ANTHROPIC_BASE_URL is set in the current shell")
+  .action((opts: ClaudeCodeOptions) => run(() => integrateClaudeCode(opts)));
+
+integrate
+  .command("cursor")
+  .description("Route Cursor through the PromptLens proxy")
+  .action(() => run(integrateCursor));
+
+integrate
+  .command("shell")
+  .description("Print env vars + helper function for any OpenAI/Anthropic script")
+  .action(() => run(integrateShell));
 
 program
   .command("config")

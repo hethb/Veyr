@@ -13,7 +13,8 @@ const MAX_LEN = 64;
  *   1. Explicit `x-feature-tag` header
  *   2. `x-request-path` header
  *   3. `Referer` URL pathname
- *   4. fallback: "untagged"
+ *   4. `User-Agent` inference (CLI tools that can't set custom headers)
+ *   5. fallback: "untagged"
  *
  * Path-derived tags are normalized: leading `/` stripped, query stripped,
  * remaining `/` replaced with `_`, truncated to 64 chars.
@@ -31,8 +32,28 @@ export function featureTag(
   }
 
   const path = headerString(req, "x-request-path") ?? extractRefererPath(req);
-  req.featureTag = path ? pathToTag(path) : "untagged";
+  req.featureTag = path ? pathToTag(path) : userAgentTag(req) ?? "untagged";
   next();
+}
+
+// Known CLI/SDK User-Agent prefixes -> feature tags, checked in order.
+// "claude-cli" is what Claude Code actually sends today.
+const UA_TAG_PREFIXES: ReadonlyArray<readonly [string, string]> = [
+  ["claude-code", "claude-code-cli"],
+  ["claude-cli", "claude-code-cli"],
+  ["cursor", "cursor"],
+  ["python-httpx", "python-script"],
+  ["node-fetch", "node-script"],
+  ["undici", "node-script"],
+];
+
+function userAgentTag(req: Request): string | null {
+  const ua = headerString(req, "user-agent")?.toLowerCase();
+  if (!ua) return null;
+  for (const [prefix, tag] of UA_TAG_PREFIXES) {
+    if (ua.startsWith(prefix)) return tag;
+  }
+  return null;
 }
 
 function headerString(req: Request, name: string): string | null {

@@ -55,8 +55,9 @@ function resolveBase(config: PromptLensConfig): string {
 }
 
 /**
- * Reads PROMPTLENS_KEY (and optional PROMPTLENS_BASE_URL) from the environment,
- * or uses values passed in `overrides`.
+ * Reads PROMPTLENS_KEY (and optional PROMPTLENS_BASE_URL /
+ * PROMPTLENS_FEATURE_TAG) from the environment, or uses values passed in
+ * `overrides`.
  */
 export function resolvePromptLensConfig(
   overrides?: Partial<PromptLensConfig>
@@ -74,7 +75,9 @@ export function resolvePromptLensConfig(
   return {
     apiKey: apiKey.trim(),
     baseUrl: overrides?.baseUrl,
-    feature: overrides?.feature,
+    feature:
+      overrides?.feature ??
+      (typeof process !== "undefined" ? process.env.PROMPTLENS_FEATURE_TAG : undefined),
     compress: overrides?.compress,
     enablePromptCaching: overrides?.enablePromptCaching,
     maxCompletionTokens: overrides?.maxCompletionTokens,

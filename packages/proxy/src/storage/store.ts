@@ -83,15 +83,21 @@ export function findApiKeysByPrefix(
 }
 
 /**
- * The oldest API key id, used as the implicit owner for anonymous local
- * traffic (e.g. Claude Code) when `PROMPTLENS_ALLOW_ANON=true`. Returns null
- * if no keys exist yet.
+ * Fixed owner for anonymous local traffic (e.g. Claude Code) when
+ * `PROMPTLENS_ALLOW_ANON=true`. The row is created on first use; its
+ * key_hash ("!") can never match a bcrypt comparison, so the id exists for
+ * attribution only and is not a usable credential.
  */
-export function getDefaultApiKeyId(): string | null {
-  const row = getDb()
-    .prepare("SELECT id FROM api_keys ORDER BY created_at ASC LIMIT 1")
-    .get() as { id: string } | undefined;
-  return row?.id ?? null;
+export const ANON_API_KEY_ID = "00000000-0000-0000-0000-000000000002";
+
+export function ensureAnonApiKey(): string {
+  getDb()
+    .prepare(
+      `INSERT OR IGNORE INTO api_keys (id, key_hash, key_prefix, name, created_at)
+       VALUES (?, '!', 'anon', 'Anonymous (local tools)', ?)`
+    )
+    .run(ANON_API_KEY_ID, new Date().toISOString());
+  return ANON_API_KEY_ID;
 }
 
 export function touchKeyLastUsed(id: string): void {

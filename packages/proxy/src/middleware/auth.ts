@@ -1,8 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import {
+  ensureAnonApiKey,
   findApiKeysByPrefix,
-  getDefaultApiKeyId,
   touchKeyLastUsed,
 } from "../storage/store.js";
 import { cacheVerifiedKey, getCachedKey, keyPrefix } from "../utils/keys.js";
@@ -34,12 +34,15 @@ export async function apiKeyAuth(
   if (!raw) {
     // Local single-tenant convenience: tools like Claude Code can't send a
     // PromptLens key. When PROMPTLENS_ALLOW_ANON=true we attribute their
-    // traffic to the default (oldest) key so it still gets logged.
+    // traffic to a fixed "anon" key id so it still gets logged.
     if (process.env.PROMPTLENS_ALLOW_ANON === "true") {
-      const fallbackId = getDefaultApiKeyId();
-      if (fallbackId) {
-        req.apiKeyId = fallbackId;
+      try {
+        req.apiKeyId = ensureAnonApiKey();
         next();
+        return;
+      } catch (err) {
+        console.error("[auth] anon key setup failed:", err);
+        res.status(500).json({ error: "Internal authentication error" });
         return;
       }
     }
