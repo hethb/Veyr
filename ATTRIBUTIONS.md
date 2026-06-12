@@ -1,6 +1,6 @@
 # Third-party attributions
 
-PromptLens incorporates ideas — and in places, a re-implementation in
+Canopy incorporates ideas — and in places, a re-implementation in
 TypeScript of the conversion behaviour — from the following open-source
 projects. Their original licenses are preserved below.
 
@@ -13,7 +13,7 @@ The Document → Markdown feature (`packages/proxy/src/conversion/` and the
 [MarkItDown](https://github.com/microsoft/markitdown) — a Python utility for
 converting various file formats into Markdown for LLM consumption.
 
-PromptLens does NOT bundle the MarkItDown source. The conversion code is a
+Canopy does NOT bundle the MarkItDown source. The conversion code is a
 clean-room TypeScript reimplementation tailored to the formats Node.js can
 handle without a Python runtime (HTML, CSV/TSV, JSON, XML, plain text, plus
 PDF via `pdf-parse` and DOCX via `mammoth`). Behavioural choices that mirror
@@ -46,7 +46,7 @@ MIT License
  SOFTWARE
 ```
 
-If you need the formats PromptLens doesn't yet cover (PPTX, XLSX, EPUB,
+If you need the formats Canopy doesn't yet cover (PPTX, XLSX, EPUB,
 audio/video, OCR), use the original MarkItDown directly — it's significantly
 more complete in those areas.
 

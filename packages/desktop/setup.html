@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Welcome to PromptLens</title>
+  <title>Welcome to Canopy</title>
   <style>
     :root { color-scheme: dark; }
     body {
@@ -57,7 +57,25 @@
   </style>
 </head>
 <body>
-  <h1>PromptLens is running on your machine 🎉</h1>
+  <div style="margin-bottom:18px">
+    <svg viewBox="0 0 48 48" width="56" height="56" aria-hidden="true">
+      <defs>
+        <linearGradient id="arc1" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#5EA2FF"/><stop offset="1" stop-color="#2E6BFF"/>
+        </linearGradient>
+        <linearGradient id="arc2" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#3E7BFF"/><stop offset="1" stop-color="#1D4ED8"/>
+        </linearGradient>
+      </defs>
+      <rect width="48" height="48" rx="11" fill="#0A0F1E"/>
+      <path d="M 8 21 A 18 18 0 0 1 40 21" fill="none" stroke="url(#arc1)" stroke-width="4.4" stroke-linecap="round"/>
+      <path d="M 14 26.5 A 12 12 0 0 1 34 26.5" fill="none" stroke="url(#arc2)" stroke-width="3.6" stroke-linecap="round"/>
+      <circle cx="24" cy="33" r="2.3" fill="#3E7BFF"/>
+      <circle cx="24" cy="38.6" r="2" fill="#3E7BFF"/>
+      <circle cx="24" cy="43.6" r="1.7" fill="#3E7BFF"/>
+    </svg>
+  </div>
+  <h1>Canopy is running on your machine 🎉</h1>
   <p class="sub">The local proxy is up. Point your LLM calls at it and every request, token, and dollar shows up in the dashboard.</p>
 
   <h2>Your demo API key</h2>

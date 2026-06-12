@@ -1,4 +1,4 @@
-# PromptLens desktop packaging.
+# Canopy desktop packaging.
 #
 # The proxy's runtime deps (express, better-sqlite3, ...) are declared as
 # dependencies of this package so electron-builder bundles them; the proxy and
@@ -8,8 +8,9 @@
 # asar is disabled for now so the forked proxy child can resolve modules from
 # plain files; revisit (asar + asarUnpack) once packaging is battle-tested.
 
+# appId kept stable (functional identifier); productName is the visible brand.
 appId: dev.promptlens.app
-productName: PromptLens
+productName: Canopy
 directories:
   output: dist-electron
 asar: false

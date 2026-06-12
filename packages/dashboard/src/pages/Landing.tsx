@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import CanopyMark, { CanopyWordmark } from "../components/CanopyMark";
 import {
   ArrowRight,
   BarChart3,
@@ -53,11 +54,9 @@ function Header() {
       <div className="pointer-events-none fixed inset-x-0 top-0 z-50">
         <div className="pointer-events-auto absolute left-6 top-6">
           <a href="#top" className="flex items-center gap-3">
-            <span className="grid h-8 w-8 place-items-center border border-[#076EFF] bg-black text-sm font-bold text-[#4FABFF]">
-              PL
-            </span>
-            <span className="hidden text-base font-semibold tracking-tight text-white sm:inline">
-              PromptLens
+            <CanopyMark className="h-8 w-8" />
+            <span className="hidden sm:inline">
+              <CanopyWordmark className="text-base" />
             </span>
           </a>
         </div>
@@ -193,7 +192,7 @@ function GetRunning() {
       code: "npm run seed -- --reset",
     },
     {
-      title: "Route a CLI agent like Claude Code through PromptLens",
+      title: "Route a CLI agent like Claude Code through Canopy",
       code:
         "# enable local logging (in .env)\nPROMPTLENS_ALLOW_ANON=true\n\n" +
         "# point Claude Code at the proxy, then run it\nexport ANTHROPIC_BASE_URL=http://localhost:3001/anthropic\nclaude",
@@ -217,7 +216,7 @@ function GetRunning() {
       <div className="mx-auto max-w-6xl px-6 py-24">
         <SectionHeader
           eyebrow="Get started"
-          title="Two ways to run PromptLens"
+          title="Two ways to run Canopy"
           subtitle="Pick the surface that matches how you use LLMs. Both run on your machine — no cloud account required."
         />
 
@@ -283,7 +282,7 @@ function GetRunning() {
               </div>
             </div>
             <p className="mt-4 text-sm leading-relaxed text-neutral-500">
-              Want PromptLens right inside the{" "}
+              Want Canopy right inside the{" "}
               <span className="text-neutral-300">ChatGPT and Claude</span> web
               apps? The extension overlays live token &amp; cost estimates and
               suggests better prompts as you type — before you hit send. No proxy
@@ -402,7 +401,7 @@ function BuiltForSection() {
         <SectionHeader
           eyebrow="Built for teams"
           title="Costs are table stakes. We tell you what to do about them."
-          subtitle="PromptLens goes beyond spend totals — see which feature is responsible and how to spend less."
+          subtitle="Canopy goes beyond spend totals — see which feature is responsible and how to spend less."
         />
 
         <div className="mt-10 overflow-hidden border border-white/10">
@@ -493,11 +492,9 @@ function Footer() {
     <footer className="border-t border-white/10 bg-black">
       <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-3 px-6 py-8 text-xs text-neutral-600 sm:flex-row sm:items-center">
         <div className="flex items-center gap-2">
-          <span className="grid h-6 w-6 place-items-center border border-[#076EFF]/50 bg-black text-[10px] font-bold text-[#4FABFF]">
-            PL
-          </span>
+          <CanopyMark className="h-6 w-6" />
           <span className="flex items-center gap-1.5">
-            PromptLens v0.1
+            Canopy v0.1
             <Layers className="h-3 w-3 text-neutral-600" />
           </span>
         </div>

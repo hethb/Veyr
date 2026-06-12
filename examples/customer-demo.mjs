@@ -1,4 +1,4 @@
-// PromptLens customer demo — exactly how a customer integrates the product.
+// Canopy customer demo — exactly how a customer integrates the product.
 //
 // This is the whole integration: wrap the OpenAI client with promptlensOpenAI()
 // and keep using openai.chat.completions as normal. Every call is routed through
@@ -29,7 +29,7 @@ if (!LLM_KEY) {
   process.exit(1);
 }
 
-// --- The only PromptLens-specific code a customer writes ---
+// --- The only Canopy-specific code a customer writes ---
 function clientFor(feature) {
   return new OpenAI(
     promptlensOpenAI({
@@ -47,7 +47,7 @@ const calls = [
   { feature: "support-bot", prompt: "Say hello to a new customer in one short line." },
 ];
 
-console.log(`Routing ${calls.length} calls through PromptLens (${BASE_URL}) → model ${MODEL}\n`);
+console.log(`Routing ${calls.length} calls through Canopy (${BASE_URL}) → model ${MODEL}\n`);
 
 for (const { feature, prompt } of calls) {
   const openai = clientFor(feature);

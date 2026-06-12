@@ -1,6 +1,6 @@
-// PromptLens content overlay for ChatGPT and Claude.
+// Canopy content overlay for ChatGPT and Claude.
 //
-// Web chats don't route through the PromptLens proxy, so this widget:
+// Web chats don't route through the Canopy proxy, so this widget:
 //   1. Estimates tokens/cost locally from the page (conversation + live draft).
 //   2. Surfaces rule-based prompt suggestions as you type.
 //   3. Intercepts the send action (Enter / send button) to review and improve
@@ -366,7 +366,7 @@
   panel.innerHTML = `
     <div class="pl-head">
       <span class="pl-logo">PL</span>
-      <span class="pl-title">PromptLens</span>
+      <span class="pl-title">Canopy</span>
       <button class="pl-min" title="Minimize">–</button>
     </div>
     <div class="pl-body">
@@ -381,14 +381,14 @@
         <div class="pl-row"><span>Last 7 days</span><b id="pl-h-week">0 sent</b></div>
       </div>
       <div class="pl-proxy" id="pl-proxy">
-        <div class="pl-proxy-head">Your PromptLens proxy</div>
+        <div class="pl-proxy-head">Your Canopy proxy</div>
         <div class="pl-proxy-body" id="pl-proxy-body">Checking…</div>
       </div>
     </div>`;
   const bubble = document.createElement("button");
   bubble.className = "pl-bubble";
   bubble.textContent = "PL";
-  bubble.title = "Open PromptLens";
+  bubble.title = "Open Canopy";
   shadow.appendChild(panel);
   shadow.appendChild(bubble);
 

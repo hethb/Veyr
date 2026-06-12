@@ -1,4 +1,4 @@
-// PromptLens popup: shows proxy overview, local usage history, and lets you set
+// Canopy popup: shows proxy overview, local usage history, and lets you set
 // the proxy URL.
 
 const fmtUsd = (n) => `$${n.toFixed(n < 1 ? 4 : 2)}`;

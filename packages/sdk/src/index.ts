@@ -1,5 +1,5 @@
 /**
- * PromptLens SDK — drop-in LLM cost tracking for production apps.
+ * Canopy SDK — drop-in LLM cost tracking for production apps.
  *
  *   import OpenAI from "openai";
  *   import { promptlensOpenAI } from "promptlens";
@@ -8,14 +8,14 @@
  *     promptlensOpenAI({ apiKey: process.env.OPENAI_API_KEY! })
  *   );
  *
- * Set PROMPTLENS_KEY once (from the PromptLens dashboard). Every call is logged.
+ * Set PROMPTLENS_KEY once (from the Canopy dashboard). Every call is logged.
  */
 
 export interface PromptLensConfig {
   apiKey: string;
   /**
    * Override for self-hosted proxies. Defaults to PROMPTLENS_BASE_URL or the
-   * public PromptLens API.
+   * public Canopy API.
    */
   baseUrl?: string;
   /**
@@ -26,7 +26,7 @@ export interface PromptLensConfig {
   /** Layer 2: compress system/user prompts before upstream (proxy). */
   compress?: boolean;
   /**
-   * Layer 2: enable provider prompt caching. On Anthropic, PromptLens wraps
+   * Layer 2: enable provider prompt caching. On Anthropic, Canopy wraps
    * long system prompts with `cache_control: { type: "ephemeral" }` so
    * subsequent calls reuse the cached prefix (~90% cheaper input). On OpenAI
    * the cache is automatic above ~1024 tokens of stable prefix — this flag
@@ -68,7 +68,7 @@ export function resolvePromptLensConfig(
 
   if (!apiKey?.trim()) {
     throw new PromptLensConfigError(
-      "Missing PROMPTLENS_KEY. Sign in to the PromptLens dashboard → API Keys → create a key, then set PROMPTLENS_KEY=pl_live_… in your environment."
+      "Missing PROMPTLENS_KEY. Sign in to the Canopy dashboard → API Keys → create a key, then set PROMPTLENS_KEY=pl_live_… in your environment."
     );
   }
 
@@ -126,7 +126,7 @@ export function createAnthropicConfig(config: PromptLensConfig): {
 export interface ProviderOpenAIOptions {
   /** Your OpenAI (or Groq-compatible) API key — unchanged. */
   apiKey: string;
-  /** PromptLens key; defaults to PROMPTLENS_KEY env var. */
+  /** Canopy key; defaults to PROMPTLENS_KEY env var. */
   promptlensKey?: string;
   baseUrl?: string;
   /** Tag spend in the dashboard (e.g. "billing-bot"). */
@@ -137,7 +137,7 @@ export interface ProviderOpenAIOptions {
 }
 
 /**
- * One-call OpenAI constructor options: provider key + PromptLens routing.
+ * One-call OpenAI constructor options: provider key + Canopy routing.
  *
  *   const openai = new OpenAI(promptlensOpenAI({ apiKey: process.env.OPENAI_API_KEY! }));
  */
@@ -172,7 +172,7 @@ export interface ProviderAnthropicOptions {
 }
 
 /**
- * One-call Anthropic constructor options: provider key + PromptLens routing.
+ * One-call Anthropic constructor options: provider key + Canopy routing.
  */
 export function promptlensAnthropic(options: ProviderAnthropicOptions): {
   apiKey: string;

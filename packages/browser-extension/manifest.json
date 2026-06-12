@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "PromptLens",
+  "name": "Canopy",
   "version": "0.1.0",
-  "description": "Live token/cost estimates and prompt-optimization tips on ChatGPT and Claude, plus your PromptLens proxy data.",
+  "description": "Live token/cost estimates and prompt-optimization tips on ChatGPT and Claude, plus your Canopy proxy data.",
   "permissions": ["storage"],
   "host_permissions": [
     "http://localhost:3001/*",
@@ -13,7 +13,7 @@
     "type": "module"
   },
   "action": {
-    "default_title": "PromptLens",
+    "default_title": "Canopy",
     "default_popup": "src/popup.html"
   },
   "content_scripts": [

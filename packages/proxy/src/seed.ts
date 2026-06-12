@@ -325,7 +325,7 @@ function main(): void {
   insertMany();
 
   console.log("");
-  console.log("PromptLens local store seeded.");
+  console.log("Canopy local store seeded.");
   console.log(`  DB:        ${resolveDbPath()}`);
   console.log(`  Requests:  ${totalRequests} across ${DAYS} days`);
   console.log(`  Est. cost: $${totalCost.toFixed(4)}`);

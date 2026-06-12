@@ -1,7 +1,7 @@
-# Deploying PromptLens
+# Deploying Canopy
 
 This guide takes you from a freshly-pushed `main` to a public, multi-tenant
-PromptLens instance that anyone can sign up for via magic link.
+Canopy instance that anyone can sign up for via magic link.
 
 **Architecture:**
 
@@ -43,7 +43,7 @@ Your repo on GitHub should already contain the files in this guide
 
 ## 1. Create the Supabase project
 
-Supabase is identity-only here — no app tables to create. PromptLens stores
+Supabase is identity-only here — no app tables to create. Canopy stores
 everything (keys, requests, policies) in the proxy's SQLite.
 
 1. Go to https://supabase.com/dashboard/projects → **New project**.

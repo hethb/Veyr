@@ -1,21 +1,21 @@
-# PromptLens
+# Canopy
 
 **LLM spend management** — a hosted proxy between your app and OpenAI/Anthropic.
 
-Change where requests go. PromptLens logs every call (metadata only by default), shows which **feature** is costing you money, compresses bloated prompts, and enforces budgets — from the same integration point.
+Change where requests go. Canopy logs every call (metadata only by default), shows which **feature** is costing you money, compresses bloated prompts, and enforces budgets — from the same integration point.
 
-> Helicone shows what happened. **PromptLens changes what happens.**
+> Helicone shows what happened. **Canopy changes what happens.**
 
 See [ROADMAP.md](./ROADMAP.md) for the three product layers (observe → optimize → enforce).
 
 ```
-your app  ──▶  PromptLens proxy  ──▶  OpenAI / Anthropic
+your app  ──▶  Canopy proxy  ──▶  OpenAI / Anthropic
                      │
                      ▼
               local SQLite store
                      │
                      ▼
-              PromptLens dashboard
+              Canopy dashboard
 ```
 
 > Runs zero-config: the proxy stores keys and request logs in a local SQLite
@@ -66,7 +66,7 @@ For local development or enterprise self-host, see [Local development](#local-de
 
 ## Token optimization
 
-PromptLens analyzes your logged traffic and surfaces specific, actionable ways
+Canopy analyzes your logged traffic and surfaces specific, actionable ways
 to cut token spend. Suggestions appear in a panel on the dashboard and are
 served by `GET /api/analysis/suggestions` — all analysis runs **in-process over
 the local SQLite data**, with no external API or LLM calls.
@@ -104,7 +104,7 @@ with little data the panel simply says there's nothing to suggest yet.
 
 ### Pre-send prompt suggestions
 
-PromptLens also helps *before* a call is made. A rule-based prompt linter
+Canopy also helps *before* a call is made. A rule-based prompt linter
 (`POST /api/analysis/prompt-lint`, stateless) flags common token wasters and
 suggests tighter phrasing, based on community best practices for agents like
 Claude Code:
@@ -129,7 +129,7 @@ claude.ai as you type.
 
 Provider prompt caching reuses the model's intermediate processing of a static
 prompt prefix across calls, dropping input cost by **up to 90%** and cutting
-latency. PromptLens treats it as a first-class control: we detect when your
+latency. Canopy treats it as a first-class control: we detect when your
 prompts are cache-eligible, auto-inject `cache_control` for Anthropic, and
 track cache hit rate alongside spend.
 
@@ -165,7 +165,7 @@ Or per-feature on the dashboard / `PUT /api/policies`:
 { "api_key_id": "…", "feature_tag": "policy-qa", "enable_prompt_caching": true }
 ```
 
-When enabled on Anthropic, PromptLens wraps your `system` prompt as a single
+When enabled on Anthropic, Canopy wraps your `system` prompt as a single
 text block with `cache_control: { type: "ephemeral" }` — **only** when it's at
 least 1024 tokens (Anthropic's cache minimum). Below that it's a no-op.
 
@@ -204,13 +204,13 @@ header flip.
 
 ## Document → Markdown
 
-PromptLens ships a built-in document converter that turns PDFs, Word docs,
+Canopy ships a built-in document converter that turns PDFs, Word docs,
 HTML pages, CSV/TSV, JSON, and XML into compact, LLM-friendly Markdown —
 typically **70–90% fewer input tokens** than feeding the raw file (or naïve
 text extraction) to a model.
 
 Inspired by Microsoft's [MarkItDown](https://github.com/microsoft/markitdown)
-(MIT-licensed). PromptLens does **not** bundle MarkItDown — the conversion
+(MIT-licensed). Canopy does **not** bundle MarkItDown — the conversion
 code is a clean-room TypeScript reimplementation so it runs inside the
 existing proxy process with no Python runtime. See
 [ATTRIBUTIONS.md](./ATTRIBUTIONS.md) for full credit.
@@ -232,7 +232,7 @@ original MarkItDown for those.
 
 ### Use it from the dashboard
 
-Open **Documents** in the sidebar, drop a file. PromptLens shows:
+Open **Documents** in the sidebar, drop a file. Canopy shows:
 
 - Converted Markdown with a copy button
 - Before/after token counts and percentage saved
@@ -257,7 +257,7 @@ conversions — they're stateless.
 ### Prompt compression previews
 
 For redundant-template suggestions, a **Preview compression** button calls
-`POST /api/analysis/compress`. By default PromptLens stores only the SHA-256
+`POST /api/analysis/compress`. By default Canopy stores only the SHA-256
 hash of prompts (not their content), so this returns a `404` explaining that
 you must set `STORE_PROMPTS=true` to enable previews. When prompt content is
 available, it runs a deterministic, rule-based compression (collapse blank
@@ -266,7 +266,7 @@ filler words) and returns the original vs. compressed token counts.
 
 ## Authentication (optional)
 
-PromptLens runs **no-login, single-tenant** by default. For a hosted,
+Canopy runs **no-login, single-tenant** by default. For a hosted,
 multi-tenant deployment you can turn on **passwordless magic-link auth**
 (Supabase) — fully gated behind a flag, so local dev is unaffected.
 
@@ -312,7 +312,7 @@ as a single tenant — the original zero-config experience.
 
 ## Editor & browser integrations
 
-PromptLens surfaces its data where you actually work — not just the dashboard.
+Canopy surfaces its data where you actually work — not just the dashboard.
 
 ### Browser extension (ChatGPT & Claude)
 
@@ -344,14 +344,14 @@ request logs from your terminal:
 ```bash
 npm install -g @promptlens/cli   # or: npx @promptlens/cli init
 
-promptlens status                # proxy health + today/week/month spend
-promptlens suggestions           # optimization tips with ready-to-run commands
-promptlens policy set summarizer --model gpt-4o-mini --budget 50
-promptlens logs --follow         # tail requests as they hit the proxy
-promptlens integrate claude-code # route Claude Code through the proxy
+canopy status                # proxy health + today/week/month spend
+canopy suggestions           # optimization tips with ready-to-run commands
+canopy policy set summarizer --model gpt-4o-mini --budget 50
+canopy logs --follow         # tail requests as they hit the proxy
+canopy integrate claude-code # route Claude Code through the proxy
 ```
 
-`promptlens init` walks new users through local/hosted setup, key verification,
+`canopy init` walks new users through local/hosted setup, key verification,
 and an integration (OpenAI SDK, Anthropic SDK, Claude Code, Cursor, or plain
 env vars). Config lives in `~/.promptlens/config.json`, shared with the desktop
 app. See its [README](packages/cli/README.md).
@@ -375,15 +375,15 @@ icons in `packages/desktop/assets/` before publishing. See its
 
 ### VSCode extension (+ Claude Code)
 
-`packages/vscode-extension` adds a **PromptLens** panel to the Activity Bar
+`packages/vscode-extension` adds a **Canopy** panel to the Activity Bar
 showing spend and optimization suggestions from the proxy, plus a command to
-**route Claude Code through PromptLens**:
+**route Claude Code through Canopy**:
 
 ```bash
 PROMPTLENS_ALLOW_ANON=true npm run dev:proxy   # let key-less local tools log
 ```
 
-Then run **PromptLens: Route Claude Code through proxy** — it sets
+Then run **Canopy: Route Claude Code through proxy** — it sets
 `ANTHROPIC_BASE_URL=http://localhost:3001/anthropic` for new terminals, so
 `claude` traffic is captured. Open the folder in VSCode and press **F5** to try
 it. See its [README](packages/vscode-extension/README.md).
@@ -395,10 +395,10 @@ it. See its [README](packages/vscode-extension/README.md).
 
 ## vs Helicone
 
-Helicone shows you that you're spending money. PromptLens tells you **which
+Helicone shows you that you're spending money. Canopy tells you **which
 feature is responsible** and **how to spend less**.
 
-| | Helicone | PromptLens |
+| | Helicone | Canopy |
 |---|---|---|
 | Per-request logging | ✓ | ✓ |
 | Cost dashboard | ✓ | ✓ |
@@ -406,7 +406,7 @@ feature is responsible** and **how to spend less**.
 | **Top prompt templates by spend** | ⚠ partial | first-class |
 | **Optimization layer** (compressed prompt suggestions) | ✘ | roadmap |
 
-The PromptLens differentiator is the optimization layer: once we cluster your
+The Canopy differentiator is the optimization layer: once we cluster your
 prompts by template hash, we can suggest a shorter version that produces the
 same output for a fraction of the input-token cost. Helicone stops at "here's
 what you spent."
@@ -421,7 +421,7 @@ promptlens/
 │   ├── sdk/                # npm-publishable SDK wrapper (`promptlens`)
 │   ├── cli/                # `promptlens` terminal CLI (status, policies, logs, integrations)
 │   ├── desktop/            # Electron app: tray spend, auto-started proxy, installers
-│   ├── vscode-extension/   # PromptLens panel + Claude Code routing for VSCode
+│   ├── vscode-extension/   # Canopy panel + Claude Code routing for VSCode
 │   └── browser-extension/  # Chrome MV3 overlay for chatgpt.com / claude.ai
 ├── examples/           # runnable customer integration demo
 ├── package.json        # workspace root
@@ -547,7 +547,7 @@ the proxy at `https://api.promptlens.dev`).
 
 ## Privacy
 
-By default PromptLens stores **only** structured metadata (token counts, cost,
+By default Canopy stores **only** structured metadata (token counts, cost,
 feature tag, prompt SHA-256 hash). Full prompt content is never logged.
 Set `STORE_PROMPTS=true` in the proxy environment to opt in to storing raw
 prompts (not enabled in V1 — placeholder for future opt-in).

@@ -2,7 +2,7 @@
   "name": "@promptlens/dashboard",
   "version": "0.1.0",
   "private": true,
-  "description": "PromptLens dashboard",
+  "description": "Canopy dashboard",
   "type": "module",
   "scripts": {
     "dev": "vite",

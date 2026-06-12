@@ -1,7 +1,7 @@
 {
   "name": "promptlens-vscode",
-  "displayName": "PromptLens",
-  "description": "LLM cost attribution and optimization suggestions in your editor, plus one-click routing of Claude Code through the PromptLens proxy.",
+  "displayName": "Canopy",
+  "description": "LLM cost attribution and optimization suggestions in your editor, plus one-click routing of Claude Code through the Canopy proxy.",
   "version": "0.1.0",
   "private": true,
   "publisher": "promptlens",
@@ -16,7 +16,7 @@
       "activitybar": [
         {
           "id": "promptlens",
-          "title": "PromptLens",
+          "title": "Canopy",
           "icon": "media/icon.svg"
         }
       ]
@@ -33,20 +33,20 @@
     "commands": [
       {
         "command": "promptlens.refresh",
-        "title": "PromptLens: Refresh",
+        "title": "Canopy: Refresh",
         "icon": "$(refresh)"
       },
       {
         "command": "promptlens.routeClaudeCode",
-        "title": "PromptLens: Route Claude Code through proxy"
+        "title": "Canopy: Route Claude Code through proxy"
       },
       {
         "command": "promptlens.unrouteClaudeCode",
-        "title": "PromptLens: Stop routing Claude Code through proxy"
+        "title": "Canopy: Stop routing Claude Code through proxy"
       },
       {
         "command": "promptlens.openDashboard",
-        "title": "PromptLens: Open dashboard"
+        "title": "Canopy: Open dashboard"
       }
     ],
     "menus": {
@@ -59,17 +59,17 @@
       ]
     },
     "configuration": {
-      "title": "PromptLens",
+      "title": "Canopy",
       "properties": {
         "promptlens.proxyUrl": {
           "type": "string",
           "default": "http://localhost:3001",
-          "description": "Base URL of your PromptLens proxy."
+          "description": "Base URL of your Canopy proxy."
         },
         "promptlens.dashboardUrl": {
           "type": "string",
           "default": "http://localhost:5173/dashboard",
-          "description": "URL of the PromptLens dashboard."
+          "description": "URL of the Canopy dashboard."
         }
       }
     }

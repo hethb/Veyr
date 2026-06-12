@@ -1,4 +1,4 @@
-// PromptLens desktop app (Electron).
+// Canopy desktop app (Electron).
 //
 // One-click local experience:
 //   1. Serves the built dashboard from a tiny static server (SPA fallback).
@@ -228,7 +228,7 @@ async function ensureProxy(): Promise<boolean> {
   const config = loadConfig();
 
   for (let port = PROXY_PORT_MIN; port <= PROXY_PORT_MAX; port++) {
-    // Reuse an already-running PromptLens proxy if present.
+    // Reuse an already-running Canopy proxy if present.
     if (await isPromptLensAt(port)) {
       activeProxyPort = port;
       saveConfig({ proxyUrl: proxyBase() });
@@ -238,7 +238,7 @@ async function ensureProxy(): Promise<boolean> {
 
     if (!existsSync(PROXY_ENTRY)) {
       dialog.showErrorBox(
-        "PromptLens",
+        "Canopy",
         `Proxy build not found at:\n${PROXY_ENTRY}\n\nRun "npm run build:deps" in packages/desktop first.`
       );
       return false;
@@ -277,15 +277,15 @@ async function ensureProxy(): Promise<boolean> {
     }
 
     dialog.showErrorBox(
-      "PromptLens",
-      `The PromptLens proxy did not start within ${PROXY_START_TIMEOUT_MS / 1000} seconds on port ${port}.\n\nCheck the logs and reopen the app.`
+      "Canopy",
+      `The Canopy proxy did not start within ${PROXY_START_TIMEOUT_MS / 1000} seconds on port ${port}.\n\nCheck the logs and reopen the app.`
     );
     return false;
   }
 
   dialog.showErrorBox(
-    "PromptLens",
-    `No free port found in ${PROXY_PORT_MIN}-${PROXY_PORT_MAX} for the PromptLens proxy.`
+    "Canopy",
+    `No free port found in ${PROXY_PORT_MIN}-${PROXY_PORT_MAX} for the Canopy proxy.`
   );
   return false;
 }
@@ -318,7 +318,7 @@ function createWindow(): void {
     width: 1200,
     height: 820,
     backgroundColor: "#000000",
-    title: "PromptLens",
+    title: "Canopy",
     webPreferences: { contextIsolation: true, nodeIntegration: false },
   });
   mainWindow.loadURL(`${UI_ORIGIN}/dashboard`);
@@ -350,7 +350,7 @@ function showSetupWindow(apiKey: string | null): void {
     width: 640,
     height: 560,
     resizable: false,
-    title: "Welcome to PromptLens",
+    title: "Welcome to Canopy",
     webPreferences: { contextIsolation: true, nodeIntegration: false },
   });
   setupWindow.loadFile(SETUP_PAGE, {
@@ -386,7 +386,7 @@ interface Overview {
 function buildTrayMenu(overview: Overview | null, healthy: boolean): Menu {
   const config = loadConfig();
   return Menu.buildFromTemplate([
-    { label: "PromptLens", enabled: false },
+    { label: "Canopy", enabled: false },
     { type: "separator" },
     { label: `Today: ${fmtUsd(overview?.today?.cost)}`, enabled: false },
     { label: `This month: ${fmtUsd(overview?.month?.cost)}`, enabled: false },
@@ -424,7 +424,7 @@ function buildTrayMenu(overview: Overview | null, healthy: boolean): Menu {
     },
     { type: "separator" },
     {
-      label: "Quit PromptLens",
+      label: "Quit Canopy",
       click: () => {
         isQuitting = true;
         app.quit();
@@ -437,8 +437,8 @@ function createTray(): void {
   // Empty image + title text — avoids shipping a binary icon. On macOS this
   // shows the text in the menu bar.
   tray = new Tray(nativeImage.createEmpty());
-  tray.setToolTip("PromptLens");
-  tray.setTitle(" PromptLens");
+  tray.setToolTip("Canopy");
+  tray.setTitle(" Canopy");
   tray.setContextMenu(buildTrayMenu(null, false));
 }
 
@@ -452,11 +452,11 @@ async function updateTray(): Promise<void> {
   if (overview?.today) {
     tray.setTitle(` ${fmtUsd(overview.today.cost)} today`);
     tray.setToolTip(
-      `PromptLens — today ${fmtUsd(overview.today.cost)} · month ${fmtUsd(overview.month?.cost)}`
+      `Canopy — today ${fmtUsd(overview.today.cost)} · month ${fmtUsd(overview.month?.cost)}`
     );
   } else {
-    tray.setTitle(" PromptLens");
-    tray.setToolTip("PromptLens");
+    tray.setTitle(" Canopy");
+    tray.setToolTip("Canopy");
   }
   tray.setContextMenu(buildTrayMenu(overview, healthy));
 }
@@ -474,8 +474,8 @@ function setupAutoUpdater(): void {
     autoUpdater.on("update-available", () => {
       try {
         new Notification({
-          title: "PromptLens",
-          body: "A PromptLens update is available and will install on next launch.",
+          title: "Canopy",
+          body: "A Canopy update is available and will install on next launch.",
         }).show();
       } catch (err) {
         console.error("Auto-updater notification error:", err);
@@ -500,7 +500,7 @@ function setupAutoUpdater(): void {
 app.whenReady().then(async () => {
   if (!existsSync(DASHBOARD_DIST)) {
     dialog.showErrorBox(
-      "PromptLens",
+      "Canopy",
       `Dashboard build not found at:\n${DASHBOARD_DIST}\n\nRun "npm run build:deps" in packages/desktop first.`
     );
     app.quit();

@@ -1,6 +1,6 @@
-# PromptLens Desktop
+# Canopy Desktop
 
-A native desktop app (Electron, TypeScript) that gives you the full PromptLens
+A native desktop app (Electron, TypeScript) that gives you the full Canopy
 experience with **zero terminals**:
 
 - **Auto-starts the proxy** — reuses one already running, or forks its own on

@@ -1,9 +1,9 @@
-# PromptLens product roadmap
+# Canopy product roadmap
 
 **Core product:** A hosted proxy between your app and OpenAI/Anthropic. Change where requests go — see (and eventually control) LLM spend by feature.
 
 ```
-your app  →  PromptLens proxy  →  OpenAI / Anthropic
+your app  →  Canopy proxy  →  OpenAI / Anthropic
                  │
          observe · compress · enforce
                  │
@@ -58,7 +58,7 @@ your app  →  PromptLens proxy  →  OpenAI / Anthropic
 | Tool | What it does |
 |------|----------------|
 | Helicone / LangSmith | Shows what happened |
-| **PromptLens** | Changes what happens — compress, cap, block |
+| **Canopy** | Changes what happens — compress, cap, block |
 
 ---
 

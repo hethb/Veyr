@@ -1,7 +1,7 @@
 {
   "name": "promptlens",
   "version": "0.1.0",
-  "description": "Drop-in SDK for the PromptLens proxy. Routes OpenAI and Anthropic calls through PromptLens for cost observability.",
+  "description": "Drop-in SDK for the Canopy proxy. Routes OpenAI and Anthropic calls through Canopy for cost observability.",
   "license": "MIT",
   "main": "dist/index.js",
   "module": "dist/index.js",

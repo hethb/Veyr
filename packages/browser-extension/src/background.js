@@ -1,4 +1,4 @@
-// PromptLens background service worker (MV3).
+// Canopy background service worker (MV3).
 //
 // Content scripts run in the page's origin (e.g. https://chatgpt.com) and can't
 // fetch http://localhost:3001 directly (mixed content). The service worker can,

@@ -1,4 +1,4 @@
-// HTTP layer for the PromptLens CLI: typed fetch helpers against the proxy,
+// HTTP layer for the Canopy CLI: typed fetch helpers against the proxy,
 // with the user-facing error handling every command shares.
 
 import chalk from "chalk";
@@ -69,14 +69,14 @@ export function proxyUrl(): string {
 
 function connectionError(): CliError {
   return new CliError(
-    chalk.red(`✗ Cannot connect to PromptLens proxy at ${proxyUrl()}`) +
+    chalk.red(`✗ Cannot connect to Canopy proxy at ${proxyUrl()}`) +
       "\n  Start the proxy with: npm run dev:proxy" +
-      "\n  Or open the PromptLens desktop app"
+      "\n  Or open the Canopy desktop app"
   );
 }
 
 function authError(): CliError {
-  return new CliError(chalk.red("✗ Invalid API key.") + " Run: promptlens config");
+  return new CliError(chalk.red("✗ Invalid API key.") + " Run: canopy config");
 }
 
 async function request(path: string, init?: Parameters<typeof fetch>[1]): Promise<FetchResponse> {
@@ -124,7 +124,7 @@ export async function resolveApiKeyId(): Promise<string> {
   if (keys.length === 0) {
     throw new CliError(
       chalk.red("✗ No API keys exist on this proxy yet.") +
-        "\n  Open the dashboard (promptlens open) and create one, or run the desktop app."
+        "\n  Open the dashboard (canopy open) and create one, or run the desktop app."
     );
   }
   const configured = loadConfig().apiKey;

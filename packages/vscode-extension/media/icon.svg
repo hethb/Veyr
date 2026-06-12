@@ -1,5 +1,8 @@
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="10" cy="10" r="6.5" stroke="currentColor" stroke-width="1.8"/>
-  <line x1="14.8" y1="14.8" x2="20" y2="20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-  <path d="M7.5 10.5L9.2 12.2L12.5 8.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Canopy mark (monochrome for the activity bar: currentColor) -->
+  <path d="M 8 21 A 18 18 0 0 1 40 21" stroke="currentColor" stroke-width="4.4" stroke-linecap="round"/>
+  <path d="M 14 26.5 A 12 12 0 0 1 34 26.5" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"/>
+  <circle cx="24" cy="33" r="2.3" fill="currentColor"/>
+  <circle cx="24" cy="38.6" r="2" fill="currentColor"/>
+  <circle cx="24" cy="43.6" r="1.7" fill="currentColor"/>
 </svg>

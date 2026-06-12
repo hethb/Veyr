@@ -1,4 +1,4 @@
-// Config resolution for the PromptLens CLI.
+// Config resolution for the Canopy CLI.
 //
 // Priority: env vars > ~/.promptlens/config.json > defaults. The same file is
 // written by the desktop app when it starts the proxy, so the CLI finds a

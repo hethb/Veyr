@@ -1,9 +1,9 @@
-# Fly.io configuration for the PromptLens proxy.
+# Fly.io configuration for the Canopy proxy.
 #
 # This is a template — change `app` to your own app name before `fly deploy`.
 # See DEPLOY.md for the full step-by-step.
 #
-# Architecture note: PromptLens stores keys + request logs in a local SQLite
+# Architecture note: Canopy stores keys + request logs in a local SQLite
 # file. To keep the DB consistent we run a single machine in one region with
 # `min_machines_running = 1`. If you outgrow that, migrate to Postgres first.
 

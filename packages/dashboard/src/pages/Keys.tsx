@@ -89,7 +89,7 @@ export function Keys() {
             API Keys
           </h1>
           <p className="mt-1 text-sm text-neutral-500">
-            Use these keys with the PromptLens SDK. Each key is scoped to your account.
+            Use these keys with the Canopy SDK. Each key is scoped to your account.
           </p>
         </div>
         <button

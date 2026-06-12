@@ -1,6 +1,6 @@
-// PromptLens VSCode extension (plain CommonJS — no build step required).
+// Canopy VSCode extension (plain CommonJS — no build step required).
 //
-//  - Adds a "PromptLens" view to the Activity Bar that shows your logged spend
+//  - Adds a "Canopy" view to the Activity Bar that shows your logged spend
 //    and optimization suggestions from the local proxy.
 //  - Adds a command to route Claude Code through the proxy by setting
 //    ANTHROPIC_BASE_URL on the integrated terminal environment.
@@ -183,12 +183,12 @@ async function routeClaudeCode() {
   await config.update(section, current, target);
 
   const choice = await vscode.window.showInformationMessage(
-    "Claude Code will now route through PromptLens in new terminals. Make sure the proxy runs with PROMPTLENS_ALLOW_ANON=true so its traffic is logged.",
+    "Claude Code will now route through Canopy in new terminals. Make sure the proxy runs with PROMPTLENS_ALLOW_ANON=true so its traffic is logged.",
     "Open new terminal",
     "Copy env line"
   );
   if (choice === "Open new terminal") {
-    vscode.window.createTerminal("Claude Code (PromptLens)").show();
+    vscode.window.createTerminal("Claude Code (Canopy)").show();
   } else if (choice === "Copy env line") {
     await vscode.env.clipboard.writeText(`export ANTHROPIC_BASE_URL=${proxyUrl()}/anthropic`);
     vscode.window.showInformationMessage("Copied ANTHROPIC_BASE_URL export to clipboard.");
@@ -205,7 +205,7 @@ async function unrouteClaudeCode() {
   delete current.ANTHROPIC_BASE_URL;
   await config.update(section, Object.keys(current).length ? current : undefined, target);
   vscode.window.showInformationMessage(
-    "Stopped routing Claude Code through PromptLens. Open a new terminal to apply."
+    "Stopped routing Claude Code through Canopy. Open a new terminal to apply."
   );
 }
 

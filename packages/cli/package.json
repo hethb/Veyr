@@ -1,9 +1,10 @@
 {
   "name": "@promptlens/cli",
   "version": "0.1.0",
-  "description": "PromptLens terminal CLI — monitor LLM costs from your terminal",
+  "description": "Canopy terminal CLI — monitor LLM costs from your terminal",
   "type": "module",
   "bin": {
+    "canopy": "./dist/index.js",
     "promptlens": "./dist/index.js"
   },
   "files": [

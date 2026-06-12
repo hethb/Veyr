@@ -110,7 +110,7 @@ export async function dispatch(
     const hinted = mimeFormat(context.mime) ?? extensionFormat(context.filename);
     if (hinted === "docx") return convertDocx(buffer);
     throw new Error(
-      "Unsupported ZIP-based format. PromptLens currently supports DOCX " +
+      "Unsupported ZIP-based format. Canopy currently supports DOCX " +
         "(.docx). PPTX/XLSX support is on the roadmap."
     );
   }

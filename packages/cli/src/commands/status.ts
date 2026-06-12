@@ -3,7 +3,7 @@ import { apiGet, proxyUrl, type Overview, type TagStat } from "../api.js";
 import { divider, fmtUsd, plural } from "../ui.js";
 
 export async function statusCommand(version: string): Promise<void> {
-  console.log(chalk.bold(`PromptLens v${version}`));
+  console.log(chalk.bold(`Canopy v${version}`));
   console.log(divider());
 
   let overview: Overview | null = null;
@@ -22,9 +22,9 @@ export async function statusCommand(version: string): Promise<void> {
 
   if (!healthy || !overview) {
     console.log(divider());
-    console.log(chalk.red(`✗ Cannot connect to PromptLens proxy at ${proxyUrl()}`));
+    console.log(chalk.red(`✗ Cannot connect to Canopy proxy at ${proxyUrl()}`));
     console.log("  Start the proxy with: npm run dev:proxy");
-    console.log("  Or open the PromptLens desktop app");
+    console.log("  Or open the Canopy desktop app");
     process.exitCode = 1;
     return;
   }
@@ -49,5 +49,5 @@ export async function statusCommand(version: string): Promise<void> {
     console.log(divider());
   }
 
-  console.log(chalk.dim('Run "promptlens suggestions" to see optimization tips'));
+  console.log(chalk.dim('Run "canopy suggestions" to see optimization tips'));
 }
