@@ -273,7 +273,10 @@ function GetRunning() {
           title: "Local proxies log Claude Code with zero config",
           detail:
             "No key needed locally — anonymous requests are logged automatically and tagged claude-code-cli.",
-          code: "export ANTHROPIC_BASE_URL=http://localhost:3001/anthropic\nclaude",
+          code:
+            "# localhost = the proxy the desktop app runs on YOUR machine\n" +
+            "# (using the hosted instance instead? see the steps on the left)\n" +
+            "export ANTHROPIC_BASE_URL=http://localhost:3001/anthropic\nclaude",
         },
       ]
     : [
