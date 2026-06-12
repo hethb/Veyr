@@ -1,4 +1,4 @@
-# @promptlens/cli
+# getcanopy
 
 Canopy terminal CLI — monitor LLM costs, view optimization suggestions, and
 manage feature policies without leaving your terminal.
@@ -6,13 +6,13 @@ manage feature policies without leaving your terminal.
 ## Install
 
 ```bash
-npm install -g @promptlens/cli
+npm install -g getcanopy
 ```
 
 Or run the onboarding wizard without installing anything:
 
 ```bash
-npx @promptlens/cli init
+npx getcanopy init
 ```
 
 ## Configuration

@@ -1,7 +1,14 @@
 {
-  "name": "@promptlens/cli",
+  "name": "getcanopy",
   "version": "0.1.0",
   "description": "Canopy terminal CLI — monitor LLM costs from your terminal",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hethb/PromptLens.git",
+    "directory": "packages/cli"
+  },
+  "keywords": ["llm", "openai", "anthropic", "cost", "observability", "cli", "canopy"],
   "type": "module",
   "bin": {
     "canopy": "./dist/index.js",
@@ -13,7 +20,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "tsc"
   },
   "dependencies": {
     "commander": "^12.0.0",

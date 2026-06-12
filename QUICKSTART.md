@@ -5,7 +5,7 @@ Canopy is the **production** counterpart to [TokenGuard](https://github.com/heth
 | | **TokenGuard** | **Canopy** |
 |---|---|---|
 | **Who** | People using ChatGPT / Claude in the browser | Engineering teams shipping LLM features |
-| **Install** | Chrome extension | `npm install promptlens` + one env var |
+| **Install** | Chrome extension | `npm install canopy-sdk` + one env var |
 | **What it does** | Cuts tokens in chat (optimize + strip fluff) | Tracks every API call: cost, tokens, feature, prompt template |
 | **Setup** | Load extension → optional API key | Copy `PROMPTLENS_KEY` → change 2 lines in your app |
 
@@ -21,12 +21,12 @@ You run TokenGuard on yourself. You plug Canopy into **your app** so finance and
 2. **In their app:**
 
    ```bash
-   npm install promptlens openai
+   npm install canopy-sdk openai
    ```
 
    ```ts
    import OpenAI from "openai";
-   import { promptlensOpenAI } from "promptlens";
+   import { promptlensOpenAI } from "canopy-sdk";
 
    const openai = new OpenAI(
      promptlensOpenAI({

@@ -13,7 +13,7 @@
     "build": "npm run build --workspaces --if-present",
     "build:proxy": "npm run build --workspace=@promptlens/proxy",
     "build:dashboard": "npm run build --workspace=@promptlens/dashboard",
-    "build:sdk": "npm run build --workspace=promptlens",
+    "build:sdk": "npm run build --workspace=canopy-sdk",
     "desktop": "npm run app --workspace=@promptlens/desktop"
   },
   "engines": {

@@ -2,7 +2,7 @@
  * Canopy SDK — drop-in LLM cost tracking for production apps.
  *
  *   import OpenAI from "openai";
- *   import { promptlensOpenAI } from "promptlens";
+ *   import { promptlensOpenAI } from "canopy-sdk";
  *
  *   const openai = new OpenAI(
  *     promptlensOpenAI({ apiKey: process.env.OPENAI_API_KEY! })

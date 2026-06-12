@@ -47,5 +47,5 @@ linux:
       arch: [x64]
 publish:
   provider: github
-  owner: YOUR_GITHUB_USERNAME
-  repo: promptlens
+  owner: hethb
+  repo: PromptLens

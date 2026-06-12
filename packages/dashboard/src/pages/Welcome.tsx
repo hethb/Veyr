@@ -165,7 +165,7 @@ function ApiKeyBlock({ apiKey }: { apiKey: string }) {
 
 function IntegrationSnippet({ apiKey }: { apiKey: string }) {
   const snippet = `import OpenAI from 'openai'
-import { createOpenAIConfig } from 'promptlens'
+import { createOpenAIConfig } from 'canopy-sdk'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,

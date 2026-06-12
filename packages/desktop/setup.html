@@ -100,7 +100,7 @@
     const url = params.get("url") || "http://localhost:3001";
 
     const snippet =
-      'import { promptlensOpenAI } from "@promptlens/sdk";\n' +
+      'import { promptlensOpenAI } from "canopy-sdk";\n' +
       'const openai = new OpenAI(promptlensOpenAI({ apiKey: process.env.OPENAI_API_KEY, baseUrl: "' +
       url + '", promptlensKey: "' + key + '" }));';
 

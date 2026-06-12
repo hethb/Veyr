@@ -109,7 +109,7 @@ function HowItWorks() {
       accent: ACCENTS[1],
       title: "Plug into your app",
       body: "One npm install. Wrap your existing OpenAI client — no agent, no prompt rewrite.",
-      code: `npm install promptlens openai\n\nimport { promptlensOpenAI } from "promptlens";\nconst openai = new OpenAI(\n  promptlensOpenAI({ apiKey: process.env.OPENAI_API_KEY! })\n);`,
+      code: `npm install canopy-sdk openai\n\nimport { promptlensOpenAI } from "canopy-sdk";\nconst openai = new OpenAI(\n  promptlensOpenAI({ apiKey: process.env.OPENAI_API_KEY! })\n);`,
     },
     {
       icon: BarChart3,
@@ -200,7 +200,7 @@ function GetRunning() {
     {
       title: "…or wrap your own OpenAI / Anthropic code",
       code:
-        "import { createOpenAIConfig } from 'promptlens'\n\n" +
+        "import { createOpenAIConfig } from 'canopy-sdk'\n\n" +
         "const openai = new OpenAI({\n  apiKey: process.env.OPENAI_API_KEY,\n  ...createOpenAIConfig({ apiKey: 'pl_live_…' })\n})",
     },
   ];

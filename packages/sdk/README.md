@@ -5,14 +5,14 @@ Plug-in LLM cost tracking for production apps. One env var, two lines of code.
 ## Install
 
 ```bash
-npm install promptlens openai
+npm install canopy-sdk openai
 ```
 
 ## Usage
 
 ```ts
 import OpenAI from "openai";
-import { promptlensOpenAI } from "promptlens";
+import { promptlensOpenAI } from "canopy-sdk";
 
 const openai = new OpenAI(
   promptlensOpenAI({
@@ -37,7 +37,7 @@ export PROMPTLENS_KEY=pl_live_...
 
 ```ts
 import Anthropic from "@anthropic-ai/sdk";
-import { promptlensAnthropic } from "promptlens";
+import { promptlensAnthropic } from "canopy-sdk";
 
 const anthropic = new Anthropic(
   promptlensAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
@@ -60,7 +60,7 @@ Or set `PROMPTLENS_BASE_URL` in the environment.
 If you prefer spreading config yourself:
 
 ```ts
-import { createOpenAIConfig, resolvePromptLensConfig } from "promptlens";
+import { createOpenAIConfig, resolvePromptLensConfig } from "canopy-sdk";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,

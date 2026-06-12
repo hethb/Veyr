@@ -7,7 +7,7 @@
 # file. To keep the DB consistent we run a single machine in one region with
 # `min_machines_running = 1`. If you outgrow that, migrate to Postgres first.
 
-app = "promptlens-proxy"          # change me — must be globally unique on Fly
+app = "promptlens"          # change me — must be globally unique on Fly
 primary_region = "iad"            # us-east; pick the region closest to your users
 
 # The image is built from the repo's Dockerfile.

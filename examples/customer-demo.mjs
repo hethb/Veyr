@@ -13,7 +13,7 @@
 // the feature tags below.
 
 import OpenAI from "openai";
-import { promptlensOpenAI } from "promptlens";
+import { promptlensOpenAI } from "canopy-sdk";
 
 const PROMPTLENS_KEY = process.env.PROMPTLENS_KEY;
 const LLM_KEY = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY;

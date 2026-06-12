@@ -1,4 +1,4 @@
-// `canopy init` / `npx @promptlens/cli init` — zero-friction onboarding.
+// `canopy init` / `npx getcanopy init` — zero-friction onboarding.
 
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
@@ -79,8 +79,8 @@ function showSdkSnippet(kind: "openai" | "anthropic", baseUrl: string, apiKey?: 
   const envKey = kind === "openai" ? "OPENAI_API_KEY" : "ANTHROPIC_API_KEY";
   const plKey = apiKey ? `, promptlensKey: "${apiKey}"` : "";
   console.log();
-  console.log(chalk.dim("// npm install @promptlens/sdk"));
-  console.log(chalk.cyan(`import { ${fn} } from "@promptlens/sdk";`));
+  console.log(chalk.dim("// npm install canopy-sdk"));
+  console.log(chalk.cyan(`import { ${fn} } from "canopy-sdk";`));
   console.log(
     chalk.cyan(
       `const client = new ${client}(${fn}({ apiKey: process.env.${envKey}!, baseUrl: "${baseUrl}"${plKey} }));`

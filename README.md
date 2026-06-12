@@ -30,12 +30,12 @@ Same idea as [TokenGuard](https://github.com/hethb/TokenGuard) — minimal setup
 **2. Install and wire the SDK**
 
 ```bash
-npm install promptlens openai
+npm install canopy-sdk openai
 ```
 
 ```ts
 import OpenAI from "openai";
-import { promptlensOpenAI } from "promptlens";
+import { promptlensOpenAI } from "canopy-sdk";
 
 const openai = new OpenAI(
   promptlensOpenAI({
@@ -342,7 +342,7 @@ select `packages/browser-extension`. No build step. See its
 request logs from your terminal:
 
 ```bash
-npm install -g @promptlens/cli   # or: npx @promptlens/cli init
+npm install -g getcanopy   # or: npx getcanopy init
 
 canopy status                # proxy health + today/week/month spend
 canopy suggestions           # optimization tips with ready-to-run commands

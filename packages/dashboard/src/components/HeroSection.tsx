@@ -67,7 +67,7 @@ export function HeroSection({ authEnabled }: HeroSectionProps) {
               </a>
             </div>
             <p className="text-xs text-neutral-500">
-              npm install promptlens — one env var, two lines of code
+              npm install canopy-sdk — one env var, two lines of code
             </p>
           </div>
         }
