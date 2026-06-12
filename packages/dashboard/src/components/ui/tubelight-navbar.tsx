@@ -106,11 +106,15 @@ export function NavBar({ items, className }: NavBarProps) {
   return (
     <div
       className={cn(
-        "fixed bottom-0 sm:top-0 left-1/2 -translate-x-1/2 z-50 mb-6 sm:pt-6",
+        // bottom-0 must be unset at sm: (sm:bottom-auto) — otherwise the fixed
+        // container spans top-0..bottom-0, a full-height invisible z-50 strip
+        // that blocks every centered click on the page. pointer-events-none
+        // keeps the wrapper inert either way; only the pill itself is hot.
+        "pointer-events-none fixed bottom-0 sm:bottom-auto sm:top-0 left-1/2 -translate-x-1/2 z-50 mb-6 sm:pt-6",
         className
       )}
     >
-      <div className="flex items-center gap-3 bg-background/5 border border-border backdrop-blur-lg py-1 px-1 rounded-full shadow-lg">
+      <div className="pointer-events-auto flex items-center gap-3 bg-background/5 border border-border backdrop-blur-lg py-1 px-1 rounded-full shadow-lg">
         {items.map((item) => (
           <NavLink
             key={item.name}
