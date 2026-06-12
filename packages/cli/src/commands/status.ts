@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { apiGet, proxyUrl, type Overview, type TagStat } from "../api.js";
+import { apiGet, isProxyHealthy, proxyUrl, AuthError, type Overview, type TagStat } from "../api.js";
 import { divider, fmtUsd, plural } from "../ui.js";
 
 export async function statusCommand(version: string): Promise<void> {
@@ -8,19 +8,32 @@ export async function statusCommand(version: string): Promise<void> {
 
   let overview: Overview | null = null;
   let topTags: TagStat[] = [];
-  let healthy = false;
+  let authBlocked = false;
   try {
     overview = await apiGet<Overview>("/api/stats/overview");
     topTags = await apiGet<TagStat[]>("/api/stats/by-tag?period=1d");
-    healthy = true;
-  } catch {
-    // fall through to the unreachable rendering below
+  } catch (err) {
+    if (err instanceof AuthError) authBlocked = true;
+    // otherwise fall through — the /health probe below decides up vs. down
   }
 
+  const healthy = overview !== null || (await isProxyHealthy());
   const statusDot = healthy ? chalk.green("● Running") : chalk.red("● Unreachable");
   console.log(`Proxy:    ${proxyUrl()} ${statusDot}`);
 
-  if (!healthy || !overview) {
+  if (healthy && overview === null) {
+    console.log(divider());
+    if (authBlocked) {
+      console.log("The proxy is up, but its stats API requires a dashboard sign-in.");
+      console.log("Hosted proxies are managed from the web dashboard — open it in your browser.");
+      console.log(chalk.dim("CLI stats work against local proxies (desktop app or npm run dev:proxy)."));
+    } else {
+      console.log(chalk.yellow("The proxy is up but its stats API returned an error."));
+    }
+    return;
+  }
+
+  if (!overview) {
     console.log(divider());
     console.log(chalk.red(`✗ Cannot connect to Canopy proxy at ${proxyUrl()}`));
     console.log("  Start the proxy with: npm run dev:proxy");

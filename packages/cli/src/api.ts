@@ -6,6 +6,8 @@ import fetch, { type Response as FetchResponse } from "node-fetch";
 import { loadConfig } from "./config.js";
 
 export class CliError extends Error {}
+/** 401/403 from the proxy — distinct from "proxy is down". */
+export class AuthError extends CliError {}
 
 export interface OverviewBucket {
   cost: number;
@@ -75,8 +77,20 @@ function connectionError(): CliError {
   );
 }
 
-function authError(): CliError {
-  return new CliError(chalk.red("✗ Invalid API key.") + " Run: canopy config");
+function authError(): AuthError {
+  return new AuthError(chalk.red("✗ Invalid API key.") + " Run: canopy config");
+}
+
+/** Unauthenticated liveness probe — /health is public on every proxy. */
+export async function isProxyHealthy(): Promise<boolean> {
+  try {
+    const res = await fetch(`${proxyUrl()}/health`);
+    if (!res.ok) return false;
+    const body = (await res.json()) as { status?: string };
+    return body?.status === "ok";
+  } catch {
+    return false;
+  }
 }
 
 async function request(path: string, init?: Parameters<typeof fetch>[1]): Promise<FetchResponse> {

@@ -1,14 +1,22 @@
 {
   "name": "getcanopy",
-  "version": "0.1.0",
-  "description": "Canopy terminal CLI — monitor LLM costs from your terminal",
+  "version": "0.1.1",
+  "description": "Canopy terminal CLI \u2014 monitor LLM costs from your terminal",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hethb/PromptLens.git",
     "directory": "packages/cli"
   },
-  "keywords": ["llm", "openai", "anthropic", "cost", "observability", "cli", "canopy"],
+  "keywords": [
+    "llm",
+    "openai",
+    "anthropic",
+    "cost",
+    "observability",
+    "cli",
+    "canopy"
+  ],
   "type": "module",
   "bin": {
     "canopy": "./dist/index.js",
