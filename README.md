@@ -21,6 +21,25 @@ your app  ──▶  Canopy proxy  ──▶  OpenAI / Anthropic
 > Runs zero-config: the proxy stores keys and request logs in a local SQLite
 > file. No external database or login required. (See [Local development](#local-development).)
 
+## Try the hosted instance
+
+Canopy is live — no install required:
+
+1. **Sign in** at **https://promptlens-lac.vercel.app** (email magic link). A
+   personal API key is minted for you on first sign-in.
+2. **Point your SDK at the proxy** — `https://promptlens.fly.dev` — with the
+   snippet shown on your welcome page (your OpenAI/Anthropic key stays yours;
+   Canopy only proxies and meters it).
+3. Or set up from the terminal:
+
+   ```bash
+   npx getcanopy init      # pick "Hosted", enter https://promptlens.fly.dev
+   ```
+
+For a fully local, no-account setup, use the desktop app or `npx getcanopy init`
+→ "Local" (the terminal CLI's stats/policy commands work against local/desktop
+proxies; the hosted dashboard is the UI for hosted accounts).
+
 ## Quickstart (plug-in for your app)
 
 Same idea as [TokenGuard](https://github.com/hethb/TokenGuard) — minimal setup — but for **production LLM APIs** (not the browser). Customers add one env var and two lines of code. See [QUICKSTART.md](./QUICKSTART.md) for the full sellable flow vs self-host.
