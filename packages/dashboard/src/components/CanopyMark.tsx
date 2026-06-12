@@ -41,14 +41,33 @@ export default function CanopyMark({ className = "h-8 w-8" }: CanopyMarkProps) {
 }
 
 /**
- * The spaced-caps wordmark from the brand sheet: C Λ N O P Y with the "A"
- * in canopy blue. Use next to the mark in headers; use plain "Canopy" in
- * running text.
+ * The full name logo from the brand sheet: spaced caps C Λ N O P Y where the
+ * "A" is a blue rounded arch glyph (no crossbar). Use next to the mark in
+ * headers; use plain "Canopy" in running text.
  */
 export function CanopyWordmark({ className = "text-base" }: CanopyMarkProps) {
   return (
-    <span className={`font-semibold uppercase tracking-[0.35em] text-white ${className}`}>
-      C<span className="text-[#3E7BFF]">a</span>nopy
+    <span
+      role="img"
+      aria-label="Canopy"
+      className={`inline-flex items-baseline gap-[0.3em] font-medium text-white ${className}`}
+    >
+      <span aria-hidden="true">C</span>
+      {/* In flex, an SVG's baseline is its bottom edge — so the arch legs
+          land exactly on the text baseline. Height ≈ cap height. */}
+      <svg viewBox="0 0 36 30" className="h-[0.72em] w-auto" aria-hidden="true">
+        <path
+          d="M 4 28 Q 18 -4 32 28"
+          fill="none"
+          stroke="#3E7BFF"
+          strokeWidth="4.5"
+          strokeLinecap="round"
+        />
+      </svg>
+      <span aria-hidden="true">N</span>
+      <span aria-hidden="true">O</span>
+      <span aria-hidden="true">P</span>
+      <span aria-hidden="true">Y</span>
     </span>
   );
 }
