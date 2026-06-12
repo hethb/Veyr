@@ -91,8 +91,8 @@ function HowItWorks() {
         icon: Code2,
         accent: ACCENTS[0],
         title: "Sign up with your email",
-        body: "Enter your email, click the magic link — no password, no credit card. Your first API key is generated and shown instantly.",
-        code: "# magic link → API key in under 60 seconds",
+        body: "Enter your email at the bottom of this page and click the magic link — no password, no credit card. Copy the key from your welcome page and export it:",
+        code: "export PROMPTLENS_KEY=pl_live_…  # your key — shown once",
       }
     : {
         icon: Code2,
@@ -108,7 +108,7 @@ function HowItWorks() {
       icon: Zap,
       accent: ACCENTS[1],
       title: "Plug into your app",
-      body: "One npm install. Wrap your existing OpenAI client — no agent, no prompt rewrite.",
+      body: "One npm install. Wrap your existing OpenAI client — it picks up PROMPTLENS_KEY from step 1 and routes through Canopy automatically.",
       code: `npm install canopy-sdk openai\n\nimport { promptlensOpenAI } from "canopy-sdk";\nconst openai = new OpenAI(\n  promptlensOpenAI({ apiKey: process.env.OPENAI_API_KEY! })\n);`,
     },
     {
@@ -160,6 +160,8 @@ function HowItWorks() {
 
 interface SetupStep {
   title: string;
+  /** Plain-language explanation of exactly what to do / what you'll see. */
+  detail?: string;
   code?: string;
 }
 
@@ -173,6 +175,9 @@ function StepList({ steps }: { steps: SetupStep[] }) {
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-white">{s.title}</p>
+            {s.detail && (
+              <p className="mt-1 text-xs leading-relaxed text-neutral-500">{s.detail}</p>
+            )}
             {s.code && <CopyCodeBlock code={s.code} className="mt-3" />}
           </div>
         </li>
@@ -193,30 +198,37 @@ function GetRunning() {
   const primarySteps: SetupStep[] = authEnabled
     ? [
         {
-          title: "Sign up below — your API key is minted on the welcome page",
-          code: "# magic link → copy your pl_live_… key",
+          title: "Create your account and copy your Canopy key",
+          detail:
+            "Scroll to the bottom of this page (or click “Get started” top-right), enter your email, and click the magic link we send you. You'll land on a welcome page showing a key starting with pl_live_… — click Copy. It is shown only once, so save it now.",
         },
         {
-          title: "Wrap your OpenAI or Anthropic client",
+          title: "Install the SDK and wrap your OpenAI client",
+          detail:
+            "In your project, run the install, then create the client like this. Replace pl_live_… with the key from step 1. Your OpenAI key stays in OPENAI_API_KEY exactly as it is today. Then use `openai` exactly as before — nothing else changes. (Anthropic? Use promptlensAnthropic the same way.)",
           code:
             "npm install canopy-sdk openai\n\n" +
-            'import { promptlensOpenAI } from "canopy-sdk";\n' +
+            'import OpenAI from "openai";\n' +
+            'import { promptlensOpenAI } from "canopy-sdk";\n\n' +
             "const openai = new OpenAI(promptlensOpenAI({\n" +
-            "  apiKey: process.env.OPENAI_API_KEY!, // your provider key — unchanged\n" +
-            '  promptlensKey: "pl_live_…",\n' +
+            "  apiKey: process.env.OPENAI_API_KEY!,  // your OpenAI key — unchanged\n" +
+            '  promptlensKey: "pl_live_…",           // ← paste YOUR key from step 1\n' +
             `  baseUrl: "${proxyBase}",\n` +
             "}));",
         },
         {
-          title: "…or route Claude Code through Canopy",
+          title: "Using Claude Code instead? Paste these two lines",
+          detail:
+            "Run these in the same terminal where you run `claude` (replace pl_live_… with your key). Every Claude Code request is then metered. To make it permanent, add both lines to your ~/.zshrc.",
           code:
             `export ANTHROPIC_BASE_URL=${proxyBase}/anthropic\n` +
             'export ANTHROPIC_CUSTOM_HEADERS="x-promptlens-key: pl_live_…"\n' +
             "claude",
         },
         {
-          title: "Send one request — it appears in your dashboard live",
-          code: "# cost, tokens, and latency, attributed by feature",
+          title: "Send one request, then open your dashboard",
+          detail:
+            "Make any LLM call through the client (or just ask Claude Code something). Then open the Dashboard link in the footer below (it's /dashboard — you're already signed in). The request appears within seconds with its cost, tokens, and feature tag.",
         },
       ]
     : [
@@ -245,15 +257,22 @@ function GetRunning() {
   const secondarySteps: SetupStep[] = authEnabled
     ? [
         {
-          title: "Clone the repo and launch the desktop app — no account needed",
-          code: "git clone https://github.com/hethb/PromptLens\ncd PromptLens && npm install\nnpm run desktop",
+          title: "Clone the repo and launch the desktop app",
+          detail:
+            "Requires Node 20+. The dashboard opens in its own window, the proxy starts automatically on port 3001, and a first-run screen shows your local API key. No account, no cloud — data stays in ~/.promptlens on your machine.",
+          code:
+            "git clone https://github.com/hethb/PromptLens\ncd PromptLens && npm install\nnpm run desktop",
         },
         {
-          title: "Or onboard entirely from the terminal",
+          title: "Or set up from the terminal in one command",
+          detail:
+            "An interactive wizard: choose “Local”, let it start the proxy, then pick your integration (OpenAI SDK, Anthropic SDK, Claude Code, or Cursor). It prints the exact snippet to paste.",
           code: "npx getcanopy init",
         },
         {
           title: "Local proxies log Claude Code with zero config",
+          detail:
+            "No key needed locally — anonymous requests are logged automatically and tagged claude-code-cli.",
           code: "export ANTHROPIC_BASE_URL=http://localhost:3001/anthropic\nclaude",
         },
       ]
