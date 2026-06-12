@@ -182,34 +182,86 @@ function StepList({ steps }: { steps: SetupStep[] }) {
 }
 
 function GetRunning() {
-  const desktopSteps: SetupStep[] = [
-    {
-      title: "Install and launch the desktop app",
-      code: "npm install\nnpm run desktop",
-    },
-    {
-      title: "Optional — load demo data to explore the dashboard",
-      code: "npm run seed -- --reset",
-    },
-    {
-      title: "Route a CLI agent like Claude Code through Canopy",
-      code:
-        "# enable local logging (in .env)\nPROMPTLENS_ALLOW_ANON=true\n\n" +
-        "# point Claude Code at the proxy, then run it\nexport ANTHROPIC_BASE_URL=http://localhost:3001/anthropic\nclaude",
-    },
-    {
-      title: "…or wrap your own OpenAI / Anthropic code",
-      code:
-        "import { createOpenAIConfig } from 'canopy-sdk'\n\n" +
-        "const openai = new OpenAI({\n  apiKey: process.env.OPENAI_API_KEY,\n  ...createOpenAIConfig({ apiKey: 'pl_live_…' })\n})",
-    },
-  ];
+  // The proxy this deployment fronts — baked in at build time so the copyable
+  // commands are correct for wherever this page is served from.
+  const proxyBase =
+    (import.meta.env.VITE_PROXY_URL as string | undefined)?.replace(/\/+$/, "") ||
+    "http://localhost:3001";
 
-  const browserSteps: SetupStep[] = [
-    { title: "Open chrome://extensions and turn on Developer mode" },
-    { title: "Click “Load unpacked” and select packages/browser-extension" },
-    { title: "Open chatgpt.com or claude.ai — the widget appears bottom-right" },
-  ];
+  // Hosted visitors get hosted commands; the local/desktop build keeps the
+  // run-on-your-machine instructions.
+  const primarySteps: SetupStep[] = authEnabled
+    ? [
+        {
+          title: "Sign up below — your API key is minted on the welcome page",
+          code: "# magic link → copy your pl_live_… key",
+        },
+        {
+          title: "Wrap your OpenAI or Anthropic client",
+          code:
+            "npm install canopy-sdk openai\n\n" +
+            'import { promptlensOpenAI } from "canopy-sdk";\n' +
+            "const openai = new OpenAI(promptlensOpenAI({\n" +
+            "  apiKey: process.env.OPENAI_API_KEY!, // your provider key — unchanged\n" +
+            '  promptlensKey: "pl_live_…",\n' +
+            `  baseUrl: "${proxyBase}",\n` +
+            "}));",
+        },
+        {
+          title: "…or route Claude Code through Canopy",
+          code:
+            `export ANTHROPIC_BASE_URL=${proxyBase}/anthropic\n` +
+            'export ANTHROPIC_CUSTOM_HEADERS="x-promptlens-key: pl_live_…"\n' +
+            "claude",
+        },
+        {
+          title: "Send one request — it appears in your dashboard live",
+          code: "# cost, tokens, and latency, attributed by feature",
+        },
+      ]
+    : [
+        {
+          title: "Install and launch the desktop app",
+          code: "npm install\nnpm run desktop",
+        },
+        {
+          title: "Optional — load demo data to explore the dashboard",
+          code: "npm run seed -- --reset",
+        },
+        {
+          title: "Route a CLI agent like Claude Code through Canopy",
+          code:
+            "# enable local logging (in .env)\nPROMPTLENS_ALLOW_ANON=true\n\n" +
+            "# point Claude Code at the proxy, then run it\nexport ANTHROPIC_BASE_URL=http://localhost:3001/anthropic\nclaude",
+        },
+        {
+          title: "…or wrap your own OpenAI / Anthropic code",
+          code:
+            "import { createOpenAIConfig } from 'canopy-sdk'\n\n" +
+            "const openai = new OpenAI({\n  apiKey: process.env.OPENAI_API_KEY,\n  ...createOpenAIConfig({ apiKey: 'pl_live_…', baseUrl: 'http://localhost:3001' })\n})",
+        },
+      ];
+
+  const secondarySteps: SetupStep[] = authEnabled
+    ? [
+        {
+          title: "Clone the repo and launch the desktop app — no account needed",
+          code: "git clone https://github.com/hethb/PromptLens\ncd PromptLens && npm install\nnpm run desktop",
+        },
+        {
+          title: "Or onboard entirely from the terminal",
+          code: "npx getcanopy init",
+        },
+        {
+          title: "Local proxies log Claude Code with zero config",
+          code: "export ANTHROPIC_BASE_URL=http://localhost:3001/anthropic\nclaude",
+        },
+      ]
+    : [
+        { title: "Open chrome://extensions and turn on Developer mode" },
+        { title: "Click “Load unpacked” and select packages/browser-extension" },
+        { title: "Open chatgpt.com or claude.ai — the widget appears bottom-right" },
+      ];
 
   return (
     <section id="setup" className="border-t border-white/10 bg-black">
@@ -217,7 +269,11 @@ function GetRunning() {
         <SectionHeader
           eyebrow="Get started"
           title="Two ways to run Canopy"
-          subtitle="Pick the surface that matches how you use LLMs. Both run on your machine — no cloud account required."
+          subtitle={
+            authEnabled
+              ? "Use this hosted instance with a free account, or clone the repo and run everything on your own machine."
+              : "Pick the surface that matches how you use LLMs. Both run on your machine — no cloud account required."
+          }
         />
 
         <div className="mt-14 grid gap-6 lg:grid-cols-2">
@@ -236,26 +292,39 @@ function GetRunning() {
               </div>
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#4FABFF]">
-                  For CLI agents &amp; code
+                  {authEnabled ? "Hosted — this site" : "For CLI agents & code"}
                 </p>
                 <h3 className="text-lg font-semibold text-white">
-                  Desktop app + proxy
+                  {authEnabled ? "Use the hosted proxy" : "Desktop app + proxy"}
                 </h3>
               </div>
             </div>
             <p className="mt-4 text-sm leading-relaxed text-neutral-500">
-              Best if you use a CLI agent like{" "}
-              <span className="text-neutral-300">Claude Code</span> or call the
-              OpenAI/Anthropic APIs from your own code. The desktop app
-              auto-starts the proxy and dashboard, shows today&apos;s spend in
-              your menu bar, and includes a{" "}
-              <span className="text-neutral-300">Prompt Helper</span> that
-              tightens your prompts before you send them.
+              {authEnabled ? (
+                <>
+                  Sign up with an email, get a key, and point your existing
+                  OpenAI/Anthropic client (or{" "}
+                  <span className="text-neutral-300">Claude Code</span>) at the
+                  Canopy proxy. Your provider API key stays yours — Canopy
+                  forwards it and meters the traffic.
+                </>
+              ) : (
+                <>
+                  Best if you use a CLI agent like{" "}
+                  <span className="text-neutral-300">Claude Code</span> or call
+                  the OpenAI/Anthropic APIs from your own code. The desktop app
+                  auto-starts the proxy and dashboard, shows today&apos;s spend
+                  in your menu bar, and includes a{" "}
+                  <span className="text-neutral-300">Prompt Helper</span> that
+                  tightens your prompts before you send them.
+                </>
+              )}
             </p>
-            <StepList steps={desktopSteps} />
+            <StepList steps={primarySteps} />
             <p className="mt-6 text-xs text-neutral-600">
-              Prefer your editor? A VSCode extension offers the same panel and
-              one-click Claude Code routing.
+              {authEnabled
+                ? "The npm packages are public: canopy-sdk (wrapper) and getcanopy (CLI)."
+                : "Prefer your editor? A VSCode extension offers the same panel and one-click Claude Code routing."}
             </p>
           </div>
 
@@ -274,24 +343,38 @@ function GetRunning() {
               </div>
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#4FABFF]">
-                  For chatgpt.com &amp; claude.ai
+                  {authEnabled ? "Self-hosted / local" : "For chatgpt.com & claude.ai"}
                 </p>
                 <h3 className="text-lg font-semibold text-white">
-                  Browser extension
+                  {authEnabled ? "Run it on your machine" : "Browser extension"}
                 </h3>
               </div>
             </div>
             <p className="mt-4 text-sm leading-relaxed text-neutral-500">
-              Want Canopy right inside the{" "}
-              <span className="text-neutral-300">ChatGPT and Claude</span> web
-              apps? The extension overlays live token &amp; cost estimates and
-              suggests better prompts as you type — before you hit send. No proxy
-              required.
+              {authEnabled ? (
+                <>
+                  Everything is open source. The{" "}
+                  <span className="text-neutral-300">desktop app</span> runs the
+                  proxy and dashboard locally with no account — your traffic and
+                  keys never leave your machine. Deploying your own instance is
+                  one <span className="text-neutral-300">fly deploy</span> (see
+                  DEPLOY.md in the repo).
+                </>
+              ) : (
+                <>
+                  Want Canopy right inside the{" "}
+                  <span className="text-neutral-300">ChatGPT and Claude</span>{" "}
+                  web apps? The extension overlays live token &amp; cost
+                  estimates and suggests better prompts as you type — before you
+                  hit send. No proxy required.
+                </>
+              )}
             </p>
-            <StepList steps={browserSteps} />
+            <StepList steps={secondarySteps} />
             <p className="mt-6 text-xs text-neutral-600">
-              Running the desktop app too? The widget will also surface your real
-              logged spend and top suggestion.
+              {authEnabled
+                ? "A browser extension (ChatGPT/Claude overlay) and VSCode extension ship in the repo too."
+                : "Running the desktop app too? The widget will also surface your real logged spend and top suggestion."}
             </p>
           </div>
         </div>

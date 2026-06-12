@@ -37,7 +37,9 @@ export interface PromptLensConfig {
   maxCompletionTokens?: number;
 }
 
-const DEFAULT_BASE_URL = "https://api.promptlens.dev";
+// The hosted Canopy proxy. Override with `baseUrl` or PROMPTLENS_BASE_URL
+// (e.g. http://localhost:3001 for the desktop app / local dev).
+const DEFAULT_BASE_URL = "https://promptlens.fly.dev";
 
 export class PromptLensConfigError extends Error {
   constructor(message: string) {

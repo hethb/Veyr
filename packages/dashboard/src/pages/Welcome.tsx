@@ -164,12 +164,15 @@ function ApiKeyBlock({ apiKey }: { apiKey: string }) {
 }
 
 function IntegrationSnippet({ apiKey }: { apiKey: string }) {
+  const proxyBase =
+    (import.meta.env.VITE_PROXY_URL as string | undefined)?.replace(/\/+$/, "") ||
+    "http://localhost:3001";
   const snippet = `import OpenAI from 'openai'
 import { createOpenAIConfig } from 'canopy-sdk'
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  ...createOpenAIConfig({ apiKey: '${apiKey}' })
+  apiKey: process.env.OPENAI_API_KEY, // your provider key — unchanged
+  ...createOpenAIConfig({ apiKey: '${apiKey}', baseUrl: '${proxyBase}' })
 })`;
   const [copied, setCopied] = useState(false);
   async function copy() {

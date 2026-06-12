@@ -1,6 +1,6 @@
 {
   "name": "canopy-sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Drop-in SDK for the Canopy proxy. Routes OpenAI and Anthropic calls through Canopy for cost observability.",
   "license": "MIT",
   "repository": {
