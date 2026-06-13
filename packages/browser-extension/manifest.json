@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Canopy",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Live token/cost estimates and prompt-optimization tips on ChatGPT and Claude, plus your Canopy proxy data.",
   "permissions": ["storage", "alarms"],
   "host_permissions": [

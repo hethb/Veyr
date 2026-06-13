@@ -12,6 +12,16 @@ extension works in two complementary ways:
    be improved, Canopy pauses the send and shows a review modal with concrete
    suggestions and a tighter prompt template. Choose **Keep editing** or
    **Send anyway**.
+3. **Canary (context-drift detector)** — set your name in the popup and ask the
+   model to address you by it (the overlay gives you a one-click **Copy setup
+   instruction**). Canopy then watches each reply: once the model has used your
+   name, a reply that drops it is an early, cheap signal that context is
+   degrading — if it forgets this trivial instruction, it's probably starting to
+   hallucinate elsewhere too. The overlay shows 🟢 / 🟡 / 🔴; when it trips, it
+   offers a **Copy handoff prompt** so you can capture a context summary and
+   start a fresh chat. Runs entirely in the browser; the canary resets when you
+   open a new conversation. Code-only and one-line replies are ignored so they
+   don't false-trip.
 3. **Persistent history (local)** — every prompt you send is logged to
    `chrome.storage.local`, so your chat/token history survives page refreshes,
    new tabs, and browser restarts (it's shared across all tabs). The widget shows

@@ -117,6 +117,23 @@
         <div id="recent" class="recent"></div>
       </div>
 
+      <div class="section">
+        <div class="section-head"><span>Canary check</span></div>
+        <p class="muted">
+          Have the model address you by name. When it stops, that's an early
+          sign context is drifting — grab a handoff and start a fresh chat.
+        </p>
+        <label for="canary-name">Your name</label>
+        <input id="canary-name" type="text" placeholder="e.g. Heth" />
+        <label
+          for="canary-enabled"
+          style="display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer;color:#9ca3af"
+        >
+          <input id="canary-enabled" type="checkbox" style="width:auto" />
+          Enable canary on ChatGPT &amp; Claude
+        </label>
+      </div>
+
       <label for="proxy">Proxy URL</label>
       <input id="proxy" type="text" placeholder="https://promptlens.fly.dev" />
       <label for="key">API key — required for the hosted proxy (from your dashboard)</label>

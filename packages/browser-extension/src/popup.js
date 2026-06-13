@@ -123,8 +123,26 @@ async function initKeyInput() {
   });
 }
 
+async function initCanary() {
+  const nameEl = document.getElementById("canary-name");
+  const enabledEl = document.getElementById("canary-enabled");
+  const { canaryName, canaryEnabled } = await chrome.storage.local.get([
+    "canaryName",
+    "canaryEnabled",
+  ]);
+  nameEl.value = canaryName || "";
+  enabledEl.checked = Boolean(canaryEnabled);
+  nameEl.addEventListener("change", () => {
+    chrome.storage.local.set({ canaryName: nameEl.value.trim() });
+  });
+  enabledEl.addEventListener("change", () => {
+    chrome.storage.local.set({ canaryEnabled: enabledEl.checked });
+  });
+}
+
 initProxyInput();
 initKeyInput();
+initCanary();
 initClear();
 load();
 loadHistory();

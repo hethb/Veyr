@@ -74,6 +74,30 @@
   };
   const P = PLATFORMS[SITE];
 
+  // ---- canary: "always address me by name" drift detector -----------------
+  // You ask the model to address you by name. The extension watches each reply;
+  // once the model has done it (canary "confirmed"), a reply that drops your
+  // name is a cheap signal that context is degrading — and if it forgets this
+  // trivial instruction, it's probably hallucinating elsewhere too. That's your
+  // cue to grab a context handoff and start a fresh chat.
+  const SITE_NAME = SITE === "claude" ? "Claude" : "ChatGPT";
+  const canaryInstruction = (name) =>
+    `From now on, please begin every reply by addressing me as "${name}".`;
+  const CANARY_HANDOFF =
+    "Before I start a new chat, write a self-contained context handoff I can " +
+    "paste into a fresh conversation. Include: (1) the goal, (2) key decisions " +
+    "and constraints, (3) current state / what's done, (4) open tasks and the " +
+    "next step, (5) any important file names or code snippets. Be concise and " +
+    "assume the new chat has zero prior context.";
+  const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const canary = {
+    name: "",
+    enabled: false,
+    confirmed: false, // model has addressed us by name at least once
+    missStreak: 0, // consecutive judgeable replies since then with no name
+    convKey: location.pathname,
+  };
+
   function readInput(el) {
     if (!el) return "";
     const text = "value" in el && el.value != null ? el.value : el.innerText;
@@ -224,6 +248,7 @@
         entry: { id, completionTokens: estimateTokens(completionText) },
       });
       void refreshHistory();
+      checkCanary(completionText);
     });
   }
 
@@ -321,6 +346,96 @@
     renderHistory(await sendBg({ type: "promptlens-usage" }));
   }
 
+  // ---- canary logic --------------------------------------------------------
+  async function loadCanaryConfig() {
+    try {
+      const { canaryName, canaryEnabled } = await chrome.storage.local.get([
+        "canaryName",
+        "canaryEnabled",
+      ]);
+      canary.name = typeof canaryName === "string" ? canaryName.trim() : "";
+      canary.enabled = Boolean(canaryEnabled) && canary.name.length > 0;
+    } catch {
+      /* storage unavailable — leave canary off */
+    }
+    renderCanary();
+  }
+
+  // A new conversation (SPA route change) resets the canary — a fresh chat
+  // starts with a clean slate, which is the whole point of starting one.
+  function maybeResetConversation() {
+    if (location.pathname === canary.convKey) return false;
+    canary.convKey = location.pathname;
+    canary.confirmed = false;
+    canary.missStreak = 0;
+    return true;
+  }
+
+  // Only judge replies with real prose — a code-only or one-word answer can't
+  // be expected to say your name, so it shouldn't count as a miss.
+  function isJudgeable(text) {
+    const prose = String(text || "")
+      .replace(/```[\s\S]*?```/g, " ")
+      .replace(/`[^`]*`/g, " ")
+      .trim();
+    return prose.length >= 25;
+  }
+
+  function checkCanary(responseText) {
+    if (!canary.enabled || !canary.name) return;
+    maybeResetConversation();
+    const text = String(responseText || "");
+    const hasName = new RegExp(`\\b${escapeRe(canary.name)}\\b`, "i").test(text);
+    if (hasName) {
+      canary.confirmed = true;
+      canary.missStreak = 0;
+    } else if (canary.confirmed && isJudgeable(text)) {
+      canary.missStreak += 1;
+    }
+    renderCanary();
+  }
+
+  function renderCanary() {
+    const sec = $("#pl-canary");
+    if (!sec) return;
+    if (!canary.enabled) {
+      sec.style.display = "none";
+      return;
+    }
+    sec.style.display = "block";
+
+    let cls, msg;
+    if (!canary.confirmed) {
+      cls = "pl-canary-warn";
+      msg = `Ask ${SITE_NAME} to address you as “${canary.name}”, then I'll watch for drift.`;
+    } else if (canary.missStreak === 0) {
+      cls = "pl-canary-ok";
+      msg = `🟢 Still addressing you as “${canary.name}”.`;
+    } else if (canary.missStreak === 1) {
+      cls = "pl-canary-warn";
+      msg = "🟡 Dropped your name once — watch for drift.";
+    } else {
+      cls = "pl-canary-bad";
+      msg = `🔴 Canary tripped (${canary.missStreak} replies in a row). Context is likely degrading — get a handoff and start a fresh chat.`;
+    }
+    const status = $("#pl-canary-status");
+    status.className = "pl-canary-status " + cls;
+    status.textContent = msg;
+
+    // Before confirmation, offer the setup line to paste; once tripped, offer
+    // the handoff prompt.
+    const wantHandoff = canary.confirmed && canary.missStreak >= 2;
+    const label = wantHandoff ? "Copy handoff prompt" : "Copy setup instruction";
+    const payload = wantHandoff ? CANARY_HANDOFF : canaryInstruction(canary.name);
+    const action = $("#pl-canary-action");
+    action.innerHTML = `<button class="pl-btn copy" id="pl-canary-copy">${label}</button>`;
+    action.querySelector("#pl-canary-copy").addEventListener("click", (ev) => {
+      navigator.clipboard?.writeText(payload).catch(() => {});
+      ev.currentTarget.textContent = "Copied";
+      setTimeout(renderCanary, 1500);
+    });
+  }
+
   // ---- styles (scoped to shadow root) --------------------------------------
   const STYLE = `
   :host { all: initial; }
@@ -352,6 +467,13 @@
   .pl-save { color: #34d399; }
   .pl-hist { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); }
   .pl-hist-head { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #4fabff; margin-bottom: 4px; }
+  .pl-canary { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); }
+  .pl-canary-head { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #4fabff; margin-bottom: 4px; }
+  .pl-canary-status { font-size: 11.5px; line-height: 1.4; }
+  .pl-canary-status.pl-canary-ok { color: #34d399; }
+  .pl-canary-status.pl-canary-warn { color: #fbbf24; }
+  .pl-canary-status.pl-canary-bad { color: #f87171; }
+  #pl-canary-action { margin-top: 6px; }
   .pl-bubble {
     position: fixed; right: 16px; bottom: 16px; z-index: 2147483647; width: 40px; height: 40px;
     border-radius: 50%; border: 1px solid #076eff; background: rgba(10,10,12,0.96); color: #4fabff;
@@ -400,6 +522,11 @@
       <div class="pl-row pl-total"><span>Est. input cost</span><b id="pl-cost">$0.00</b></div>
       <div class="pl-tips-head">Improve your prompt</div>
       <div class="pl-tips" id="pl-tips"></div>
+      <div class="pl-canary" id="pl-canary" style="display:none">
+        <div class="pl-canary-head">Canary</div>
+        <div class="pl-canary-status" id="pl-canary-status"></div>
+        <div id="pl-canary-action"></div>
+      </div>
       <div class="pl-hist">
         <div class="pl-hist-head">Your history (this browser)</div>
         <div class="pl-row"><span>Today</span><b id="pl-h-today">0 sent</b></div>
@@ -615,4 +742,19 @@
   setInterval(refreshProxy, 30000);
   refreshHistory();
   setInterval(refreshHistory, 10000);
+
+  // Canary: load config, react to popup changes, and reset on chat switch.
+  loadCanaryConfig();
+  try {
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === "local" && ("canaryName" in changes || "canaryEnabled" in changes)) {
+        loadCanaryConfig();
+      }
+    });
+  } catch {
+    /* onChanged unavailable — popup toggles apply on next page load */
+  }
+  setInterval(() => {
+    if (maybeResetConversation()) renderCanary();
+  }, 2000);
 })();
