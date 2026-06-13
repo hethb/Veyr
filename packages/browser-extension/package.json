@@ -1,9 +1,11 @@
 {
   "name": "@promptlens/browser-extension",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Veyr overlay for ChatGPT and Claude (Chrome MV3, zero-build).",
   "scripts": {
-    "build": "echo 'No build step — load packages/browser-extension as an unpacked extension.'"
+    "build": "echo 'No build step — load packages/browser-extension as an unpacked extension.'",
+    "icons": "node scripts/make-icons.js",
+    "package": "node scripts/make-icons.js && rm -rf dist-zip && mkdir -p dist-zip && zip -r -X dist-zip/veyr-extension.zip manifest.json icons src -x '*.DS_Store'"
   }
 }

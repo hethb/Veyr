@@ -3,6 +3,12 @@
   "name": "Veyr",
   "version": "0.3.0",
   "description": "Live token/cost estimates and prompt-optimization tips on ChatGPT and Claude, plus your Veyr proxy data.",
+  "icons": {
+    "16": "icons/16.png",
+    "32": "icons/32.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
   "permissions": ["storage", "alarms"],
   "host_permissions": [
     "https://promptlens.fly.dev/*",
@@ -15,7 +21,13 @@
   },
   "action": {
     "default_title": "Veyr",
-    "default_popup": "src/popup.html"
+    "default_popup": "src/popup.html",
+    "default_icon": {
+      "16": "icons/16.png",
+      "32": "icons/32.png",
+      "48": "icons/48.png",
+      "128": "icons/128.png"
+    }
   },
   "content_scripts": [
     {
