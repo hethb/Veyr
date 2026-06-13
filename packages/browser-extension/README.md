@@ -15,11 +15,17 @@ extension works in two complementary ways:
 3. **Persistent history (local)** — every prompt you send is logged to
    `chrome.storage.local`, so your chat/token history survives page refreshes,
    new tabs, and browser restarts (it's shared across all tabs). The widget shows
-   today's and the last 7 days' counts; the popup shows the recent prompt list
-   with a **Clear** button. Nothing leaves your browser.
-4. **Proxy data (when reachable)** — if your Canopy proxy is running on
-   `http://localhost:3001`, the widget and popup also show your real logged
-   spend (today / week / month) and your top optimization suggestion.
+   today's and the last 7 days' counts plus a **sync status** line.
+4. **Synced to the dashboard** — each captured web chat is pushed to the proxy's
+   `/ingest/web-chat` through a **durable, retried queue**: it's enqueued the
+   moment you send (so a closed tab still delivers it), completion tokens are
+   attached once the reply finishes, and it keeps retrying until the proxy
+   accepts it. So your web-chat prompt statistics land on the dashboard and the
+   extension's counts converge with it (the sync line shows `synced`,
+   `N pending`, or `needs your API key`).
+5. **Proxy data (your account)** — the widget and popup show your real logged
+   spend (today / week / month) read from the proxy's key-authenticated
+   `/api/key-stats`, scoped to your key — the same data the dashboard shows.
 
 The UI renders inside a **Shadow DOM**, so the host page's CSS can't hide or
 restyle it — important since ChatGPT/Claude ship aggressive global styles.
@@ -41,14 +47,20 @@ No build step is required — the extension is plain JS. After editing
 ## Connecting to the proxy
 
 The widget calls the proxy through the extension's background worker (so there's
-no CORS/mixed-content issue). Start the proxy from the repo root:
+no CORS/mixed-content issue). Open the extension popup to configure it:
 
-```bash
-npm run dev:proxy
-```
+- **Hosted (default)** — the proxy URL is already `https://promptlens.fly.dev`.
+  Paste your **API key** (`pl_live_…`, from your dashboard's Welcome/API Keys
+  page) in the popup. The hosted proxy requires it both to read your stats and to
+  sync your web chats — until it's set, the sync line shows `pending — add your
+  API key`.
+- **Self-hosting / local** — set the **Proxy URL** to `http://localhost:3001`
+  (or start one with `npm run dev:proxy`). No key needed: local proxies log
+  anonymous traffic automatically.
 
-To point at a different proxy URL, click the extension icon and edit the
-**Proxy URL** field in the popup.
+Custom self-host URLs other than the two above must also be added to
+`host_permissions` in `manifest.json` (Chrome only lets the worker reach
+declared hosts).
 
 ## Notes
 
