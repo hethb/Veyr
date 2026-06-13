@@ -1,4 +1,4 @@
-# Canopy desktop packaging.
+# Veyr desktop packaging.
 #
 # The proxy's runtime deps (express, better-sqlite3, ...) are declared as
 # dependencies of this package so electron-builder bundles them; the proxy and
@@ -10,7 +10,7 @@
 
 # appId kept stable (functional identifier); productName is the visible brand.
 appId: dev.promptlens.app
-productName: Canopy
+productName: Veyr
 directories:
   output: dist-electron
 asar: false

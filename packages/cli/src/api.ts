@@ -1,4 +1,4 @@
-// HTTP layer for the Canopy CLI: typed fetch helpers against the proxy,
+// HTTP layer for the Veyr CLI: typed fetch helpers against the proxy,
 // with the user-facing error handling every command shares.
 
 import chalk from "chalk";
@@ -71,14 +71,14 @@ export function proxyUrl(): string {
 
 function connectionError(): CliError {
   return new CliError(
-    chalk.red(`✗ Cannot connect to Canopy proxy at ${proxyUrl()}`) +
+    chalk.red(`✗ Cannot connect to Veyr proxy at ${proxyUrl()}`) +
       "\n  Start the proxy with: npm run dev:proxy" +
-      "\n  Or open the Canopy desktop app"
+      "\n  Or open the Veyr desktop app"
   );
 }
 
 function authError(): AuthError {
-  return new AuthError(chalk.red("✗ Invalid API key.") + " Run: canopy config");
+  return new AuthError(chalk.red("✗ Invalid API key.") + " Run: veyr config");
 }
 
 /** Unauthenticated liveness probe — /health is public on every proxy. */
@@ -138,7 +138,7 @@ export async function resolveApiKeyId(): Promise<string> {
   if (keys.length === 0) {
     throw new CliError(
       chalk.red("✗ No API keys exist on this proxy yet.") +
-        "\n  Open the dashboard (canopy open) and create one, or run the desktop app."
+        "\n  Open the dashboard (veyr open) and create one, or run the desktop app."
     );
   }
   const configured = loadConfig().apiKey;

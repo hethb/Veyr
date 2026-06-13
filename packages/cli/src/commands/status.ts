@@ -3,7 +3,7 @@ import { apiGet, isProxyHealthy, proxyUrl, AuthError, type Overview, type TagSta
 import { divider, fmtUsd, plural } from "../ui.js";
 
 export async function statusCommand(version: string): Promise<void> {
-  console.log(chalk.bold(`Canopy v${version}`));
+  console.log(chalk.bold(`Veyr v${version}`));
   console.log(divider());
 
   let overview: Overview | null = null;
@@ -35,9 +35,9 @@ export async function statusCommand(version: string): Promise<void> {
 
   if (!overview) {
     console.log(divider());
-    console.log(chalk.red(`✗ Cannot connect to Canopy proxy at ${proxyUrl()}`));
+    console.log(chalk.red(`✗ Cannot connect to Veyr proxy at ${proxyUrl()}`));
     console.log("  Start the proxy with: npm run dev:proxy");
-    console.log("  Or open the Canopy desktop app");
+    console.log("  Or open the Veyr desktop app");
     process.exitCode = 1;
     return;
   }
@@ -62,5 +62,5 @@ export async function statusCommand(version: string): Promise<void> {
     console.log(divider());
   }
 
-  console.log(chalk.dim('Run "canopy suggestions" to see optimization tips'));
+  console.log(chalk.dim('Run "veyr suggestions" to see optimization tips'));
 }

@@ -2,7 +2,7 @@
   "name": "@promptlens/desktop",
   "version": "0.1.0",
   "private": true,
-  "description": "Canopy desktop app (Electron): auto-starts the proxy and opens the dashboard with a menu-bar spend readout.",
+  "description": "Veyr desktop app (Electron): auto-starts the proxy and opens the dashboard with a menu-bar spend readout.",
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",

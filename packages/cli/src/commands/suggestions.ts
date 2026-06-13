@@ -3,7 +3,7 @@ import { apiGet, type Suggestion } from "../api.js";
 import { fmtUsd, severityBadge } from "../ui.js";
 
 /**
- * Maps a suggestion to the exact `canopy policy set` command that acts on
+ * Maps a suggestion to the exact `veyr policy set` command that acts on
  * it, when one exists for its category.
  */
 function actionCommand(s: Suggestion): string | null {
@@ -12,13 +12,13 @@ function actionCommand(s: Suggestion): string | null {
 
   switch (s.category) {
     case "model":
-      return `canopy policy set ${tag} --model gpt-4o-mini`;
+      return `veyr policy set ${tag} --model gpt-4o-mini`;
     case "caching":
-      return `canopy policy set ${tag} --cache true`;
+      return `veyr policy set ${tag} --cache true`;
     case "volume": {
       const monthly = typeof s.evidence.monthly_cost === "number" ? s.evidence.monthly_cost : null;
       const budget = monthly ? Math.max(1, Math.ceil(monthly)) : 50;
-      return `canopy policy set ${tag} --budget ${budget}`;
+      return `veyr policy set ${tag} --budget ${budget}`;
     }
     case "token-waste": {
       const avg =
@@ -27,7 +27,7 @@ function actionCommand(s: Suggestion): string | null {
           : null;
       if (avg === null) return null; // template-compression rule — no policy lever
       const cap = Math.max(128, Math.ceil((avg * 1.2) / 128) * 128);
-      return `canopy policy set ${tag} --max-tokens ${cap}`;
+      return `veyr policy set ${tag} --max-tokens ${cap}`;
     }
     default:
       return null;

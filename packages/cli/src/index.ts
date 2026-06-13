@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Canopy terminal CLI — monitor LLM costs from your terminal.
+// Veyr terminal CLI — monitor LLM costs from your terminal.
 
 import { createRequire } from "node:module";
 import { Command } from "commander";
@@ -24,8 +24,8 @@ const { version } = require("../package.json") as { version: string };
 const program = new Command();
 
 program
-  .name("canopy")
-  .description("Canopy terminal CLI — monitor LLM costs from your terminal")
+  .name("veyr")
+  .description("Veyr terminal CLI — monitor LLM costs from your terminal")
   .version(version);
 
 program
@@ -72,18 +72,18 @@ program
 
 const integrate = program
   .command("integrate")
-  .description("Route terminal tools (Claude Code, Cursor, shell scripts) through Canopy");
+  .description("Route terminal tools (Claude Code, Cursor, shell scripts) through Veyr");
 
 integrate
   .command("claude-code")
-  .description("Route Claude Code through the Canopy proxy")
+  .description("Route Claude Code through the Veyr proxy")
   .option("--write", "append the export line to your shell profile")
   .option("--check", "verify ANTHROPIC_BASE_URL is set in the current shell")
   .action((opts: ClaudeCodeOptions) => run(() => integrateClaudeCode(opts)));
 
 integrate
   .command("cursor")
-  .description("Route Cursor through the Canopy proxy")
+  .description("Route Cursor through the Veyr proxy")
   .action(() => run(integrateCursor));
 
 integrate
@@ -98,7 +98,7 @@ program
 
 program
   .command("open")
-  .description("Open the Canopy dashboard in your browser")
+  .description("Open the Veyr dashboard in your browser")
   .action(() =>
     run(async () => {
       const url = `${proxyUrl()}/dashboard`;

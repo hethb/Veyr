@@ -1,15 +1,15 @@
-# Canopy — 2-minute quickstart (for teams)
+# Veyr — 2-minute quickstart (for teams)
 
-Canopy is the **production** counterpart to [TokenGuard](https://github.com/hethb/TokenGuard):
+Veyr is the **production** counterpart to [TokenGuard](https://github.com/hethb/TokenGuard):
 
-| | **TokenGuard** | **Canopy** |
+| | **TokenGuard** | **Veyr** |
 |---|---|---|
 | **Who** | People using ChatGPT / Claude in the browser | Engineering teams shipping LLM features |
 | **Install** | Chrome extension | `npm install canopy-sdk` + one env var |
 | **What it does** | Cuts tokens in chat (optimize + strip fluff) | Tracks every API call: cost, tokens, feature, prompt template |
 | **Setup** | Load extension → optional API key | Copy `PROMPTLENS_KEY` → change 2 lines in your app |
 
-You run TokenGuard on yourself. You plug Canopy into **your app** so finance and eng see where token spend goes.
+You run TokenGuard on yourself. You plug Veyr into **your app** so finance and eng see where token spend goes.
 
 ---
 
@@ -79,4 +79,4 @@ Smoke test: `./scripts/smoke-groq.sh` after creating an API key.
 
 ## Positioning one-liner
 
-**TokenGuard** saves tokens in the browser. **Canopy** shows companies which features and prompts are burning tokens in production — plug in with one key, no agent, no prompt rewrite required.
+**TokenGuard** saves tokens in the browser. **Veyr** shows companies which features and prompts are burning tokens in production — plug in with one key, no agent, no prompt rewrite required.

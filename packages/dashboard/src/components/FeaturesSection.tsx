@@ -68,7 +68,7 @@ const FEATURE_DETAILS = [
   {
     icon: Layers,
     title: "Desktop app & VSCode panel",
-    body: "Electron app auto-starts the proxy, opens the dashboard natively, and shows today's spend in your menu bar. VSCode extension adds a Canopy panel + a one-click command to route Claude Code through the proxy.",
+    body: "Electron app auto-starts the proxy, opens the dashboard natively, and shows today's spend in your menu bar. VSCode extension adds a Veyr panel + a one-click command to route Claude Code through the proxy.",
   },
   {
     icon: Zap,
@@ -90,7 +90,7 @@ export function FeaturesSection() {
               Every surface where you use LLMs — captured, costed, optimized.
             </h2>
             <p className="mt-4 text-base leading-relaxed text-neutral-500">
-              Most observability tools stop at totals. Canopy tells you{" "}
+              Most observability tools stop at totals. Veyr tells you{" "}
               <span className="text-neutral-300">where</span>,{" "}
               <span className="text-neutral-300">why</span>, and{" "}
               <span className="text-neutral-300">what to fix</span> — from your

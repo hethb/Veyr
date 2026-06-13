@@ -33,7 +33,7 @@ export async function apiKeyAuth(
 
   if (!raw) {
     // Local single-tenant convenience: tools like Claude Code can't send a
-    // Canopy key. When PROMPTLENS_ALLOW_ANON=true we attribute their
+    // Veyr key. When PROMPTLENS_ALLOW_ANON=true we attribute their
     // traffic to a fixed "anon" key id so it still gets logged.
     if (process.env.PROMPTLENS_ALLOW_ANON === "true") {
       try {

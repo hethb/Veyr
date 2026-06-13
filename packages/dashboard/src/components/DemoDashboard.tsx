@@ -48,7 +48,7 @@ export function DemoDashboard({ variant = "light" }: DemoDashboardProps) {
             Sample data.
           </span>{" "}
           This is what your dashboard will look like once you start sending traffic
-          through Canopy.
+          through Veyr.
         </div>
         <span
           className={cn(

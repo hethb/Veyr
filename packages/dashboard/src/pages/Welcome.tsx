@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { ArrowRight, Check, Copy } from "lucide-react";
-import CanopyMark from "../components/CanopyMark";
+import VeyrMark from "../components/VeyrMark";
 import { authEnabled, supabase } from "../lib/auth";
 import { createKey, listKeys } from "../lib/api";
 import { copyToClipboard } from "../lib/clipboard";
@@ -67,8 +67,8 @@ export function Welcome() {
     <div className="min-h-screen bg-black px-6 py-20 text-white">
       <div className="mx-auto max-w-2xl">
         <div className="mb-8 flex items-center gap-3">
-          <CanopyMark className="h-9 w-9" />
-          <h1 className="text-2xl font-semibold tracking-tight">Welcome to Canopy</h1>
+          <VeyrMark className="h-9 w-9" />
+          <h1 className="text-2xl font-semibold tracking-tight">Welcome to Veyr</h1>
         </div>
 
         {phase === "loading" && (

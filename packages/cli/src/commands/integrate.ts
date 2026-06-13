@@ -1,4 +1,4 @@
-// `canopy integrate <tool>` — route terminal tools through the proxy.
+// `veyr integrate <tool>` — route terminal tools through the proxy.
 
 import { accessSync, constants, existsSync, readFileSync, appendFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -7,7 +7,7 @@ import chalk from "chalk";
 import inquirer from "inquirer";
 import { proxyUrl } from "../api.js";
 
-const MARKER = "# Added by `canopy integrate claude-code --write`";
+const MARKER = "# Added by `veyr integrate claude-code --write`";
 
 function findInPath(bin: string): string | null {
   const exts = process.platform === "win32" ? [".exe", ".cmd", ".bat", ""] : [""];
@@ -48,7 +48,7 @@ export async function integrateClaudeCode(opts: ClaudeCodeOptions): Promise<void
   if (opts.check) {
     const current = process.env.ANTHROPIC_BASE_URL ?? "";
     if (current === anthropicBase) {
-      console.log(chalk.green("✓ ANTHROPIC_BASE_URL is set — Claude Code routes through Canopy."));
+      console.log(chalk.green("✓ ANTHROPIC_BASE_URL is set — Claude Code routes through Veyr."));
     } else if (current) {
       console.log(chalk.yellow(`⚠ ANTHROPIC_BASE_URL is set to ${current}, expected ${anthropicBase}`));
       process.exitCode = 1;
@@ -71,32 +71,32 @@ export async function integrateClaudeCode(opts: ClaudeCodeOptions): Promise<void
   console.log();
 
   if (!opts.write) {
-    console.log("To route Claude Code through Canopy, add this to your shell profile:");
+    console.log("To route Claude Code through Veyr, add this to your shell profile:");
     console.log();
     console.log(`  ${chalk.cyan(exportLine)}`);
     console.log(`  ${chalk.dim("export ANTHROPIC_API_KEY=<your-anthropic-key>  # unchanged")}`);
     console.log();
     console.log("Or run this command to append it automatically:");
-    console.log(`  ${chalk.cyan("canopy integrate claude-code --write")}`);
+    console.log(`  ${chalk.cyan("veyr integrate claude-code --write")}`);
   } else {
     const profile = shellProfile();
     const existing = existsSync(profile) ? readFileSync(profile, "utf8") : "";
     if (existing.includes(MARKER)) {
-      console.log(chalk.yellow(`⚠ ${profile} already contains the Canopy block — nothing to do.`));
+      console.log(chalk.yellow(`⚠ ${profile} already contains the Veyr block — nothing to do.`));
     } else {
       appendFileSync(profile, `\n${MARKER}\n${exportLine}\n`, "utf8");
       console.log(chalk.green(`✓ Added to ${profile}.`) + ` Run: source ${profile}`);
     }
     console.log(
-      chalk.dim("Then verify with: ") + chalk.cyan("canopy integrate claude-code --check")
+      chalk.dim("Then verify with: ") + chalk.cyan("veyr integrate claude-code --check")
     );
   }
 
   console.log();
   console.log(
     chalk.dim(
-      "Claude Code will now appear in your Canopy dashboard under the feature tag\n" +
-        '"claude-code-cli". You can change this with: canopy policy set claude-code-cli'
+      "Claude Code will now appear in your Veyr dashboard under the feature tag\n" +
+        '"claude-code-cli". You can change this with: veyr policy set claude-code-cli'
     )
   );
 }
@@ -118,11 +118,11 @@ function cursorSettingsPath(): string {
 export async function integrateCursor(): Promise<void> {
   const openaiBase = `${proxyUrl()}/openai/v1`;
 
-  console.log("To route Cursor through Canopy:");
+  console.log("To route Cursor through Veyr:");
   console.log();
   console.log("  1. Open Cursor Settings → Models → OpenAI API Key");
   console.log(`  2. Set "Override OpenAI Base URL" to: ${chalk.cyan(openaiBase)}`);
-  console.log(`  3. Your Cursor usage will appear in Canopy under the tag ${chalk.cyan('"cursor"')}`);
+  console.log(`  3. Your Cursor usage will appear in Veyr under the tag ${chalk.cyan('"cursor"')}`);
   console.log();
 
   const settingsPath = cursorSettingsPath();
@@ -170,10 +170,10 @@ export async function integrateShell(): Promise<void> {
   console.log(chalk.cyan(`export OPENAI_BASE_URL="${base}/openai/v1"`));
   console.log(chalk.cyan(`export ANTHROPIC_BASE_URL="${base}/anthropic"`));
   console.log();
-  console.log("# Optional: tag requests by project (read by the Canopy SDK)");
-  console.log(chalk.cyan("canopy-tag() {"));
+  console.log("# Optional: tag requests by project (read by the Veyr SDK)");
+  console.log(chalk.cyan("veyr-tag() {"));
   console.log(chalk.cyan('  export PROMPTLENS_FEATURE_TAG="$1"'));
-  console.log(chalk.cyan('  echo "✓ Canopy feature tag set to: $1"'));
+  console.log(chalk.cyan('  echo "✓ Veyr feature tag set to: $1"'));
   console.log(chalk.cyan("}"));
   console.log();
   console.log(

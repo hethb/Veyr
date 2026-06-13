@@ -1,13 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 96" role="img" aria-label="Canopy">
-  <!-- Canopy full name logo: spaced caps with the blue arch as the A.
-       Letter glyphs use the viewer's sans stack; the arch is geometry, so the
-       lockup stays correct anywhere this renders. -->
-  <g fill="#F2F4F8" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="58" font-weight="500">
-    <text x="28" y="68">C</text>
-    <text x="196" y="68">N</text>
-    <text x="290" y="68">O</text>
-    <text x="388" y="68">P</text>
-    <text x="472" y="68">Y</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 96" role="img" aria-label="Veyr">
+  <!-- Veyr full-name logo: spaced caps with a blue accent on the V.
+       Letter glyphs use the viewer's sans stack; pairs with the arcs+dots mark. -->
+  <g font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="62" font-weight="600" letter-spacing="8" text-anchor="middle">
+    <text x="158" y="69" fill="#3E7BFF">V</text>
+    <text x="255" y="69" fill="#F2F4F8">E</text>
+    <text x="352" y="69" fill="#F2F4F8">Y</text>
+    <text x="449" y="69" fill="#F2F4F8">R</text>
   </g>
-  <path d="M 112 68 Q 142 -4 172 68" fill="none" stroke="#3E7BFF" stroke-width="8.5" stroke-linecap="round"/>
 </svg>

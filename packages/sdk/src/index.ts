@@ -1,5 +1,5 @@
 /**
- * Canopy SDK — drop-in LLM cost tracking for production apps.
+ * Veyr SDK — drop-in LLM cost tracking for production apps.
  *
  *   import OpenAI from "openai";
  *   import { promptlensOpenAI } from "canopy-sdk";
@@ -8,14 +8,14 @@
  *     promptlensOpenAI({ apiKey: process.env.OPENAI_API_KEY! })
  *   );
  *
- * Set PROMPTLENS_KEY once (from the Canopy dashboard). Every call is logged.
+ * Set PROMPTLENS_KEY once (from the Veyr dashboard). Every call is logged.
  */
 
 export interface PromptLensConfig {
   apiKey: string;
   /**
    * Override for self-hosted proxies. Defaults to PROMPTLENS_BASE_URL or the
-   * public Canopy API.
+   * public Veyr API.
    */
   baseUrl?: string;
   /**
@@ -26,7 +26,7 @@ export interface PromptLensConfig {
   /** Layer 2: compress system/user prompts before upstream (proxy). */
   compress?: boolean;
   /**
-   * Layer 2: enable provider prompt caching. On Anthropic, Canopy wraps
+   * Layer 2: enable provider prompt caching. On Anthropic, Veyr wraps
    * long system prompts with `cache_control: { type: "ephemeral" }` so
    * subsequent calls reuse the cached prefix (~90% cheaper input). On OpenAI
    * the cache is automatic above ~1024 tokens of stable prefix — this flag
@@ -37,7 +37,7 @@ export interface PromptLensConfig {
   maxCompletionTokens?: number;
 }
 
-// The hosted Canopy proxy. Override with `baseUrl` or PROMPTLENS_BASE_URL
+// The hosted Veyr proxy. Override with `baseUrl` or PROMPTLENS_BASE_URL
 // (e.g. http://localhost:3001 for the desktop app / local dev).
 const DEFAULT_BASE_URL = "https://promptlens.fly.dev";
 
@@ -70,7 +70,7 @@ export function resolvePromptLensConfig(
 
   if (!apiKey?.trim()) {
     throw new PromptLensConfigError(
-      "Missing PROMPTLENS_KEY. Sign in to the Canopy dashboard → API Keys → create a key, then set PROMPTLENS_KEY=pl_live_… in your environment."
+      "Missing PROMPTLENS_KEY. Sign in to the Veyr dashboard → API Keys → create a key, then set PROMPTLENS_KEY=pl_live_… in your environment."
     );
   }
 
@@ -128,7 +128,7 @@ export function createAnthropicConfig(config: PromptLensConfig): {
 export interface ProviderOpenAIOptions {
   /** Your OpenAI (or Groq-compatible) API key — unchanged. */
   apiKey: string;
-  /** Canopy key; defaults to PROMPTLENS_KEY env var. */
+  /** Veyr key; defaults to PROMPTLENS_KEY env var. */
   promptlensKey?: string;
   baseUrl?: string;
   /** Tag spend in the dashboard (e.g. "billing-bot"). */
@@ -139,7 +139,7 @@ export interface ProviderOpenAIOptions {
 }
 
 /**
- * One-call OpenAI constructor options: provider key + Canopy routing.
+ * One-call OpenAI constructor options: provider key + Veyr routing.
  *
  *   const openai = new OpenAI(promptlensOpenAI({ apiKey: process.env.OPENAI_API_KEY! }));
  */
@@ -174,7 +174,7 @@ export interface ProviderAnthropicOptions {
 }
 
 /**
- * One-call Anthropic constructor options: provider key + Canopy routing.
+ * One-call Anthropic constructor options: provider key + Veyr routing.
  */
 export function promptlensAnthropic(options: ProviderAnthropicOptions): {
   apiKey: string;

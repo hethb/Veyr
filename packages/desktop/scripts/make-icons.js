@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Generates the Canopy app icons: dark rounded tile, two canopy arcs, three
+// Generates the Veyr app icons: dark rounded tile, two veyr arcs, three
 // falling dots (programmatic recreation of the brand mark — keep in sync with
 // packages/dashboard/public/favicon.svg).
 //
@@ -156,7 +156,7 @@ function drawIcon(size) {
 // Outputs
 // ---------------------------------------------------------------------------
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-  <!-- Canopy mark — keep in sync with packages/dashboard/public/favicon.svg -->
+  <!-- Veyr mark — keep in sync with packages/dashboard/public/favicon.svg -->
   <defs>
     <linearGradient id="arc1" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#5EA2FF"/>
@@ -196,7 +196,7 @@ writeFileSync(join(ASSETS, "icon.ico"), Buffer.concat([icoHeader, png256]));
 
 // ICNS via iconutil (macOS only).
 if (process.platform === "darwin") {
-  const setDir = mkdtempSync(join(tmpdir(), "canopy-icon-"));
+  const setDir = mkdtempSync(join(tmpdir(), "veyr-icon-"));
   const iconset = join(setDir, "icon.iconset");
   mkdirSync(iconset);
   for (const s of [16, 32, 64, 128, 256, 512]) {
@@ -214,4 +214,4 @@ if (process.platform === "darwin") {
   console.warn("Not macOS — skipping icon.icns (electron-builder can fall back to icon.png).");
 }
 
-console.log("Canopy icons written to", ASSETS);
+console.log("Veyr icons written to", ASSETS);

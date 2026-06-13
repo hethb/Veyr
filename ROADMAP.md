@@ -1,9 +1,9 @@
-# Canopy product roadmap
+# Veyr product roadmap
 
 **Core product:** A hosted proxy between your app and OpenAI/Anthropic. Change where requests go — see (and eventually control) LLM spend by feature.
 
 ```
-your app  →  Canopy proxy  →  OpenAI / Anthropic
+your app  →  Veyr proxy  →  OpenAI / Anthropic
                  │
          observe · compress · enforce
                  │
@@ -58,7 +58,7 @@ your app  →  Canopy proxy  →  OpenAI / Anthropic
 | Tool | What it does |
 |------|----------------|
 | Helicone / LangSmith | Shows what happened |
-| **Canopy** | Changes what happens — compress, cap, block |
+| **Veyr** | Changes what happens — compress, cap, block |
 
 ---
 

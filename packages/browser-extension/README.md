@@ -1,20 +1,20 @@
-# Canopy Browser Extension
+# Veyr Browser Extension
 
 A Chrome (MV3) overlay for **chatgpt.com** and **claude.ai**.
 
-Web chats don't use your API key and never hit the Canopy proxy, so this
+Web chats don't use your API key and never hit the Veyr proxy, so this
 extension works in two complementary ways:
 
 1. **Local estimate (always on)** — a floating widget shows the live token count
    of the current conversation and your draft, an estimated input cost, and
    rule-based prompt suggestions as you type.
 2. **Pre-send review** — when you press Enter or click send on a draft that can
-   be improved, Canopy pauses the send and shows a review modal with concrete
+   be improved, Veyr pauses the send and shows a review modal with concrete
    suggestions and a tighter prompt template. Choose **Keep editing** or
    **Send anyway**.
 3. **Canary (context-drift detector)** — set your name in the popup and ask the
    model to address you by it (the overlay gives you a one-click **Copy setup
-   instruction**). Canopy then watches each reply: once the model has used your
+   instruction**). Veyr then watches each reply: once the model has used your
    name, a reply that drops it is an early, cheap signal that context is
    degrading — if it forgets this trivial instruction, it's probably starting to
    hallucinate elsewhere too. The overlay shows 🟢 / 🟡 / 🔴; when it trips, it
@@ -47,7 +47,7 @@ restyle it — important since ChatGPT/Claude ship aggressive global styles.
 3. Click **Load unpacked** and select this folder
    (`packages/browser-extension`).
 4. Open [chatgpt.com](https://chatgpt.com) or [claude.ai](https://claude.ai) —
-   the Canopy widget appears in the bottom-right. Minimize it to a bubble
+   the Veyr widget appears in the bottom-right. Minimize it to a bubble
    with the `–` button.
 
 No build step is required — the extension is plain JS. After editing

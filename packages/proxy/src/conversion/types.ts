@@ -1,5 +1,5 @@
 /**
- * Document → Markdown conversion. Canopy's pure-Node take on Microsoft's
+ * Document → Markdown conversion. Veyr's pure-Node take on Microsoft's
  * MarkItDown (https://github.com/microsoft/markitdown, MIT) — same idea (turn
  * bloated formats into LLM-friendly Markdown), reimplemented in TypeScript so
  * it runs inside the existing proxy process without a Python dependency.

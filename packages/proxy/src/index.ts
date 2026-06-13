@@ -89,7 +89,7 @@ app.use(errorHandler);
 
 const port = parseInt(process.env.PORT ?? "3001", 10);
 app.listen(port, () => {
-  console.log(`Canopy proxy listening on :${port}`);
+  console.log(`Veyr proxy listening on :${port}`);
   console.log(`OpenAI-compatible upstream: ${getOpenAIUpstreamUrl()}`);
   console.log(
     `Control plane: compression default=${process.env.ENABLE_COMPRESSION === "true" ? "on" : "off"}`

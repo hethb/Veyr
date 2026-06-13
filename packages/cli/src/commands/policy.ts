@@ -12,7 +12,7 @@ export async function policyListCommand(): Promise<void> {
 
   console.log(chalk.bold("Feature Policies"));
   if (policies.length === 0) {
-    console.log(chalk.dim("No policies yet. Create one with: canopy policy set <feature-tag>"));
+    console.log(chalk.dim("No policies yet. Create one with: veyr policy set <feature-tag>"));
     return;
   }
 

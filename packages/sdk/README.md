@@ -29,7 +29,7 @@ await openai.chat.completions.create({
 ```
 
 ```bash
-# Only new secret — from Canopy dashboard → API Keys
+# Only new secret — from Veyr dashboard → API Keys
 export PROMPTLENS_KEY=pl_live_...
 ```
 
@@ -70,4 +70,4 @@ const openai = new OpenAI({
 
 ## vs TokenGuard
 
-[TokenGuard](https://github.com/hethb/TokenGuard) is a browser extension that optimizes chat usage. Canopy is for **teams** that call OpenAI/Anthropic from code and need spend broken down by feature and prompt template.
+[TokenGuard](https://github.com/hethb/TokenGuard) is a browser extension that optimizes chat usage. Veyr is for **teams** that call OpenAI/Anthropic from code and need spend broken down by feature and prompt template.

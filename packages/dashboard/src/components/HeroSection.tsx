@@ -30,7 +30,7 @@ export function HeroSection({ authEnabled }: HeroSectionProps) {
     >
       <GoogleGeminiEffect
         title="The LLM spend management layer"
-        description="Point your API at Canopy. See which features burn money — then compress prompts and enforce budgets from the same proxy. Helicone shows what happened; Canopy changes what happens."
+        description="Point your API at Veyr. See which features burn money — then compress prompts and enforce budgets from the same proxy. Helicone shows what happened; Veyr changes what happens."
         pathLengths={[
           pathLengthFirst,
           pathLengthSecond,

@@ -1,4 +1,4 @@
-// `canopy init` / `npx getcanopy init` — zero-friction onboarding.
+// `veyr init` / `npx getcanopy init` — zero-friction onboarding.
 
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
@@ -29,7 +29,7 @@ async function isHealthy(baseUrl: string): Promise<boolean> {
 
 /**
  * Best-effort local proxy start: works when the CLI runs inside the
- * Canopy monorepo (dev / git clone). npm-installed users are pointed at
+ * Veyr monorepo (dev / git clone). npm-installed users are pointed at
  * the desktop app instead.
  */
 function findProxyEntry(): string | null {
@@ -87,12 +87,12 @@ function showSdkSnippet(kind: "openai" | "anthropic", baseUrl: string, apiKey?: 
     )
   );
   console.log();
-  console.log(chalk.dim("Every call through this client is now logged to Canopy."));
+  console.log(chalk.dim("Every call through this client is now logged to Veyr."));
 }
 
 export async function initCommand(): Promise<void> {
   console.log();
-  console.log(chalk.bold("Welcome to Canopy 👋"));
+  console.log(chalk.bold("Welcome to Veyr 👋"));
   console.log();
   console.log("Let's get you set up in 60 seconds.");
   console.log();
@@ -102,7 +102,7 @@ export async function initCommand(): Promise<void> {
     {
       type: "list",
       name: "mode",
-      message: "How do you want to run Canopy?",
+      message: "How do you want to run Veyr?",
       choices: [
         { name: "Local (proxy running on this machine)", value: "local" },
         { name: "Hosted (connect to a deployed proxy URL)", value: "hosted" },
@@ -119,7 +119,7 @@ export async function initCommand(): Promise<void> {
         name: "url",
         message: "Proxy URL",
         validate: (v: string) =>
-          /^https?:\/\/.+/.test(v.trim()) || "Enter a full URL (e.g. https://canopy.example.com)",
+          /^https?:\/\/.+/.test(v.trim()) || "Enter a full URL (e.g. https://veyr.example.com)",
       },
     ]);
     baseUrl = url.trim().replace(/\/+$/, "");
@@ -148,8 +148,8 @@ export async function initCommand(): Promise<void> {
           spinner.succeed(`Proxy running on ${baseUrl}`);
         } else {
           spinner.fail("Couldn't start the proxy from here.");
-          console.log("  Start it with: npm run dev:proxy   (in the Canopy repo)");
-          console.log("  Or open the Canopy desktop app — it manages the proxy for you.");
+          console.log("  Start it with: npm run dev:proxy   (in the Veyr repo)");
+          console.log("  Or open the Veyr desktop app — it manages the proxy for you.");
         }
       }
     }
@@ -160,7 +160,7 @@ export async function initCommand(): Promise<void> {
     {
       type: "input",
       name: "apiKey",
-      message: "Your Canopy API key (leave blank to use demo mode):",
+      message: "Your Veyr API key (leave blank to use demo mode):",
     },
   ]);
   const trimmedKey = apiKey.trim();
@@ -223,6 +223,6 @@ export async function initCommand(): Promise<void> {
   console.log();
   console.log(chalk.green.bold("✓ Setup complete!"));
   console.log(`  Dashboard: ${baseUrl}`);
-  console.log('  Run "canopy status" to see your spend');
-  console.log('  Run "canopy suggestions" to get optimization tips');
+  console.log('  Run "veyr status" to see your spend');
+  console.log('  Run "veyr suggestions" to get optimization tips');
 }

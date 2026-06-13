@@ -1,6 +1,6 @@
-// Canopy content overlay for ChatGPT and Claude.
+// Veyr content overlay for ChatGPT and Claude.
 //
-// Web chats don't route through the Canopy proxy, so this widget:
+// Web chats don't route through the Veyr proxy, so this widget:
 //   1. Estimates tokens/cost locally from the page (conversation + live draft).
 //   2. Surfaces rule-based prompt suggestions as you type.
 //   3. Intercepts the send action (Enter / send button) to review and improve
@@ -15,7 +15,7 @@
   if (window.__promptlensInjected) return;
   window.__promptlensInjected = true;
 
-  // Canopy mark (two arcs + three dots), monochrome to the surrounding accent.
+  // Veyr mark (two arcs + three dots), monochrome to the surrounding accent.
   const CANOPY_MARK =
     '<svg viewBox="0 0 48 48" width="16" height="16" fill="none" aria-hidden="true">' +
     '<path d="M 8 21 A 18 18 0 0 1 40 21" stroke="#4fabff" stroke-width="4.4" stroke-linecap="round"/>' +
@@ -513,7 +513,7 @@
   panel.innerHTML = `
     <div class="pl-head">
       <span class="pl-logo">${CANOPY_MARK}</span>
-      <span class="pl-title">Canopy</span>
+      <span class="pl-title">Veyr</span>
       <button class="pl-min" title="Minimize">–</button>
     </div>
     <div class="pl-body">
@@ -534,14 +534,14 @@
         <div id="pl-h-sync" class="pl-muted" style="margin-top:4px">✓ synced to dashboard</div>
       </div>
       <div class="pl-proxy" id="pl-proxy">
-        <div class="pl-proxy-head">Your Canopy proxy</div>
+        <div class="pl-proxy-head">Your Veyr proxy</div>
         <div class="pl-proxy-body" id="pl-proxy-body">Checking…</div>
       </div>
     </div>`;
   const bubble = document.createElement("button");
   bubble.className = "pl-bubble";
   bubble.innerHTML = CANOPY_MARK;
-  bubble.title = "Open Canopy";
+  bubble.title = "Open Veyr";
   shadow.appendChild(panel);
   shadow.appendChild(bubble);
 
@@ -598,7 +598,7 @@
       proxyFetch("/api/analysis/suggestions"),
     ]);
     if (!overview) {
-      body.innerHTML = `<span class="pl-muted">Can't reach your proxy with this key. Open the Canopy extension to set your proxy URL &amp; API key.</span>`;
+      body.innerHTML = `<span class="pl-muted">Can't reach your proxy with this key. Open the Veyr extension to set your proxy URL &amp; API key.</span>`;
       return;
     }
     const top = Array.isArray(suggestions)

@@ -5,7 +5,7 @@ export const KEY_PREFIX_LENGTH = 12;
 export const KEY_BCRYPT_ROUNDS = 10;
 
 /**
- * Generates a fresh Canopy API key in the form `pl_live_<32 hex chars>`.
+ * Generates a fresh Veyr API key in the form `pl_live_<32 hex chars>`.
  * Returns the raw key, its bcrypt hash, and the prefix to store for display.
  *
  * The raw key is shown to the user once and never persisted anywhere.

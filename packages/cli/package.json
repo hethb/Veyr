@@ -1,7 +1,7 @@
 {
   "name": "getcanopy",
   "version": "0.1.1",
-  "description": "Canopy terminal CLI \u2014 monitor LLM costs from your terminal",
+  "description": "Veyr terminal CLI \u2014 monitor LLM costs from your terminal",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -15,10 +15,11 @@
     "cost",
     "observability",
     "cli",
-    "canopy"
+    "veyr"
   ],
   "type": "module",
   "bin": {
+    "veyr": "./dist/index.js",
     "canopy": "./dist/index.js",
     "promptlens": "./dist/index.js"
   },

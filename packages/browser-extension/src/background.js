@@ -1,4 +1,4 @@
-// Canopy background service worker (MV3).
+// Veyr background service worker (MV3).
 //
 // Content scripts run in the page's origin (e.g. https://chatgpt.com) and can't
 // fetch the proxy directly. The service worker can, using the extension's

@@ -319,7 +319,7 @@ function buildSuggestions(rows: AnalysisRow[]): Suggestion[] {
           cache_hit_rate: round2(cacheHitRate),
           calls: agg.count,
         },
-        action: `Set x-promptlens-cache: 1 on requests for "${agg.tag}" (or enable_prompt_caching=true in the feature policy) so Canopy injects Anthropic cache_control automatically.`,
+        action: `Set x-promptlens-cache: 1 on requests for "${agg.tag}" (or enable_prompt_caching=true in the feature policy) so Veyr injects Anthropic cache_control automatically.`,
       });
     } else {
       // Burst-only fallback for pre-instrumentation traffic.
@@ -343,7 +343,7 @@ function buildSuggestions(rows: AnalysisRow[]): Suggestion[] {
             burst_count: bursts,
             calls_per_burst: maxCalls,
           },
-          action: `Set x-promptlens-cache: 1 on requests for "${agg.tag}" (or enable_prompt_caching=true in the feature policy) so Canopy injects Anthropic cache_control automatically.`,
+          action: `Set x-promptlens-cache: 1 on requests for "${agg.tag}" (or enable_prompt_caching=true in the feature policy) so Veyr injects Anthropic cache_control automatically.`,
         });
       }
     }
@@ -431,7 +431,7 @@ analysisRouter.post("/compress", (req: Request, res: Response): void => {
 });
 
 /**
- * Placeholder lookup for stored prompt content. Canopy does not persist
+ * Placeholder lookup for stored prompt content. Veyr does not persist
  * prompt content by default (privacy), so this always returns null until a
  * content store is wired up behind STORE_PROMPTS.
  */

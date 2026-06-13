@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import { SpiralAnimation } from "@/components/ui/spiral-animation";
-import CanopyMark, { CanopyWordmark } from "./CanopyMark";
+import VeyrMark, { VeyrWordmark } from "./VeyrMark";
 import { authEnabled, signOut } from "../lib/auth";
 
 interface LayoutProps {
@@ -80,9 +80,9 @@ export function Layout({ children }: LayoutProps) {
         <aside className="flex w-60 shrink-0 flex-col border-r border-white/[0.06] bg-[#0c0e15]/70 backdrop-blur-md">
           <div className="px-6 py-5">
             <Link to="/" className="flex items-center gap-3">
-              <CanopyMark className="h-8 w-8" />
+              <VeyrMark className="h-8 w-8" />
               <div>
-                <CanopyWordmark className="text-sm" />
+                <VeyrWordmark className="text-sm" />
                 <div className="text-xs text-neutral-500">v0.1</div>
               </div>
             </Link>

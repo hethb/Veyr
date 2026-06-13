@@ -1,7 +1,7 @@
 {
   "name": "promptlens-vscode",
-  "displayName": "Canopy",
-  "description": "LLM cost attribution and optimization suggestions in your editor, plus one-click routing of Claude Code through the Canopy proxy.",
+  "displayName": "Veyr",
+  "description": "LLM cost attribution and optimization suggestions in your editor, plus one-click routing of Claude Code through the Veyr proxy.",
   "version": "0.1.0",
   "private": true,
   "publisher": "promptlens",
@@ -16,7 +16,7 @@
       "activitybar": [
         {
           "id": "promptlens",
-          "title": "Canopy",
+          "title": "Veyr",
           "icon": "media/icon.svg"
         }
       ]
@@ -33,20 +33,20 @@
     "commands": [
       {
         "command": "promptlens.refresh",
-        "title": "Canopy: Refresh",
+        "title": "Veyr: Refresh",
         "icon": "$(refresh)"
       },
       {
         "command": "promptlens.routeClaudeCode",
-        "title": "Canopy: Route Claude Code through proxy"
+        "title": "Veyr: Route Claude Code through proxy"
       },
       {
         "command": "promptlens.unrouteClaudeCode",
-        "title": "Canopy: Stop routing Claude Code through proxy"
+        "title": "Veyr: Stop routing Claude Code through proxy"
       },
       {
         "command": "promptlens.openDashboard",
-        "title": "Canopy: Open dashboard"
+        "title": "Veyr: Open dashboard"
       }
     ],
     "menus": {
@@ -59,17 +59,17 @@
       ]
     },
     "configuration": {
-      "title": "Canopy",
+      "title": "Veyr",
       "properties": {
         "promptlens.proxyUrl": {
           "type": "string",
           "default": "http://localhost:3001",
-          "description": "Base URL of your Canopy proxy."
+          "description": "Base URL of your Veyr proxy."
         },
         "promptlens.dashboardUrl": {
           "type": "string",
           "default": "http://localhost:5173/dashboard",
-          "description": "URL of the Canopy dashboard."
+          "description": "URL of the Veyr dashboard."
         }
       }
     }

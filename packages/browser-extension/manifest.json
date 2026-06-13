@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Canopy",
+  "name": "Veyr",
   "version": "0.3.0",
-  "description": "Live token/cost estimates and prompt-optimization tips on ChatGPT and Claude, plus your Canopy proxy data.",
+  "description": "Live token/cost estimates and prompt-optimization tips on ChatGPT and Claude, plus your Veyr proxy data.",
   "permissions": ["storage", "alarms"],
   "host_permissions": [
     "https://promptlens.fly.dev/*",
@@ -14,7 +14,7 @@
     "type": "module"
   },
   "action": {
-    "default_title": "Canopy",
+    "default_title": "Veyr",
     "default_popup": "src/popup.html"
   },
   "content_scripts": [
