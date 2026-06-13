@@ -31,6 +31,15 @@ function relTime(ts) {
   return `${Math.floor(s / 86400)}d ago`;
 }
 
+function syncLabel(s) {
+  if (s.pending > 0) {
+    if (s.sync === "needs-key") return `⚠ ${s.pending} pending — add your API key below`;
+    if (s.sync === "offline") return `⏳ ${s.pending} pending — proxy unreachable, will retry`;
+    return `⏳ syncing ${s.pending}…`;
+  }
+  return "✓ synced to dashboard";
+}
+
 async function loadHistory() {
   const summary = await sendBg({ type: "promptlens-usage" });
   if (!summary) return;
@@ -38,6 +47,11 @@ async function loadHistory() {
     `${summary.today.prompts} sent · ~${fmtTok(summary.today.tokens)} tok`;
   document.getElementById("h-week").textContent =
     `${summary.last7.prompts} sent · ~${fmtTok(summary.last7.tokens)} tok`;
+  const sync = document.getElementById("h-sync");
+  if (sync) {
+    sync.textContent = syncLabel(summary);
+    sync.style.color = summary.pending > 0 && summary.sync === "needs-key" ? "#fbbf24" : "#6b7280";
+  }
 
   const recent = document.getElementById("recent");
   if (!summary.recent.length) {
@@ -65,10 +79,14 @@ function initClear() {
 async function load() {
   const status = document.getElementById("status");
   const stats = document.getElementById("stats");
+  // Rewritten to /api/key-stats/overview by the background worker and scoped to
+  // this key — so these figures match the dashboard for the same account.
   const overview = await proxyFetch("/api/stats/overview");
   if (!overview) {
     status.textContent =
-      "Proxy offline. Run `npm run dev:proxy`, then reopen this popup.";
+      "Can't reach the proxy with this key. Check the Proxy URL and API key below.";
+    status.style.display = "block";
+    stats.style.display = "none";
     return;
   }
   status.style.display = "none";
@@ -81,9 +99,13 @@ async function load() {
 async function initProxyInput() {
   const input = document.getElementById("proxy");
   const { proxyUrl } = await chrome.storage.local.get("proxyUrl");
-  input.value = proxyUrl || "http://localhost:3001";
+  input.value = proxyUrl || "https://promptlens.fly.dev";
   input.addEventListener("change", () => {
-    chrome.storage.local.set({ proxyUrl: input.value.trim() }, load);
+    chrome.storage.local.set({ proxyUrl: input.value.trim() }, async () => {
+      await sendBg({ type: "promptlens-flush" });
+      load();
+      loadHistory();
+    });
   });
 }
 
@@ -92,7 +114,12 @@ async function initKeyInput() {
   const { promptlensKey } = await chrome.storage.local.get("promptlensKey");
   input.value = promptlensKey || "";
   input.addEventListener("change", () => {
-    chrome.storage.local.set({ promptlensKey: input.value.trim() });
+    chrome.storage.local.set({ promptlensKey: input.value.trim() }, async () => {
+      // New key may unblock both reads and the pending ingest queue.
+      await sendBg({ type: "promptlens-flush" });
+      load();
+      loadHistory();
+    });
   });
 }
 

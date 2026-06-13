@@ -14,6 +14,7 @@ import { policiesRouter } from "./routes/policies.js";
 import { analysisRouter } from "./routes/analysis.js";
 import { convertRouter } from "./routes/convert.js";
 import { ingestRouter } from "./routes/ingest.js";
+import { keyStatsRouter } from "./routes/keyStats.js";
 import { dashboardAuth } from "./middleware/dashboardAuth.js";
 import { getOpenAIUpstreamUrl, isAuthEnabled } from "./config.js";
 
@@ -55,6 +56,10 @@ app.use("/anthropic", anthropicRouter);
 // LLM routes — NOT dashboardAuth — so it works with PROMPTLENS_ALLOW_ANON in
 // local single-tenant mode.
 app.use("/ingest", ingestRouter);
+// Key-authenticated read of this key's own stats — the read counterpart to
+// /ingest. Used by the browser extension (which holds a pl_live_ key, not a
+// dashboard session). Self-authenticates with apiKeyAuth, so NOT dashboardAuth.
+app.use("/api/key-stats", keyStatsRouter);
 // dashboardAuth is a pass-through unless AUTH_ENABLED=true, in which case it
 // requires a Supabase token and scopes each request to req.userId.
 app.use("/api/stats", dashboardAuth, statsRouter);

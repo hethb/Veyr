@@ -87,7 +87,15 @@
   </head>
   <body>
     <div class="head">
-      <span class="logo">PL</span>
+      <span class="logo" style="border: none">
+        <svg viewBox="0 0 48 48" width="18" height="18" fill="none" aria-hidden="true">
+          <path d="M 8 21 A 18 18 0 0 1 40 21" stroke="#4fabff" stroke-width="4.4" stroke-linecap="round"/>
+          <path d="M 14 26.5 A 12 12 0 0 1 34 26.5" stroke="#4fabff" stroke-width="3.6" stroke-linecap="round"/>
+          <circle cx="24" cy="33" r="2.3" fill="#4fabff"/>
+          <circle cx="24" cy="38.6" r="2" fill="#4fabff"/>
+          <circle cx="24" cy="43.6" r="1.7" fill="#4fabff"/>
+        </svg>
+      </span>
       <b>Canopy</b>
     </div>
     <div class="body">
@@ -105,15 +113,19 @@
         </div>
         <div class="row"><span>Today</span><b id="h-today">0 sent</b></div>
         <div class="row"><span>Last 7 days</span><b id="h-week">0 sent</b></div>
+        <div id="h-sync" class="muted" style="margin-top: 4px">✓ synced to dashboard</div>
         <div id="recent" class="recent"></div>
       </div>
 
       <label for="proxy">Proxy URL</label>
-      <input id="proxy" type="text" placeholder="http://localhost:3001" />
-      <label for="key">API key (optional, for hosted proxies)</label>
+      <input id="proxy" type="text" placeholder="https://promptlens.fly.dev" />
+      <label for="key">API key — required for the hosted proxy (from your dashboard)</label>
       <input id="key" type="text" placeholder="pl_live_…" />
+      <p class="muted" style="margin-top: 6px">
+        Self-hosting? Set the proxy URL to <code>http://localhost:3001</code> (no key needed).
+      </p>
       <p style="margin-top: 12px">
-        <a href="http://localhost:5173/dashboard" target="_blank">Open dashboard →</a>
+        <a href="https://promptlens-lac.vercel.app/dashboard" target="_blank">Open dashboard →</a>
       </p>
     </div>
     <script src="popup.js"></script>

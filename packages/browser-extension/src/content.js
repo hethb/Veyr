@@ -15,6 +15,14 @@
   if (window.__promptlensInjected) return;
   window.__promptlensInjected = true;
 
+  // Canopy mark (two arcs + three dots), monochrome to the surrounding accent.
+  const CANOPY_MARK =
+    '<svg viewBox="0 0 48 48" width="16" height="16" fill="none" aria-hidden="true">' +
+    '<path d="M 8 21 A 18 18 0 0 1 40 21" stroke="#4fabff" stroke-width="4.4" stroke-linecap="round"/>' +
+    '<path d="M 14 26.5 A 12 12 0 0 1 34 26.5" stroke="#4fabff" stroke-width="3.6" stroke-linecap="round"/>' +
+    '<circle cx="24" cy="33" r="2.3" fill="#4fabff"/><circle cx="24" cy="38.6" r="2" fill="#4fabff"/>' +
+    '<circle cx="24" cy="43.6" r="1.7" fill="#4fabff"/></svg>';
+
   const SITE = location.hostname.includes("claude") ? "claude" : "chatgpt";
   const estimateTokens = (text) => (text ? Math.ceil(text.length / 4) : 0);
   const PRICE_PER_1K = SITE === "claude" ? 0.003 : 0.0025; // Sonnet vs GPT-4o
@@ -159,7 +167,7 @@
   }
 
   // ---- background messaging ------------------------------------------------
-  function sendBg(message) {
+  function sendBgRaw(message) {
     return new Promise((resolve) => {
       try {
         chrome.runtime.sendMessage(message, (resp) => {
@@ -167,13 +175,14 @@
             resolve(null);
             return;
           }
-          resolve(resp.data);
+          resolve(resp);
         });
       } catch {
         resolve(null);
       }
     });
   }
+  const sendBg = (message) => sendBgRaw(message).then((r) => (r ? r.data : null));
   const proxyFetch = (path) => sendBg({ type: "promptlens-fetch", path });
 
   // ---- local usage log -----------------------------------------------------
@@ -186,7 +195,7 @@
     if (now - lastLoggedAt < 1200) return;
     lastLoggedAt = now;
     const promptTokens = estimateTokens(text);
-    const summary = await sendBg({
+    const resp = await sendBgRaw({
       type: "promptlens-log",
       entry: {
         site: SITE,
@@ -195,23 +204,26 @@
         preview: text.slice(0, 140),
       },
     });
-    if (summary) renderHistory(summary);
+    if (resp && resp.data) renderHistory(resp.data);
+    const id = resp ? resp.id : null;
+    if (!id) return;
 
-    // Kick off response capture in the background. Once the assistant message
-    // stops growing, we ingest a single proxy row with both prompt and
-    // completion tokens — gives the dashboard accurate cost, not just input.
+    // Enqueue the ingest immediately (durable, retried in the background) so the
+    // prompt reaches the dashboard even if this tab closes before the response
+    // finishes. Completion tokens are attached later if/when capture completes.
+    void sendBg({
+      type: "promptlens-ingest",
+      entry: { id, site: SITE, prompt: text.slice(0, 4000), promptTokens },
+    });
+
+    // Once the assistant message stops growing, attach completion tokens to the
+    // same queued job and release it — so the dashboard row has accurate cost.
     captureAssistantResponse((completionText) => {
-      const completionTokens = estimateTokens(completionText);
       void sendBg({
         type: "promptlens-ingest",
-        entry: {
-          site: SITE,
-          prompt: text.slice(0, 4000),
-          promptTokens,
-          completionTokens,
-          preview: text.slice(0, 140),
-        },
+        entry: { id, completionTokens: estimateTokens(completionText) },
       });
+      void refreshHistory();
     });
   }
 
@@ -287,10 +299,23 @@
   }
 
   const fmtTok = (t) => (t >= 1000 ? `${(t / 1000).toFixed(1)}k` : `${t}`);
+  function syncLabel(s) {
+    if (s.pending > 0) {
+      if (s.sync === "needs-key") return `⚠ ${s.pending} pending — add your API key below`;
+      if (s.sync === "offline") return `⏳ ${s.pending} pending — proxy unreachable, will retry`;
+      return `⏳ syncing ${s.pending}…`;
+    }
+    return "✓ synced to dashboard";
+  }
   function renderHistory(s) {
     if (!s) return;
     $("#pl-h-today").textContent = `${s.today.prompts} sent · ~${fmtTok(s.today.tokens)} tok`;
     $("#pl-h-week").textContent = `${s.last7.prompts} sent · ~${fmtTok(s.last7.tokens)} tok`;
+    const sync = $("#pl-h-sync");
+    if (sync) {
+      sync.textContent = syncLabel(s);
+      sync.style.color = s.pending > 0 && s.sync === "needs-key" ? "#fbbf24" : "#6b7280";
+    }
   }
   async function refreshHistory() {
     renderHistory(await sendBg({ type: "promptlens-usage" }));
@@ -365,7 +390,7 @@
   panel.className = "pl-panel";
   panel.innerHTML = `
     <div class="pl-head">
-      <span class="pl-logo">PL</span>
+      <span class="pl-logo">${CANOPY_MARK}</span>
       <span class="pl-title">Canopy</span>
       <button class="pl-min" title="Minimize">–</button>
     </div>
@@ -379,6 +404,7 @@
         <div class="pl-hist-head">Your history (this browser)</div>
         <div class="pl-row"><span>Today</span><b id="pl-h-today">0 sent</b></div>
         <div class="pl-row"><span>Last 7 days</span><b id="pl-h-week">0 sent</b></div>
+        <div id="pl-h-sync" class="pl-muted" style="margin-top:4px">✓ synced to dashboard</div>
       </div>
       <div class="pl-proxy" id="pl-proxy">
         <div class="pl-proxy-head">Your Canopy proxy</div>
@@ -387,7 +413,7 @@
     </div>`;
   const bubble = document.createElement("button");
   bubble.className = "pl-bubble";
-  bubble.textContent = "PL";
+  bubble.innerHTML = CANOPY_MARK;
   bubble.title = "Open Canopy";
   shadow.appendChild(panel);
   shadow.appendChild(bubble);
@@ -445,7 +471,7 @@
       proxyFetch("/api/analysis/suggestions"),
     ]);
     if (!overview) {
-      body.innerHTML = `<span class="pl-muted">Proxy offline. Start it to see real spend &amp; suggestions.</span>`;
+      body.innerHTML = `<span class="pl-muted">Can't reach your proxy with this key. Open the Canopy extension to set your proxy URL &amp; API key.</span>`;
       return;
     }
     const top = Array.isArray(suggestions)

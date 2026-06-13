@@ -297,6 +297,28 @@ export function getRequestsSince(
     .all(sinceIso) as RequestRow[];
 }
 
+/**
+ * Request rows since an ISO timestamp, scoped to a single api key. Used by the
+ * key-authenticated stats routes (e.g. the browser extension, which holds a
+ * `pl_live_…` key rather than a dashboard session).
+ */
+export function getRequestsSinceForKey(
+  sinceIso: string,
+  apiKeyId: string
+): RequestRow[] {
+  return getDb()
+    .prepare(
+      `SELECT timestamp, cost_usd, total_tokens, prompt_tokens,
+              completion_tokens, cached_tokens, cache_creation_tokens,
+              feature_tag, prompt_hash
+       FROM requests
+       WHERE timestamp >= ? AND api_key_id = ?
+       ORDER BY timestamp DESC
+       LIMIT 50000`
+    )
+    .all(sinceIso, apiKeyId) as RequestRow[];
+}
+
 export interface RecentRequestRow {
   id: string;
   timestamp: string;
@@ -311,6 +333,7 @@ export function getRecentRequests(opts: {
   limit: number;
   tag?: string | null;
   userId?: string | null;
+  apiKeyId?: string | null;
 }): RecentRequestRow[] {
   const where: string[] = [];
   const params: unknown[] = [];
@@ -318,7 +341,10 @@ export function getRecentRequests(opts: {
     where.push("feature_tag = ?");
     params.push(opts.tag);
   }
-  if (opts.userId) {
+  if (opts.apiKeyId) {
+    where.push("api_key_id = ?");
+    params.push(opts.apiKeyId);
+  } else if (opts.userId) {
     where.push("api_key_id IN (SELECT id FROM api_keys WHERE user_id = ?)");
     params.push(opts.userId);
   }
