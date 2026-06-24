@@ -11,7 +11,6 @@ import { useChartAnimation } from "./useChartAnimation";
  *     `animations` prop and `prefers-reduced-motion`)
  *   - absolute-positioned hover tooltip
  *   - peak cap rendered as a separate rect filled with `--chart-peak`
- *   - optional "surprise" class for the easter-egg jitter
  */
 
 export interface BarChartPoint {
@@ -27,8 +26,6 @@ export interface BarChartProps {
   ariaLabel: string;
   /** When false, bars render at their final size immediately. */
   animations?: boolean;
-  /** Enables the surprise-me easter-egg (jitter + rainbow peak cap). */
-  surprise?: boolean;
   /** Optional empty-state message rendered when `data.length === 0`. */
   emptyMessage?: string;
 }
@@ -45,7 +42,6 @@ export function BarChart({
   valueFormatter,
   ariaLabel,
   animations = true,
-  surprise = false,
   emptyMessage,
 }: BarChartProps) {
   const fmt = valueFormatter ?? ((v: number) => v.toFixed(2));
@@ -95,10 +91,7 @@ export function BarChart({
   const onLeave = () => setHover(null);
 
   return (
-    <div
-      className={`chart chart--bar${surprise ? " chart--surprise" : ""}`}
-      ref={containerRef}
-    >
+    <div className="chart chart--bar" ref={containerRef}>
       <svg
         width={actualWidth}
         height={height}

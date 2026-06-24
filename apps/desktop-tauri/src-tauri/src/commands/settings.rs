@@ -23,7 +23,6 @@ pub struct SettingsUpdate {
     pub show_as_used: Option<bool>,
     pub show_credits_extra_usage: Option<bool>,
     pub show_all_token_accounts_in_menu: Option<bool>,
-    pub surprise_animations: Option<bool>,
     pub enable_animations: Option<bool>,
     pub reset_time_relative: Option<bool>,
     pub menu_bar_display_mode: Option<String>,
@@ -179,9 +178,6 @@ impl SettingsUpdate {
     }
 
     fn apply_advanced_settings(self, settings: &mut Settings) -> Self {
-        if let Some(v) = self.surprise_animations {
-            settings.surprise_animations = v;
-        }
         if let Some(v) = self.enable_animations {
             settings.enable_animations = v;
         }

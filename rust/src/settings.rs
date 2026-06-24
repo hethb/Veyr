@@ -82,9 +82,6 @@ pub struct Settings {
     /// Show usage bars as "used" (true) or "remaining" (false)
     pub show_as_used: bool,
 
-    /// Enable random "surprise" animations (blinks, wiggles)
-    pub surprise_animations: bool,
-
     /// Enable UI animations (chart entrances, transitions)
     pub enable_animations: bool,
 
@@ -322,10 +319,9 @@ impl Default for Settings {
             switcher_shows_icons: true,
             menu_bar_shows_highest_usage: false,
             menu_bar_shows_percent: false,
-            show_as_used: true,         // Show as "used" by default
-            surprise_animations: false, // Off by default
-            enable_animations: true,    // Animations enabled by default
-            reset_time_relative: true,  // Show relative times by default
+            show_as_used: true,        // Show as "used" by default
+            enable_animations: true,   // Animations enabled by default
+            reset_time_relative: true, // Show relative times by default
             menu_bar_display_mode: "detailed".to_string(), // Detailed mode by default
             show_credits_extra_usage: true, // Show credits + extra usage by default
             show_all_token_accounts_in_menu: false,

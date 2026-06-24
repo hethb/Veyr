@@ -389,10 +389,6 @@ impl LocaleKey {
             LocaleKey::ShortcutHintPlaceholder,
             "ShortcutHintPlaceholder",
         ),
-        (
-            LocaleKey::SurpriseAnimationsHelper,
-            "SurpriseAnimationsHelper",
-        ),
         (LocaleKey::SelectProvider, "SelectProvider"),
         (LocaleKey::RefreshInterval30Sec, "RefreshInterval30Sec"),
         (LocaleKey::RefreshInterval1Min, "RefreshInterval1Min"),
@@ -532,10 +528,6 @@ impl LocaleKey {
         ),
         (LocaleKey::EnableAnimationsLabel, "EnableAnimationsLabel"),
         (LocaleKey::EnableAnimationsHelper, "EnableAnimationsHelper"),
-        (
-            LocaleKey::SurpriseAnimationsLabel,
-            "SurpriseAnimationsLabel",
-        ),
         (
             LocaleKey::UpdateChannelStableOption,
             "UpdateChannelStableOption",

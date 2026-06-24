@@ -12,7 +12,7 @@ import type { DailyUsageBreakdown } from "../../../../../types/bridge";
  * `rust/src/native_ui/preferences.rs::render_provider_detail_panel`.
  *
  * Phase 10: tokenised palette (`--chart-service-*`), per-row entrance
- * animation, hover tooltip, and surprise-me hook.
+ * animation, and hover tooltip.
  */
 
 interface Props {
@@ -20,7 +20,6 @@ interface Props {
   title: string;
   ariaLabel: string;
   animations: boolean;
-  surprise: boolean;
   emptyMessage: string;
 }
 
@@ -29,7 +28,6 @@ export function UsageBreakdownChart({
   title,
   ariaLabel,
   animations,
-  surprise,
   emptyMessage,
 }: Props) {
   const recent = data.slice(-14);
@@ -84,10 +82,7 @@ export function UsageBreakdownChart({
   return (
     <div className="provider-detail-chart">
       <div className="provider-detail-chart__title">{title}</div>
-      <div
-        className={`chart chart--stacked${surprise ? " chart--surprise" : ""}`}
-        ref={containerRef}
-      >
+      <div className="chart chart--stacked" ref={containerRef}>
         <svg
           width={totalWidth}
           height={svgHeight}

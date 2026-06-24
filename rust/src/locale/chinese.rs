@@ -355,7 +355,6 @@ impl LocaleKey {
             LocaleKey::ShortcutHintPlaceholder => "例如：Ctrl+Shift+U",
 
             // Display/Preferences helpers
-            LocaleKey::SurpriseAnimationsHelper => "在托盘图标中偶尔显示趣味动画",
             LocaleKey::SelectProvider => "请选择服务商",
 
             // Refresh interval labels
@@ -462,8 +461,6 @@ impl LocaleKey {
             }
             LocaleKey::EnableAnimationsLabel => "启用动画",
             LocaleKey::EnableAnimationsHelper => "平滑过渡与动画进度条。",
-            LocaleKey::SurpriseAnimationsLabel => "惊喜动画",
-
             // Tauri desktop shell — Advanced tab fields
             LocaleKey::UpdateChannelStableOption => "稳定版",
             LocaleKey::UpdateChannelBetaOption => "测试预览版",

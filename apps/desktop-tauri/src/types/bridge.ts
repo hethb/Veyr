@@ -130,22 +130,6 @@ export type ProofCommand =
   | `open-provider:${ProofProviderId}`
   | `open-settings:${SettingsTabId}`;
 
-export interface SurfaceModeDescriptor {
-  id: string;
-  label: string;
-  description: string;
-}
-
-export interface BridgeCommandDescriptor {
-  id: string;
-  description: string;
-}
-
-export interface BridgeEventDescriptor {
-  id: string;
-  description: string;
-}
-
 export interface ProviderCatalogEntry {
   id: string;
   displayName: string;
@@ -177,7 +161,6 @@ export interface SettingsSnapshot {
   showAsUsed: boolean;
   showCreditsExtraUsage: boolean;
   showAllTokenAccountsInMenu: boolean;
-  surpriseAnimations: boolean;
   enableAnimations: boolean;
   resetTimeRelative: boolean;
   menuBarDisplayMode: MenuBarDisplayMode;
@@ -226,7 +209,6 @@ export interface SettingsUpdate {
   showAsUsed?: boolean;
   showCreditsExtraUsage?: boolean;
   showAllTokenAccountsInMenu?: boolean;
-  surpriseAnimations?: boolean;
   enableAnimations?: boolean;
   resetTimeRelative?: boolean;
   menuBarDisplayMode?: MenuBarDisplayMode;
@@ -255,9 +237,6 @@ export interface SettingsUpdate {
 
 export interface BootstrapState {
   contractVersion: string;
-  surfaceModes: SurfaceModeDescriptor[];
-  commands: BridgeCommandDescriptor[];
-  events: BridgeEventDescriptor[];
   providers: ProviderCatalogEntry[];
   settings: SettingsSnapshot;
 }

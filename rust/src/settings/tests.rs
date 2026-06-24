@@ -113,7 +113,6 @@ fn float_bar_raw_clamps_out_of_range_opacity_on_load() {
             "critical_usage_threshold": 90.0,
             "merge_tray_icons": false,
             "show_as_used": true,
-            "surprise_animations": false,
             "enable_animations": true,
             "reset_time_relative": true,
             "menu_bar_display_mode": "detailed",

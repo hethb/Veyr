@@ -102,7 +102,6 @@ function settings(): SettingsSnapshot {
     showAsUsed: true,
     showCreditsExtraUsage: true,
     showAllTokenAccountsInMenu: false,
-    surpriseAnimations: false,
     enableAnimations: true,
     resetTimeRelative: true,
     menuBarDisplayMode: "detailed",
@@ -132,9 +131,6 @@ function settings(): SettingsSnapshot {
 function bootstrap(catalog: ProviderCatalogEntry[] = []): BootstrapState {
   return {
     contractVersion: "v1",
-    surfaceModes: [],
-    commands: [],
-    events: [],
     providers: catalog,
     settings: settings(),
   };

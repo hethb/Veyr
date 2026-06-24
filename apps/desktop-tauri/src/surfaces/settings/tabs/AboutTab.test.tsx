@@ -54,7 +54,6 @@ const settings: SettingsSnapshot = {
   showAsUsed: false,
   showCreditsExtraUsage: true,
   showAllTokenAccountsInMenu: true,
-  surpriseAnimations: true,
   enableAnimations: true,
   resetTimeRelative: true,
   menuBarDisplayMode: "compact",

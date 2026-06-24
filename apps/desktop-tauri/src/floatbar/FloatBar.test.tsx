@@ -104,7 +104,6 @@ function settings(overrides: Partial<SettingsSnapshot> = {}): SettingsSnapshot {
     showAsUsed: true,
     showCreditsExtraUsage: true,
     showAllTokenAccountsInMenu: false,
-    surpriseAnimations: false,
     enableAnimations: true,
     resetTimeRelative: true,
     menuBarDisplayMode: "detailed",
@@ -135,9 +134,6 @@ function settings(overrides: Partial<SettingsSnapshot> = {}): SettingsSnapshot {
 function bootstrap(settingsOverrides: Partial<SettingsSnapshot> = {}): BootstrapState {
   return {
     contractVersion: "v1",
-    surfaceModes: [],
-    commands: [],
-    events: [],
     providers: [],
     settings: settings(settingsOverrides),
   };

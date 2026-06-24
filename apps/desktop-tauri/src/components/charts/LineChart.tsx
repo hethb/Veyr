@@ -4,7 +4,7 @@ import { useChartAnimation } from "./useChartAnimation";
 /**
  * LineChart — dependency-free SVG line chart with optional area fill,
  * entrance animation that sweeps the polyline up from the baseline,
- * per-point hover tooltip, and a surprise-me jitter hook.
+ * and per-point hover tooltip.
  *
  * Port target: the credits-history line in
  * `rust/src/native_ui/charts.rs`.
@@ -24,7 +24,6 @@ export interface LineChartProps {
   /** When true, render a faint filled area under the line. Defaults true. */
   area?: boolean;
   animations?: boolean;
-  surprise?: boolean;
   emptyMessage?: string;
 }
 
@@ -39,7 +38,6 @@ export function LineChart({
   ariaLabel,
   area = true,
   animations = true,
-  surprise = false,
   emptyMessage,
 }: LineChartProps) {
   const fmt = valueFormatter ?? ((v: number) => v.toFixed(2));
@@ -106,10 +104,7 @@ export function LineChart({
   const onLeave = () => setHover(null);
 
   return (
-    <div
-      className={`chart chart--line${surprise ? " chart--surprise" : ""}`}
-      ref={containerRef}
-    >
+    <div className="chart chart--line" ref={containerRef}>
       <svg
         width={SVG_WIDTH}
         height={height}

@@ -422,7 +422,6 @@ pub enum LocaleKey {
     ShortcutHintPlaceholder,
 
     // Display/Preferences helpers
-    SurpriseAnimationsHelper,
     SelectProvider,
 
     // Refresh interval labels
@@ -532,8 +531,6 @@ pub enum LocaleKey {
     ShowAllTokenAccountsHelper,
     EnableAnimationsLabel,
     EnableAnimationsHelper,
-    SurpriseAnimationsLabel,
-
     // Tauri desktop shell — Advanced tab fields
     UpdateChannelStableOption,
     UpdateChannelBetaOption,

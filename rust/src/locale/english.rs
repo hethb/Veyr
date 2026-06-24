@@ -375,9 +375,6 @@ impl LocaleKey {
             LocaleKey::ShortcutHintPlaceholder => "e.g., Ctrl+Shift+U",
 
             // Display/Preferences helpers
-            LocaleKey::SurpriseAnimationsHelper => {
-                "Show occasional fun animations in the tray icon"
-            }
             LocaleKey::SelectProvider => "Select a provider",
 
             // Refresh interval labels
@@ -498,8 +495,6 @@ impl LocaleKey {
             }
             LocaleKey::EnableAnimationsLabel => "Enable animations",
             LocaleKey::EnableAnimationsHelper => "Smooth transitions and animated progress bars.",
-            LocaleKey::SurpriseAnimationsLabel => "Surprise animations",
-
             // Tauri desktop shell — Advanced tab fields
             LocaleKey::UpdateChannelStableOption => "Stable",
             LocaleKey::UpdateChannelBetaOption => "Beta",

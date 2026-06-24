@@ -2895,46 +2895,12 @@ body:has(.tray-panel-reveal) {
   margin-right: 6px;
 }
 
-/* Surprise easter-egg: bars jitter briefly on mount (mirrors the
-   tray "Wiggle" surprise). Kept tasteful and short. */
-@keyframes chart-surprise-wiggle {
-  0% { transform: translateX(0); }
-  20% { transform: translateX(-1px); }
-  40% { transform: translateX(1px); }
-  60% { transform: translateX(-0.5px); }
-  80% { transform: translateX(0.5px); }
-  100% { transform: translateX(0); }
-}
-
-.chart--surprise .chart__bar,
-.chart--surprise .chart__stack-rect {
-  animation: chart-surprise-wiggle 0.6s ease-in-out;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-/* Rainbow shimmer on the peak cap when surprise is on. */
-@keyframes chart-surprise-rainbow {
-  0%   { fill: var(--chart-peak); }
-  25%  { fill: var(--chart-service-1); }
-  50%  { fill: var(--chart-service-2); }
-  75%  { fill: var(--chart-service-3); }
-  100% { fill: var(--chart-peak); }
-}
-
-.chart--surprise .chart__peak-cap {
-  animation: chart-surprise-rainbow 2.4s linear infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .chart__bar,
   .chart__line,
   .chart__area,
   .chart__point,
-  .chart__stack-rect,
-  .chart--surprise .chart__bar,
-  .chart--surprise .chart__stack-rect,
-  .chart--surprise .chart__peak-cap {
+  .chart__stack-rect {
     animation: none !important;
     transition: none !important;
   }

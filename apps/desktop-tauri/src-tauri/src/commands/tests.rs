@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
 use super::{
-    ProviderSummary, ProviderUsageSnapshot, bridge_commands, bridge_events,
-    provider_cookie_source_lookup, provider_region_lookup, validate_external_url,
-    validate_surface_target,
+    ProviderSummary, ProviderUsageSnapshot, provider_cookie_source_lookup, provider_region_lookup,
+    validate_external_url, validate_surface_target,
 };
 use crate::surface::SurfaceMode;
 use crate::surface_target::SurfaceTarget;
@@ -53,22 +52,6 @@ fn validate_surface_target_rejects_hidden_mode() {
 }
 
 #[test]
-fn bootstrap_contract_lists_current_surface_commands() {
-    let ids = bridge_commands()
-        .into_iter()
-        .map(|descriptor| descriptor.id)
-        .collect::<Vec<_>>();
-
-    assert!(ids.contains(&"set_surface_mode"));
-    assert!(ids.contains(&"dismiss_tray_panel"));
-    assert!(ids.contains(&"get_current_surface_mode"));
-    assert!(ids.contains(&"get_current_surface_state"));
-    assert!(ids.contains(&"get_app_info"));
-    assert!(ids.contains(&"open_external_url"));
-    assert!(!ids.contains(&"get_proof_config"));
-}
-
-#[test]
 fn external_url_validation_allows_only_http_urls() {
     assert_eq!(
         validate_external_url(" https://github.com/Finesssee/Win-CodexBar ").unwrap(),
@@ -89,49 +72,6 @@ fn external_url_validation_allows_only_http_urls() {
             validate_external_url(invalid).is_err(),
             "accepted invalid URL: {invalid:?}"
         );
-    }
-}
-
-#[test]
-fn bootstrap_contract_lists_surface_mode_changed_event() {
-    let ids = bridge_events()
-        .into_iter()
-        .map(|descriptor| descriptor.id)
-        .collect::<Vec<_>>();
-
-    assert!(ids.contains(&"surface-mode-changed"));
-}
-
-#[test]
-fn bootstrap_contract_lists_phase4_commands() {
-    let ids = bridge_commands()
-        .into_iter()
-        .map(|descriptor| descriptor.id)
-        .collect::<Vec<_>>();
-
-    for expected in [
-        "reorder_providers",
-        "set_provider_cookie_source",
-        "get_provider_cookie_source",
-        "set_provider_region",
-        "get_provider_region",
-        "get_gemini_cli_signed_in",
-        "get_vertexai_status",
-        "list_jetbrains_detected_ides",
-        "set_jetbrains_ide_path",
-        "get_kiro_status",
-        "register_global_shortcut",
-        "unregister_global_shortcut",
-        "is_remote_session",
-        "get_launch_block_reason",
-        "get_work_area_rect",
-        "play_notification_sound",
-        "open_provider_dashboard",
-        "trigger_provider_login",
-        "revoke_provider_credentials",
-        "get_credential_storage_status",
-    ] {
-        assert!(ids.contains(&expected), "missing command id: {expected}");
     }
 }
 
@@ -177,16 +117,6 @@ fn command_inputs_reject_multiline_secrets() {
 fn command_inputs_reject_unknown_cookie_source_and_region_values() {
     assert!(super::set_provider_cookie_source("codex".into(), "browser".into()).is_err());
     assert!(super::set_provider_region("zai".into(), "moon".into()).is_err());
-}
-
-#[test]
-fn bootstrap_contract_lists_global_shortcut_event() {
-    let ids = bridge_events()
-        .into_iter()
-        .map(|descriptor| descriptor.id)
-        .collect::<Vec<_>>();
-
-    assert!(ids.contains(&"global-shortcut-triggered"));
 }
 
 #[test]
@@ -676,42 +606,6 @@ fn pace_stage_serializes_to_snake_case_string() {
 }
 
 #[test]
-fn bootstrap_contract_lists_phase6b_commands() {
-    let ids = bridge_commands()
-        .into_iter()
-        .map(|descriptor| descriptor.id)
-        .collect::<Vec<_>>();
-
-    for expected in ["get_provider_detail", "open_provider_status_page"] {
-        assert!(ids.contains(&expected), "missing command id: {expected}");
-    }
-}
-
-#[test]
-fn bootstrap_contract_lists_chart_data_command() {
-    let ids = bridge_commands()
-        .into_iter()
-        .map(|descriptor| descriptor.id)
-        .collect::<Vec<_>>();
-    assert!(
-        ids.contains(&"get_provider_chart_data"),
-        "get_provider_chart_data must be advertised to the bridge",
-    );
-}
-
-#[test]
-fn bootstrap_contract_lists_stale_refresh_command() {
-    let ids = bridge_commands()
-        .into_iter()
-        .map(|descriptor| descriptor.id)
-        .collect::<Vec<_>>();
-    assert!(
-        ids.contains(&"refresh_providers_if_stale"),
-        "refresh_providers_if_stale must be advertised to the bridge",
-    );
-}
-
-#[test]
 fn provider_cache_is_fresh_inside_stale_window() {
     assert!(super::is_provider_cache_fresh(
         Some(std::time::Instant::now()),
@@ -974,20 +868,6 @@ fn chart_data_requires_account_email_for_codex() {
 }
 
 #[test]
-fn bootstrap_contract_lists_phase6c_commands() {
-    let ids = bridge_commands()
-        .into_iter()
-        .map(|descriptor| descriptor.id)
-        .collect::<Vec<_>>();
-    for expected in [
-        "get_provider_cookie_source_options",
-        "get_provider_region_options",
-    ] {
-        assert!(ids.contains(&expected), "missing command id: {expected}");
-    }
-}
-
-#[test]
 fn cookie_options_for_cookie_supporting_provider() {
     let opts = super::cookie_source_options_for("codex", Language::English);
     let values: Vec<_> = opts.iter().map(|o| o.value.as_str()).collect();
@@ -1055,15 +935,6 @@ fn region_option_roundtrips_serde() {
 }
 
 // ── Phase 6d — credential detection UIs ────────────────────────
-
-#[test]
-fn bootstrap_contract_lists_phase6d_open_path() {
-    let ids = bridge_commands()
-        .into_iter()
-        .map(|descriptor| descriptor.id)
-        .collect::<Vec<_>>();
-    assert!(ids.contains(&"open_path"));
-}
 
 #[test]
 fn open_path_rejects_empty_path() {
