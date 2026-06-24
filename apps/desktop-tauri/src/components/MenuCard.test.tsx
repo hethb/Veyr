@@ -150,6 +150,24 @@ describe("MenuCard", () => {
     expect(fill?.style.width).toBe("100%");
   });
 
+  it("renders additional Copilot budget windows", async () => {
+    const snapshot = provider(null, 20);
+    snapshot.providerId = "copilot";
+    snapshot.displayName = "GitHub Copilot";
+    snapshot.extraRateWindows = [
+      {
+        id: "additional_budget",
+        title: "Additional Budget",
+        window: rateWindow(42),
+      },
+    ];
+
+    renderCard(snapshot);
+
+    expect(await screen.findByText("Additional Budget")).toBeInTheDocument();
+    expect(screen.getByText("58% left")).toBeInTheDocument();
+  });
+
   it("notifies the tray panel after async local usage data loads", async () => {
     const onLayoutChange = vi.fn();
 
