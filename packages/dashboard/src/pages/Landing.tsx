@@ -31,6 +31,10 @@ const LANDING_NAV_ITEMS = [
 
 const ACCENTS = ["#076EFF", "#4FABFF", "#B1C5FF"] as const;
 
+// Desktop app installers (mac/win/linux) are published here by the
+// release-desktop GitHub Actions workflow.
+const RELEASES_URL = "https://github.com/hethb/PromptLens/releases/latest";
+
 export function Landing() {
   return (
     <div className="min-h-screen bg-black text-white">
@@ -62,6 +66,14 @@ function Header() {
         </div>
 
         <div className="pointer-events-auto absolute right-6 top-6 flex items-center gap-2">
+          <a
+            href={RELEASES_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="hidden border border-white/20 px-3 py-2 text-sm font-medium text-white transition-colors hover:border-white sm:inline-flex"
+          >
+            Download
+          </a>
           {authEnabled ? (
             <a
               href="#get-started"
@@ -393,9 +405,20 @@ function GetRunning() {
               )}
             </p>
             <StepList steps={secondarySteps} />
+            {authEnabled && (
+              <a
+                href={RELEASES_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-6 inline-flex w-fit items-center gap-2 border border-white bg-white px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
+              >
+                <Monitor className="h-4 w-4" />
+                Download the desktop app
+              </a>
+            )}
             <p className="mt-6 text-xs text-neutral-600">
               {authEnabled
-                ? "A browser extension (ChatGPT/Claude overlay) and VSCode extension ship in the repo too."
+                ? "macOS · Windows · Linux. A browser extension (ChatGPT/Claude overlay) and VSCode extension ship in the repo too."
                 : "Running the desktop app too? The widget will also surface your real logged spend and top suggestion."}
             </p>
           </div>

@@ -49,3 +49,7 @@ publish:
   provider: github
   owner: hethb
   repo: PromptLens
+  # CI uploads to a DRAFT release; review it on GitHub and click "Publish
+  # release" to make it live. electron-updater only serves published releases,
+  # so a bad build never auto-ships. Set to "release" to publish automatically.
+  releaseType: draft

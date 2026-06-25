@@ -40,6 +40,36 @@ For a fully local, no-account setup, use the desktop app or `npx getcanopy init`
 → "Local" (the terminal CLI's stats/policy commands work against local/desktop
 proxies; the hosted dashboard is the UI for hosted accounts).
 
+## Download the desktop app
+
+The easiest way to run Veyr — no terminal, no account. The app auto-starts the
+proxy, opens the dashboard in a native window, and shows today's spend in your
+menu bar.
+
+**[⬇︎ Download for macOS · Windows · Linux](https://github.com/hethb/PromptLens/releases/latest)**
+
+Builds are produced for every platform by the
+[`release-desktop`](.github/workflows/release-desktop.yml) CI pipeline and ship
+with auto-update (new releases install on next launch). Releases are currently
+**unsigned**, so the first launch needs a one-time bypass:
+
+- **macOS** — right-click the app → **Open** → **Open** (Gatekeeper).
+- **Windows** — **More info** → **Run anyway** (SmartScreen).
+- **Linux** — `chmod +x Veyr-*.AppImage` and run it.
+
+### Cutting a release
+
+```bash
+# bump the desktop app's version, then tag it
+npm version 0.1.1 -w @promptlens/desktop --no-git-tag-version
+git commit -am "desktop v0.1.1"
+git tag v0.1.1 && git push origin main --tags
+```
+
+The tag push triggers the workflow, which builds all three platforms and uploads
+the installers to a **draft** GitHub Release. Review it and click **Publish
+release** to make it live (and visible to the auto-updater).
+
 ## Quickstart (plug-in for your app)
 
 Same idea as [TokenGuard](https://github.com/hethb/TokenGuard) — minimal setup — but for **production LLM APIs** (not the browser). Customers add one env var and two lines of code. See [QUICKSTART.md](./QUICKSTART.md) for the full sellable flow vs self-host.

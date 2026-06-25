@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "description": "Veyr desktop app (Electron): auto-starts the proxy and opens the dashboard with a menu-bar spend readout.",
+  "author": "Veyr <hjbhatt@andrew.cmu.edu>",
+  "homepage": "https://github.com/hethb/PromptLens",
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -27,7 +29,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.7.0",
-    "electron": "^33.0.0",
+    "electron": "33.4.11",
     "electron-builder": "^25.1.8",
     "typescript": "^5.6.2"
   }
