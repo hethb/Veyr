@@ -1,0 +1,81 @@
+# Builds the Veyr desktop app (Electron) for macOS, Windows, and Linux on
+# native runners and publishes the installers + auto-update metadata to a
+# GitHub Release.
+#
+# Trigger: push a tag matching v* whose number equals packages/desktop's
+# version, e.g.
+#     npm version 0.1.1 -w @promptlens/desktop --no-git-tag-version
+#     git commit -am "desktop v0.1.1" && git tag v0.1.1 && git push --tags
+#
+# electron-builder reads its publish target (github / hethb / PromptLens) from
+# packages/desktop/electron-builder.yml and uploads with GITHUB_TOKEN. The
+# in-app auto-updater (electron-updater) then finds new releases automatically.
+#
+# Builds are UNSIGNED (no Apple/Windows certificates configured) — see
+# packages/desktop/README for the right-click-Open / SmartScreen note. To add
+# signing later, set the CSC_LINK/CSC_KEY_PASSWORD (mac+win) secrets and remove
+# CSC_IDENTITY_AUTO_DISCOVERY=false below.
+
+name: Release desktop
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch: {} # manual dry-run (builds, does not publish)
+
+permissions:
+  contents: write # needed to create/upload the GitHub Release
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            flag: "--mac"
+          - os: windows-latest
+            flag: "--win"
+          - os: ubuntu-latest
+            flag: "--linux"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install workspace dependencies
+        run: npm ci
+
+      - name: Build proxy + dashboard (bundled into the app)
+        run: npm run build:deps -w @promptlens/desktop
+
+      - name: Build + package + publish
+        working-directory: packages/desktop
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # No code-signing certs in CI — build unsigned. Remove once certs added.
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+          # Publish only for real tag pushes; manual runs are dry builds.
+          EB_PUBLISH: ${{ startsWith(github.ref, 'refs/tags/v') && 'always' || 'never' }}
+        run: |
+          npm run build
+          npx electron-builder --publish "$EB_PUBLISH" ${{ matrix.flag }}
+        shell: bash
+
+      - name: Upload build artifacts (for inspection on manual runs)
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: veyr-${{ matrix.os }}
+          path: |
+            packages/desktop/dist-electron/*.dmg
+            packages/desktop/dist-electron/*.zip
+            packages/desktop/dist-electron/*.exe
+            packages/desktop/dist-electron/*.AppImage
+            packages/desktop/dist-electron/*.deb
+          if-no-files-found: ignore
