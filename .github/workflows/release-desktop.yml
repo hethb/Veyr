@@ -31,6 +31,11 @@ jobs:
   build:
     strategy:
       fail-fast: false
+      # Publish jobs must run one at a time: electron-builder's GitHub publisher
+      # finds-or-creates the draft release by tag, and parallel jobs race to
+      # create duplicate drafts (assets end up split across them). Serializing
+      # lets the first job create the draft and the rest upload into it.
+      max-parallel: 1
       matrix:
         include:
           - os: macos-latest
