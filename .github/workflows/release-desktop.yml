@@ -48,6 +48,13 @@ jobs:
           node-version: 20
           cache: npm
 
+      # better-sqlite3 compiles from source when no prebuilt binary matches the
+      # runner's Node; node-gyp needs distutils, removed in Python 3.12+. The
+      # runners default to 3.14, so pin a Python that still ships distutils.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
       - name: Install workspace dependencies
         run: npm ci
 
