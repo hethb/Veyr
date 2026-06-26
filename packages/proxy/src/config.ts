@@ -14,6 +14,15 @@ export function isCompressionEnabledByDefault(): boolean {
 }
 
 /**
+ * When true, raw prompt text may be persisted (e.g. prompt_revisions draft/final
+ * pairs for personalization). Off by default — Veyr is privacy-first and stores
+ * only hashes + metadata unless a deployment explicitly opts in.
+ */
+export function isRawPromptStorageEnabled(): boolean {
+  return process.env.STORE_PROMPTS === "true";
+}
+
+/**
  * When true, dashboard API routes require a Supabase access token and data is
  * scoped per-user (multi-tenant). When false (default), the proxy is the
  * zero-config single-tenant local tool.

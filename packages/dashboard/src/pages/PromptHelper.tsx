@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { lintPrompt, type PromptLintResult, type PromptSeverity } from "../lib/api";
+import {
+  personalizedSuggest,
+  recordPromptRevision,
+  recordSuggestionEvent,
+  type PersonalizedSuggestResult,
+  type PromptSeverity,
+} from "../lib/api";
 import { copyToClipboard } from "../lib/clipboard";
 
 const SEVERITY_BORDER: Record<PromptSeverity, string> = {
@@ -13,22 +19,29 @@ const SEVERITY_BORDER: Record<PromptSeverity, string> = {
 const EXAMPLE =
   "fix the auth issue, also clean up the whole codebase and please make everything faster";
 
+type Feedback = Record<string, "accepted" | "dismissed">;
+
 export function PromptHelper() {
   const [prompt, setPrompt] = useState("");
-  const [result, setResult] = useState<PromptLintResult | null>(null);
+  const [result, setResult] = useState<PersonalizedSuggestResult | null>(null);
   const [loading, setLoading] = useState(false);
+  // Accept/dismiss state, keyed by suggestion id. Persists across re-analyses
+  // (ids are stable) so editing the prompt doesn't wipe a click; cleared only
+  // when the prompt is emptied.
+  const [feedback, setFeedback] = useState<Feedback>({});
   const timer = useRef<number | null>(null);
 
   useEffect(() => {
     if (timer.current) window.clearTimeout(timer.current);
     if (!prompt.trim()) {
       setResult(null);
+      setFeedback({});
       return;
     }
     setLoading(true);
     timer.current = window.setTimeout(async () => {
       try {
-        setResult(await lintPrompt(prompt));
+        setResult(await personalizedSuggest(prompt));
       } catch {
         setResult(null);
       } finally {
@@ -39,6 +52,15 @@ export function PromptHelper() {
       if (timer.current) window.clearTimeout(timer.current);
     };
   }, [prompt]);
+
+  function handleFeedback(id: string, action: "accepted" | "dismissed") {
+    setFeedback((f) => ({ ...f, [id]: action }));
+    void recordSuggestionEvent({ suggestion_id: id, action, prompt });
+  }
+
+  const acceptedIds = Object.entries(feedback)
+    .filter(([, a]) => a === "accepted")
+    .map(([id]) => id);
 
   return (
     <div className="space-y-8">
@@ -95,24 +117,74 @@ export function PromptHelper() {
               Looks tight — no obvious ways to cut tokens here.
             </div>
           ) : (
-            result?.suggestions.map((s) => (
-              <div
-                key={s.id}
-                className={cn(
-                  "rounded-lg border border-white/[0.07] border-l-4 bg-white/[0.025] p-4 backdrop-blur-md",
-                  SEVERITY_BORDER[s.severity]
-                )}
-              >
-                <h3 className="text-sm font-medium text-white">{s.title}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-neutral-400">
-                  {s.detail}
-                </p>
-              </div>
-            ))
+            result?.suggestions.map((s) => {
+              const state = feedback[s.id];
+              return (
+                <div
+                  key={s.id}
+                  className={cn(
+                    "rounded-lg border border-white/[0.07] border-l-4 bg-white/[0.025] p-4 backdrop-blur-md transition-opacity",
+                    SEVERITY_BORDER[s.severity],
+                    state === "dismissed" && "opacity-50"
+                  )}
+                >
+                  <h3 className="text-sm font-medium text-white">{s.title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-neutral-400">
+                    {s.detail}
+                  </p>
+                  <div className="mt-3 flex items-center gap-2">
+                    {state ? (
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1.5 text-xs font-medium",
+                          state === "accepted" ? "text-emerald-300" : "text-neutral-500"
+                        )}
+                      >
+                        {state === "accepted" ? (
+                          <>
+                            <Check className="h-3.5 w-3.5" /> Marked helpful
+                          </>
+                        ) : (
+                          <>
+                            <X className="h-3.5 w-3.5" /> Dismissed
+                          </>
+                        )}
+                      </span>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleFeedback(s.id, "accepted")}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-emerald-400/30 bg-emerald-400/[0.06] px-2.5 py-1 text-xs font-medium text-emerald-200 hover:bg-emerald-400/[0.12]"
+                        >
+                          <Check className="h-3.5 w-3.5" /> Helpful
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleFeedback(s.id, "dismissed")}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-white/10 px-2.5 py-1 text-xs font-medium text-neutral-400 hover:bg-white/[0.04]"
+                        >
+                          <X className="h-3.5 w-3.5" /> Dismiss
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })
           )}
 
           {result && result.improved_template && (
-            <ImprovedTemplate template={result.improved_template} />
+            <ImprovedTemplate
+              template={result.improved_template}
+              onCopied={() =>
+                void recordPromptRevision({
+                  draft_prompt: prompt,
+                  final_prompt: result.improved_template,
+                  accepted_suggestion_ids: acceptedIds,
+                })
+              }
+            />
           )}
         </div>
       </div>
@@ -120,11 +192,18 @@ export function PromptHelper() {
   );
 }
 
-function ImprovedTemplate({ template }: { template: string }) {
+function ImprovedTemplate({
+  template,
+  onCopied,
+}: {
+  template: string;
+  onCopied: () => void;
+}) {
   const [copied, setCopied] = useState(false);
   async function copy() {
     if (await copyToClipboard(template)) {
       setCopied(true);
+      onCopied();
       window.setTimeout(() => setCopied(false), 2000);
     }
   }

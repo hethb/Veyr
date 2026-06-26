@@ -169,6 +169,20 @@ export interface PromptLintResult {
   improved_template: string;
 }
 
+export interface Exemplar {
+  similarity: number;
+  draft_preview: string;
+  final_preview: string;
+}
+
+/** Superset of PromptLintResult returned by /personalized-suggest. */
+export interface PersonalizedSuggestResult extends PromptLintResult {
+  personalized: boolean;
+  source: "rules" | "retrieval";
+  exemplars: Exemplar[];
+  rewrite: string | null;
+}
+
 // ---------------------------------------------------------------------------
 // Endpoints
 // ---------------------------------------------------------------------------
@@ -241,6 +255,55 @@ export async function lintPrompt(prompt: string): Promise<PromptLintResult> {
     body: JSON.stringify({ prompt }),
   });
   return (await res.json()) as PromptLintResult;
+}
+
+/**
+ * Phase-2-ready suggestion call. Returns the rule-based lint today (with
+ * personalized:false); Phase 2 enriches it with retrieval + a rewrite without a
+ * shape change, so the UI upgrades for free.
+ */
+export async function personalizedSuggest(
+  prompt: string
+): Promise<PersonalizedSuggestResult> {
+  const res = await authedFetch("/api/analysis/personalized-suggest", {
+    method: "POST",
+    body: JSON.stringify({ prompt }),
+  });
+  return (await res.json()) as PersonalizedSuggestResult;
+}
+
+/** Records whether the user accepted or dismissed a suggestion (the ML label). */
+export async function recordSuggestionEvent(input: {
+  suggestion_id: string;
+  action: "accepted" | "dismissed";
+  prompt?: string;
+  surface?: string;
+}): Promise<void> {
+  try {
+    await authedFetch("/api/analysis/suggestion-event", {
+      method: "POST",
+      body: JSON.stringify({ surface: "dashboard", ...input }),
+    });
+  } catch {
+    // Telemetry is best-effort — never block the UI on it.
+  }
+}
+
+/** Records a (draft -> final) rewrite pair. Raw text persists only under STORE_PROMPTS. */
+export async function recordPromptRevision(input: {
+  draft_prompt: string;
+  final_prompt: string;
+  accepted_suggestion_ids: string[];
+}): Promise<{ stored: boolean }> {
+  try {
+    const res = await authedFetch("/api/analysis/prompt-revision", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+    return (await res.json()) as { stored: boolean };
+  } catch {
+    return { stored: false };
+  }
 }
 
 // ---------------------------------------------------------------------------

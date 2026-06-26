@@ -63,6 +63,45 @@ CREATE TABLE IF NOT EXISTS feature_policies (
   UNIQUE (api_key_id, feature_tag)
 );
 CREATE INDEX IF NOT EXISTS feature_policies_apikey_idx ON feature_policies (api_key_id);
+
+-- Prompt-personalization learning signal (see docs/prompt-personalization.md).
+--
+-- suggestion_events: METADATA ONLY, always recorded. The accept/reject label
+-- for the rule-based linter plus lightweight structural features. No raw prompt
+-- text is ever stored here, so it is safe under the privacy-first default.
+CREATE TABLE IF NOT EXISTS suggestion_events (
+  id TEXT PRIMARY KEY,
+  subject_id TEXT NOT NULL,        -- user_id (hosted) or 'local' / api_key_id
+  subject_kind TEXT NOT NULL,      -- 'user' | 'key' | 'local'
+  timestamp TEXT NOT NULL,
+  suggestion_id TEXT NOT NULL,     -- e.g. 'be-specific', 'cap-output'
+  action TEXT NOT NULL,            -- 'accepted' | 'dismissed'
+  surface TEXT NOT NULL,           -- 'dashboard' | 'extension'
+  token_estimate INTEGER,
+  template_hash TEXT,              -- structure with variables stripped (sha256)
+  features_json TEXT               -- JSON of structural flags; no raw text
+);
+CREATE INDEX IF NOT EXISTS suggestion_events_subject_idx
+  ON suggestion_events (subject_id, timestamp DESC);
+
+-- prompt_revisions: RAW (draft -> final) rewrite pairs. Contains prompt text,
+-- so rows are written ONLY when STORE_PROMPTS=true. The training signal for the
+-- Phase-2 retrieval index; the embedding column is filled later (nullable now).
+CREATE TABLE IF NOT EXISTS prompt_revisions (
+  id TEXT PRIMARY KEY,
+  subject_id TEXT NOT NULL,
+  subject_kind TEXT NOT NULL,
+  timestamp TEXT NOT NULL,
+  draft_prompt TEXT NOT NULL,
+  final_prompt TEXT NOT NULL,
+  accepted_suggestion_ids TEXT,    -- JSON array of suggestion ids
+  draft_tokens INTEGER,
+  final_tokens INTEGER,
+  template_hash TEXT,
+  embedding BLOB                   -- Phase 2 fills this via the Embedder seam
+);
+CREATE INDEX IF NOT EXISTS prompt_revisions_subject_idx
+  ON prompt_revisions (subject_id, timestamp DESC);
 `;
 
 /**

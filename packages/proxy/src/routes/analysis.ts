@@ -6,8 +6,28 @@ import {
 import { inputCostPerToken, outputCostPerToken } from "../utils/costs.js";
 import { compressSystemPrompt } from "../optimization/compressPrompt.js";
 import { lintPrompt } from "../optimization/promptLint.js";
+import {
+  recordSuggestionEvent,
+  recordPromptRevision,
+} from "../storage/store.js";
+import { extractFeatures } from "../personalization/features.js";
+import {
+  personalizedSuggest,
+  type SubjectRef,
+} from "../personalization/suggest.js";
 
 export const analysisRouter: Router = Router();
+
+/**
+ * Resolves whose history a request personalizes against. Hosted (AUTH_ENABLED)
+ * requests carry req.userId; the local single-tenant proxy has none, so all its
+ * traffic shares one logical "local" subject. Key-authenticated surfaces (the
+ * Phase-2 browser extension) will resolve to { kind: "key" } instead.
+ */
+function resolveSubject(req: Request): SubjectRef {
+  if (req.userId) return { id: req.userId, kind: "user" };
+  return { id: "local", kind: "local" };
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -403,6 +423,101 @@ analysisRouter.get("/suggestions", (req: Request, res: Response): void => {
 analysisRouter.post("/prompt-lint", (req: Request, res: Response): void => {
   const prompt = typeof req.body?.prompt === "string" ? req.body.prompt : "";
   res.json(lintPrompt(prompt));
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/analysis/personalized-suggest
+//   Phase-2-ready suggestion endpoint. Today it returns the rule-based lint
+//   wrapped in a forward-compatible shape; Phase 2 fills in retrieval + a
+//   personalized rewrite inside personalizedSuggest() with no API change.
+// ---------------------------------------------------------------------------
+analysisRouter.post(
+  "/personalized-suggest",
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const prompt = typeof req.body?.prompt === "string" ? req.body.prompt : "";
+      const result = await personalizedSuggest(resolveSubject(req), prompt);
+      res.json(result);
+    } catch (err) {
+      console.error("[analysis/personalized-suggest] failed:", err);
+      res.status(500).json({ error: "Failed to generate suggestions" });
+    }
+  }
+);
+
+// ---------------------------------------------------------------------------
+// POST /api/analysis/suggestion-event
+//   Records accept/dismiss of a linter suggestion (the core ML label).
+//   Metadata only — no raw prompt text is stored here.
+// ---------------------------------------------------------------------------
+analysisRouter.post("/suggestion-event", (req: Request, res: Response): void => {
+  const suggestionId =
+    typeof req.body?.suggestion_id === "string" ? req.body.suggestion_id : "";
+  const action = req.body?.action === "accepted" ? "accepted" : req.body?.action === "dismissed" ? "dismissed" : "";
+  if (!suggestionId || !action) {
+    res.status(400).json({ error: "suggestion_id and action ('accepted'|'dismissed') are required" });
+    return;
+  }
+  const surface = typeof req.body?.surface === "string" ? req.body.surface : "dashboard";
+  const prompt = typeof req.body?.prompt === "string" ? req.body.prompt : "";
+
+  try {
+    const subject = resolveSubject(req);
+    // Derive lightweight features when a prompt is supplied; never store the text.
+    const features = prompt ? extractFeatures(prompt) : null;
+    recordSuggestionEvent({
+      subjectId: subject.id,
+      subjectKind: subject.kind,
+      suggestionId,
+      action,
+      surface,
+      tokenEstimate: features?.token_estimate ?? null,
+      templateHash: features?.template_hash ?? null,
+      featuresJson: features ? JSON.stringify(features) : null,
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("[analysis/suggestion-event] failed:", err);
+    res.status(500).json({ error: "Failed to record event" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/analysis/prompt-revision
+//   Records a raw (draft -> final) rewrite pair. Persists prompt TEXT, so it is
+//   stored ONLY when STORE_PROMPTS=true; otherwise it is a no-op and reports
+//   stored:false. The accept/reject labels still flow via /suggestion-event.
+// ---------------------------------------------------------------------------
+analysisRouter.post("/prompt-revision", (req: Request, res: Response): void => {
+  const draft = typeof req.body?.draft_prompt === "string" ? req.body.draft_prompt : "";
+  const final = typeof req.body?.final_prompt === "string" ? req.body.final_prompt : "";
+  if (!draft || !final) {
+    res.status(400).json({ error: "draft_prompt and final_prompt are required" });
+    return;
+  }
+  const acceptedIds = Array.isArray(req.body?.accepted_suggestion_ids)
+    ? (req.body.accepted_suggestion_ids as unknown[]).filter((x): x is string => typeof x === "string")
+    : [];
+
+  try {
+    const subject = resolveSubject(req);
+    const draftFeatures = extractFeatures(draft);
+    const finalFeatures = extractFeatures(final);
+    const stored = recordPromptRevision({
+      subjectId: subject.id,
+      subjectKind: subject.kind,
+      draftPrompt: draft,
+      finalPrompt: final,
+      acceptedSuggestionIds: acceptedIds,
+      draftTokens: draftFeatures.token_estimate,
+      finalTokens: finalFeatures.token_estimate,
+      templateHash: finalFeatures.template_hash,
+    });
+    res.json({ stored });
+  } catch (err) {
+    console.error("[analysis/prompt-revision] failed:", err);
+    res.status(500).json({ error: "Failed to record revision" });
+  }
 });
 
 // ---------------------------------------------------------------------------

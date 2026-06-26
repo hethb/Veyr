@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getDb } from "./db.js";
+import { isRawPromptStorageEnabled } from "../config.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -453,6 +454,123 @@ export function upsertPolicy(input: PolicyUpsert): FeaturePolicy {
     updated_at: now,
   });
   return getFeaturePolicy(input.apiKeyId, input.featureTag)!;
+}
+
+// ---------------------------------------------------------------------------
+// Prompt personalization (see docs/prompt-personalization.md)
+// ---------------------------------------------------------------------------
+export type SubjectKind = "user" | "key" | "local";
+
+export interface SuggestionEventInsert {
+  subjectId: string;
+  subjectKind: SubjectKind;
+  suggestionId: string;
+  action: "accepted" | "dismissed";
+  surface: string;
+  tokenEstimate?: number | null;
+  templateHash?: string | null;
+  /** Pre-serialized JSON of structural features. No raw prompt text. */
+  featuresJson?: string | null;
+}
+
+/**
+ * Records an accept/dismiss event for a linter suggestion. Metadata only (no raw
+ * prompt text), so this is always safe to call regardless of STORE_PROMPTS.
+ */
+export function recordSuggestionEvent(input: SuggestionEventInsert): void {
+  getDb()
+    .prepare(
+      `INSERT INTO suggestion_events (
+         id, subject_id, subject_kind, timestamp, suggestion_id, action,
+         surface, token_estimate, template_hash, features_json
+       ) VALUES (
+         @id, @subject_id, @subject_kind, @timestamp, @suggestion_id, @action,
+         @surface, @token_estimate, @template_hash, @features_json
+       )`
+    )
+    .run({
+      id: randomUUID(),
+      subject_id: input.subjectId,
+      subject_kind: input.subjectKind,
+      timestamp: new Date().toISOString(),
+      suggestion_id: input.suggestionId,
+      action: input.action,
+      surface: input.surface,
+      token_estimate: input.tokenEstimate ?? null,
+      template_hash: input.templateHash ?? null,
+      features_json: input.featuresJson ?? null,
+    });
+}
+
+export interface PromptRevisionInsert {
+  subjectId: string;
+  subjectKind: SubjectKind;
+  draftPrompt: string;
+  finalPrompt: string;
+  acceptedSuggestionIds: string[];
+  draftTokens?: number | null;
+  finalTokens?: number | null;
+  templateHash?: string | null;
+}
+
+/**
+ * Records a raw (draft -> final) rewrite pair. Because this persists prompt
+ * TEXT, it is a no-op unless STORE_PROMPTS=true (privacy-first default).
+ * Returns whether the row was actually written.
+ */
+export function recordPromptRevision(input: PromptRevisionInsert): boolean {
+  if (!isRawPromptStorageEnabled()) return false;
+  getDb()
+    .prepare(
+      `INSERT INTO prompt_revisions (
+         id, subject_id, subject_kind, timestamp, draft_prompt, final_prompt,
+         accepted_suggestion_ids, draft_tokens, final_tokens, template_hash,
+         embedding
+       ) VALUES (
+         @id, @subject_id, @subject_kind, @timestamp, @draft_prompt, @final_prompt,
+         @accepted_suggestion_ids, @draft_tokens, @final_tokens, @template_hash,
+         NULL
+       )`
+    )
+    .run({
+      id: randomUUID(),
+      subject_id: input.subjectId,
+      subject_kind: input.subjectKind,
+      timestamp: new Date().toISOString(),
+      draft_prompt: input.draftPrompt,
+      final_prompt: input.finalPrompt,
+      accepted_suggestion_ids: JSON.stringify(input.acceptedSuggestionIds ?? []),
+      draft_tokens: input.draftTokens ?? null,
+      final_tokens: input.finalTokens ?? null,
+      template_hash: input.templateHash ?? null,
+    });
+  return true;
+}
+
+export interface RevisionRow {
+  id: string;
+  timestamp: string;
+  draft_prompt: string;
+  final_prompt: string;
+  accepted_suggestion_ids: string | null;
+  template_hash: string | null;
+}
+
+/**
+ * A subject's most recent raw rewrite pairs, newest first. The Phase-2
+ * retrieval read path; empty unless STORE_PROMPTS has been collecting rows.
+ */
+export function getRecentRevisions(subjectId: string, limit = 200): RevisionRow[] {
+  return getDb()
+    .prepare(
+      `SELECT id, timestamp, draft_prompt, final_prompt,
+              accepted_suggestion_ids, template_hash
+       FROM prompt_revisions
+       WHERE subject_id = ?
+       ORDER BY timestamp DESC
+       LIMIT ?`
+    )
+    .all(subjectId, limit) as RevisionRow[];
 }
 
 export function getPolicyById(
