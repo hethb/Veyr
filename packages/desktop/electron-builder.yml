@@ -15,6 +15,10 @@ productName: Veyr
 # the package name (@promptlens/desktop), whose "@" and "/" break the Linux
 # AppImage build.
 executableName: veyr
+# Output filenames. Without this, the .deb target derives its filename from the
+# scoped package name (@promptlens/desktop); the "/" makes electron-builder try
+# to write into a nonexistent "@promptlens" directory and the build aborts.
+artifactName: ${productName}-${version}-${arch}.${ext}
 directories:
   output: dist-electron
 asar: false
