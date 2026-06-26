@@ -11,6 +11,10 @@
 # appId kept stable (functional identifier); productName is the visible brand.
 appId: dev.promptlens.app
 productName: Veyr
+# Binary/launcher name. Must be filesystem-safe — without this it derives from
+# the package name (@promptlens/desktop), whose "@" and "/" break the Linux
+# AppImage build.
+executableName: veyr
 directories:
   output: dist-electron
 asar: false

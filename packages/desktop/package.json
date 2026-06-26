@@ -8,7 +8,7 @@
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "build:deps": "npm run build --workspace=@promptlens/proxy && VITE_PROXY_URL= npm run build --workspace=@promptlens/dashboard",
+    "build:deps": "npm run build --workspace=@promptlens/proxy && cross-env VITE_PROXY_URL= npm run build --workspace=@promptlens/dashboard",
     "start": "npm run build && electron .",
     "app": "npm run build:deps && npm run build && electron .",
     "icons": "node scripts/make-icons.js",
@@ -29,6 +29,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.7.0",
+    "cross-env": "^7.0.3",
     "electron": "33.4.11",
     "electron-builder": "26.15.3",
     "typescript": "^5.6.2"
