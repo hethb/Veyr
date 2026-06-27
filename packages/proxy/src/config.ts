@@ -23,6 +23,30 @@ export function isRawPromptStorageEnabled(): boolean {
 }
 
 /**
+ * When true, the personalization endpoint may call an LLM to generate a concrete
+ * rewrite from the user's exemplars. Off by default: it sends prompt text to the
+ * configured upstream, so it is opt-in independent of retrieval (which is local).
+ */
+export function isPromptRewriteEnabled(): boolean {
+  return process.env.ENABLE_PROMPT_REWRITE === "true";
+}
+
+/** Model used for personalized rewrites. */
+export function getRewriteModel(): string {
+  return process.env.REWRITE_MODEL?.trim() || "gpt-4o-mini";
+}
+
+/** API key for the rewrite call; falls back to the proxy's default upstream key. */
+export function getRewriteApiKey(): string {
+  return (
+    process.env.REWRITE_API_KEY?.trim() ||
+    process.env.GROQ_API_KEY?.trim() ||
+    process.env.OPENAI_API_KEY?.trim() ||
+    ""
+  );
+}
+
+/**
  * When true, dashboard API routes require a Supabase access token and data is
  * scoped per-user (multi-tenant). When false (default), the proxy is the
  * zero-config single-tenant local tool.

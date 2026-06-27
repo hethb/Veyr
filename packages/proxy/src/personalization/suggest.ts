@@ -9,10 +9,20 @@
  */
 
 import { lintPrompt, type PromptLintResult } from "../optimization/promptLint.js";
+import { retrieveSimilarRevisions } from "./retrieval.js";
+import { generateRewrite } from "./rewrite.js";
 
 export interface SubjectRef {
   id: string;
   kind: "user" | "key" | "local";
+}
+
+/** Max characters of exemplar text exposed to clients (full text stays server-side). */
+const PREVIEW_CHARS = 160;
+
+function preview(text: string): string {
+  const t = text.trim().replace(/\s+/g, " ");
+  return t.length > PREVIEW_CHARS ? `${t.slice(0, PREVIEW_CHARS)}…` : t;
 }
 
 export interface Exemplar {
@@ -36,21 +46,41 @@ export interface PersonalizedSuggestResult extends PromptLintResult {
 }
 
 export async function personalizedSuggest(
-  _subject: SubjectRef,
+  subject: SubjectRef,
   prompt: string
 ): Promise<PersonalizedSuggestResult> {
   const base = lintPrompt(prompt);
-
-  // --- Phase 2 drops in here (signature already async) -----------------------
-  // const exemplars = await retrieveSimilarRevisions(_subject, prompt);
-  // if (exemplars.length) return { ...base, personalized: true,
-  //   source: "retrieval", exemplars, rewrite: await generateRewrite(...) };
-
-  return {
+  const rulesOnly: PersonalizedSuggestResult = {
     ...base,
     personalized: false,
     source: "rules",
     exemplars: [],
     rewrite: null,
+  };
+  if (!prompt.trim()) return rulesOnly;
+
+  // Retrieval is local + best-effort; never fail the request over it.
+  let matches;
+  try {
+    matches = retrieveSimilarRevisions(subject.id, prompt);
+  } catch (err) {
+    console.error("[personalization] retrieval failed:", err);
+    return rulesOnly;
+  }
+  if (matches.length === 0) return rulesOnly;
+
+  // Optional LLM rewrite (gated by ENABLE_PROMPT_REWRITE inside generateRewrite).
+  const rewrite = await generateRewrite(prompt, matches);
+
+  return {
+    ...base,
+    personalized: true,
+    source: "retrieval",
+    exemplars: matches.map((m) => ({
+      similarity: Math.round(m.similarity * 100) / 100,
+      draft_preview: preview(m.draft),
+      final_preview: preview(m.final),
+    })),
+    rewrite,
   };
 }

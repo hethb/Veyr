@@ -5,6 +5,7 @@ import {
   personalizedSuggest,
   recordPromptRevision,
   recordSuggestionEvent,
+  type Exemplar,
   type PersonalizedSuggestResult,
   type PromptSeverity,
 } from "../lib/api";
@@ -106,6 +107,21 @@ export function PromptHelper() {
         </div>
 
         <div className="space-y-4">
+          {result?.rewrite && (
+            <RewritePanel
+              rewrite={result.rewrite}
+              onCopied={() =>
+                void recordPromptRevision({
+                  draft_prompt: prompt,
+                  final_prompt: result.rewrite as string,
+                  accepted_suggestion_ids: acceptedIds,
+                })
+              }
+            />
+          )}
+          {result?.personalized && result.exemplars.length > 0 && (
+            <ExemplarsPanel exemplars={result.exemplars} />
+          )}
           {!prompt.trim() ? (
             <div className="rounded-lg border border-dashed border-white/[0.12] bg-white/[0.015] px-4 py-10 text-center text-sm text-neutral-500">
               Start typing to get suggestions.
@@ -187,6 +203,70 @@ export function PromptHelper() {
             />
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function RewritePanel({
+  rewrite,
+  onCopied,
+}: {
+  rewrite: string;
+  onCopied: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    if (await copyToClipboard(rewrite)) {
+      setCopied(true);
+      onCopied();
+      window.setTimeout(() => setCopied(false), 2000);
+    }
+  }
+  return (
+    <div className="rounded-lg border border-emerald-400/30 bg-emerald-400/[0.06]">
+      <div className="flex items-center justify-between border-b border-white/[0.07] px-4 py-2">
+        <span className="text-xs font-medium uppercase tracking-[0.16em] text-emerald-300">
+          Personalized rewrite
+        </span>
+        <button
+          type="button"
+          onClick={copy}
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-300 hover:text-emerald-200"
+        >
+          {copied ? <Check className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+      <pre className="overflow-x-auto whitespace-pre-wrap px-4 py-3 font-mono text-xs leading-relaxed text-emerald-50/90">
+        {rewrite}
+      </pre>
+    </div>
+  );
+}
+
+function ExemplarsPanel({ exemplars }: { exemplars: Exemplar[] }) {
+  return (
+    <div className="rounded-lg border border-white/[0.07] bg-white/[0.02] p-4">
+      <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#7fa8ee]">
+        Based on your past prompts
+      </p>
+      <div className="mt-3 space-y-3">
+        {exemplars.map((e, i) => (
+          <div key={i} className="border-l-2 border-[#5b8def]/40 pl-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-neutral-500">
+                You previously tightened a similar prompt
+              </span>
+              <span className="text-[11px] font-medium text-[#7fa8ee]">
+                {Math.round(e.similarity * 100)}% match
+              </span>
+            </div>
+            <p className="mt-1 font-mono text-xs leading-relaxed text-neutral-300">
+              {e.final_preview}
+            </p>
+          </div>
+        ))}
       </div>
     </div>
   );
