@@ -1,6 +1,6 @@
 {
   "name": "@promptlens/desktop",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Veyr desktop app (Electron): auto-starts the proxy and opens the dashboard with a menu-bar spend readout.",
   "author": "Veyr <hjbhatt@andrew.cmu.edu>",

@@ -247,6 +247,10 @@ async function ensureProxy(): Promise<boolean> {
     proxyChild = fork(PROXY_ENTRY, [], {
       env: {
         ...process.env,
+        // Local single-tenant app: keep prompt content on-device so the
+        // personalization layer (Prompt Helper rewrites) has data to learn
+        // from. Stays local; overridable via config.proxyEnv below.
+        STORE_PROMPTS: "true",
         ...config.proxyEnv,
         PORT: String(port),
         NODE_ENV: "production",

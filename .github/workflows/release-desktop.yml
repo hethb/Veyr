@@ -1,20 +1,20 @@
 # Builds the Veyr desktop app (Electron) for macOS, Windows, and Linux on
-# native runners and publishes the installers + auto-update metadata to a
-# GitHub Release.
+# native runners, then publishes every installer + auto-update metadata to a
+# single GitHub Release.
+#
+# Two stages on purpose: each matrix job only BUILDS (--publish never) and
+# uploads its installers as workflow artifacts; a final `release` job collects
+# them and creates ONE draft release. Letting each electron-builder job publish
+# itself raced to create duplicate drafts (GitHub's draft-by-tag matching is
+# unreliable), so we centralize publishing here.
 #
 # Trigger: push a tag matching v* whose number equals packages/desktop's
 # version, e.g.
-#     npm version 0.1.1 -w @promptlens/desktop --no-git-tag-version
-#     git commit -am "desktop v0.1.1" && git tag v0.1.1 && git push --tags
+#     npm version 0.1.2 -w @promptlens/desktop --no-git-tag-version
+#     git commit -am "desktop v0.1.2" && git tag v0.1.2 && git push --tags
 #
-# electron-builder reads its publish target (github / hethb / PromptLens) from
-# packages/desktop/electron-builder.yml and uploads with GITHUB_TOKEN. The
-# in-app auto-updater (electron-updater) then finds new releases automatically.
-#
-# Builds are UNSIGNED (no Apple/Windows certificates configured) — see
-# packages/desktop/README for the right-click-Open / SmartScreen note. To add
-# signing later, set the CSC_LINK/CSC_KEY_PASSWORD (mac+win) secrets and remove
-# CSC_IDENTITY_AUTO_DISCOVERY=false below.
+# Builds are UNSIGNED (no Apple/Windows certs). Review the draft and click
+# "Publish release" to make it live (electron-updater serves published releases).
 
 name: Release desktop
 
@@ -22,20 +22,15 @@ on:
   push:
     tags:
       - "v*"
-  workflow_dispatch: {} # manual dry-run (builds, does not publish)
+  workflow_dispatch: {} # manual build (no release; artifacts only)
 
 permissions:
-  contents: write # needed to create/upload the GitHub Release
+  contents: write
 
 jobs:
   build:
     strategy:
       fail-fast: false
-      # Publish jobs must run one at a time: electron-builder's GitHub publisher
-      # finds-or-creates the draft release by tag, and parallel jobs race to
-      # create duplicate drafts (assets end up split across them). Serializing
-      # lets the first job create the draft and the rest upload into it.
-      max-parallel: 1
       matrix:
         include:
           - os: macos-latest
@@ -54,8 +49,7 @@ jobs:
           cache: npm
 
       # better-sqlite3 compiles from source when no prebuilt binary matches the
-      # runner's Node; node-gyp needs distutils, removed in Python 3.12+. The
-      # runners default to 3.14, so pin a Python that still ships distutils.
+      # runner's Node; node-gyp needs distutils, removed in Python 3.12+.
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -66,28 +60,45 @@ jobs:
       - name: Build proxy + dashboard (bundled into the app)
         run: npm run build:deps -w @promptlens/desktop
 
-      - name: Build + package + publish
+      - name: Build + package (no publish)
         working-directory: packages/desktop
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # No code-signing certs in CI — build unsigned. Remove once certs added.
-          CSC_IDENTITY_AUTO_DISCOVERY: "false"
-          # Publish only for real tag pushes; manual runs are dry builds.
-          EB_PUBLISH: ${{ startsWith(github.ref, 'refs/tags/v') && 'always' || 'never' }}
+          CSC_IDENTITY_AUTO_DISCOVERY: "false" # no signing certs in CI
         run: |
           npm run build
-          npx electron-builder --publish "$EB_PUBLISH" ${{ matrix.flag }}
+          npx electron-builder --publish never ${{ matrix.flag }}
         shell: bash
 
-      - name: Upload build artifacts (for inspection on manual runs)
-        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+      - name: Upload installers as artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: veyr-${{ matrix.os }}
+          name: dist-${{ matrix.os }}
           path: |
             packages/desktop/dist-electron/*.dmg
             packages/desktop/dist-electron/*.zip
             packages/desktop/dist-electron/*.exe
             packages/desktop/dist-electron/*.AppImage
             packages/desktop/dist-electron/*.deb
+            packages/desktop/dist-electron/*.yml
+            packages/desktop/dist-electron/*.blockmap
           if-no-files-found: ignore
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true # flatten every platform's files into one dir
+
+      - name: Publish single draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          fail_on_unmatched_files: true
+          files: artifacts/**/*
