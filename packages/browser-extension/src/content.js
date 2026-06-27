@@ -208,6 +208,135 @@
   }
   const sendBg = (message) => sendBgRaw(message).then((r) => (r ? r.data : null));
   const proxyFetch = (path) => sendBg({ type: "promptlens-fetch", path });
+  const proxyPost = (path, body) => sendBg({ type: "promptlens-post", path, body });
+
+  // ---- personalization (retrieval-based, pre-send) -------------------------
+  // Calls the proxy's personalized-suggest with the live draft. Works against a
+  // local proxy (desktop app); on the hosted proxy this route needs a dashboard
+  // session, so it returns null and we silently fall back to the local tips.
+  let personalized = null; // last PersonalizedSuggestResult with personalization
+  let personalizedDraft = "";
+  let suggestTimer = null;
+
+  function setComposerText(el, text) {
+    if (!el) return;
+    el.focus();
+    if ("value" in el && el.value != null) {
+      el.value = text;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    } else {
+      // contenteditable (ProseMirror): replace text and notify the editor.
+      el.textContent = text;
+      el.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: text }));
+    }
+  }
+
+  function scheduleSuggest() {
+    if (suggestTimer) clearTimeout(suggestTimer);
+    suggestTimer = setTimeout(updatePersonalized, 600);
+  }
+
+  async function updatePersonalized() {
+    const draft = getComposerText();
+    if (!draft || draft.length < 8) {
+      personalized = null;
+      renderPersonalized();
+      hideGhost();
+      return;
+    }
+    const res = await proxyPost("/api/analysis/personalized-suggest", { prompt: draft });
+    if (!res || !res.personalized) {
+      personalized = null;
+      renderPersonalized();
+      hideGhost();
+      return;
+    }
+    personalized = res;
+    personalizedDraft = draft;
+    renderPersonalized();
+    renderGhost();
+  }
+
+  function applyPersonalized() {
+    if (!personalized || !personalized.rewrite) return;
+    const text = personalized.rewrite;
+    setComposerText(P.findInput(), text);
+    // Close the learning loop: record the acceptance + the (draft -> final) pair.
+    void proxyPost("/api/analysis/suggestion-event", {
+      suggestion_id: "personalized-rewrite",
+      action: "accepted",
+      surface: "extension",
+      prompt: personalizedDraft,
+    });
+    void proxyPost("/api/analysis/prompt-revision", {
+      draft_prompt: personalizedDraft,
+      final_prompt: text,
+      accepted_suggestion_ids: ["personalized-rewrite"],
+    });
+    personalized = null;
+    renderPersonalized();
+    hideGhost();
+  }
+
+  function renderPersonalized() {
+    const sec = $("#pl-pers");
+    if (!sec) return;
+    if (!personalized) {
+      sec.style.display = "none";
+      return;
+    }
+    sec.style.display = "block";
+    let html = "";
+    if (personalized.rewrite) {
+      html +=
+        `<div class="pl-pers-rewrite">${escapeHtml(personalized.rewrite)}</div>` +
+        `<button class="pl-btn primary pl-pers-apply" id="pl-pers-apply">Apply rewrite (Tab)</button>`;
+    }
+    const ex = personalized.exemplars || [];
+    if (ex.length) {
+      html +=
+        `<div class="pl-pers-ex-head">Based on your past prompts</div>` +
+        ex
+          .map(
+            (e) =>
+              `<div class="pl-pers-ex"><span class="pl-pers-sim">${Math.round(
+                (e.similarity || 0) * 100
+              )}%</span>${escapeHtml(e.final_preview || "")}</div>`
+          )
+          .join("");
+    }
+    $("#pl-pers-body").innerHTML = html;
+    const apply = $("#pl-pers-apply");
+    if (apply) apply.addEventListener("click", applyPersonalized);
+  }
+
+  // ---- ghost-text pill near the composer -----------------------------------
+  let ghostEl = null;
+  function renderGhost() {
+    if (!personalized || !personalized.rewrite) {
+      hideGhost();
+      return;
+    }
+    const input = P.findInput();
+    if (!input) {
+      hideGhost();
+      return;
+    }
+    if (!ghostEl) {
+      ghostEl = document.createElement("div");
+      ghostEl.className = "pl-ghost";
+      ghostEl.addEventListener("click", applyPersonalized);
+      shadow.appendChild(ghostEl);
+    }
+    const r = input.getBoundingClientRect();
+    ghostEl.innerHTML = "✨ Veyr rewrite ready — <b>Tab</b> to apply";
+    ghostEl.style.left = `${Math.max(8, r.left)}px`;
+    ghostEl.style.top = `${Math.max(8, r.top - 32)}px`;
+    ghostEl.style.display = "block";
+  }
+  function hideGhost() {
+    if (ghostEl) ghostEl.style.display = "none";
+  }
 
   // ---- local usage log -----------------------------------------------------
   let lastLoggedAt = 0;
@@ -497,6 +626,22 @@
   .pl-btn.primary { background: #076eff; border-color: #076eff; color: #fff; }
   .pl-btn.primary:hover { background: #2b85ff; }
   .pl-btn.copy { font-size: 11px; padding: 3px 8px; }
+  /* personalization */
+  .pl-pers { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); }
+  .pl-pers-head { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #34d399; margin-bottom: 4px; }
+  .pl-pers-rewrite { font-size: 12px; line-height: 1.45; color: #d1fae5; background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.25); border-radius: 8px; padding: 8px 10px; white-space: pre-wrap; }
+  .pl-pers-apply { margin-top: 6px; width: 100%; text-align: center; }
+  .pl-pers-ex-head { margin-top: 8px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #4fabff; }
+  .pl-pers-ex { font-size: 11px; line-height: 1.4; color: #9ca3af; padding: 3px 0; border-left: 2px solid rgba(79,124,255,0.4); padding-left: 8px; margin-top: 4px; }
+  .pl-pers-sim { color: #4fabff; font-weight: 600; margin-right: 4px; }
+  /* ghost-text pill anchored near the composer */
+  .pl-ghost {
+    position: fixed; z-index: 2147483647; cursor: pointer;
+    font-size: 12px; color: #d1fae5; background: rgba(7,20,16,0.95);
+    border: 1px solid rgba(52,211,153,0.5); border-radius: 8px; padding: 5px 10px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.45); max-width: 60vw;
+  }
+  .pl-ghost b { color: #34d399; }
   `;
 
   // ---- mount UI in shadow root --------------------------------------------
@@ -522,6 +667,10 @@
       <div class="pl-row pl-total"><span>Est. input cost</span><b id="pl-cost">$0.00</b></div>
       <div class="pl-tips-head">Improve your prompt</div>
       <div class="pl-tips" id="pl-tips"></div>
+      <div class="pl-pers" id="pl-pers" style="display:none">
+        <div class="pl-pers-head">✨ Personalized</div>
+        <div id="pl-pers-body"></div>
+      </div>
       <div class="pl-canary" id="pl-canary" style="display:none">
         <div class="pl-canary-head">Canary</div>
         <div class="pl-canary-status" id="pl-canary-status"></div>
@@ -734,9 +883,36 @@
   );
 
   // ---- lifecycle -----------------------------------------------------------
-  document.addEventListener("input", updateLocal, true);
-  document.addEventListener("keyup", updateLocal, true);
+  function onComposerActivity() {
+    updateLocal();
+    scheduleSuggest();
+  }
+  document.addEventListener("input", onComposerActivity, true);
+  document.addEventListener("keyup", onComposerActivity, true);
   setInterval(updateLocal, 1500);
+
+  // Tab applies the personalized rewrite when one is ready and the composer is
+  // focused (capture phase so we beat the page's own Tab handling).
+  document.addEventListener(
+    "keydown",
+    (e) => {
+      if (e.key !== "Tab" || e.shiftKey) return;
+      if (!personalized || !personalized.rewrite) return;
+      if (!isComposerFocused(P.findInput())) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      applyPersonalized();
+    },
+    true
+  );
+
+  // Keep the ghost pill glued to the composer as the page scrolls/resizes.
+  const repositionGhost = () => {
+    if (personalized && personalized.rewrite) renderGhost();
+  };
+  window.addEventListener("scroll", repositionGhost, true);
+  window.addEventListener("resize", repositionGhost);
+
   updateLocal();
   refreshProxy();
   setInterval(refreshProxy, 30000);

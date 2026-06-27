@@ -51,6 +51,28 @@ async function fetchJson(path) {
   return res.json();
 }
 
+/**
+ * POST against the proxy (carries the API key). Used by the pre-send
+ * personalization calls (personalized-suggest, suggestion-event,
+ * prompt-revision). These live under /api/analysis, which needs a dashboard
+ * session on the hosted proxy — so they succeed against a LOCAL proxy (desktop
+ * app, anon allowed) and fail gracefully on hosted, where the overlay falls
+ * back to its built-in local tips.
+ */
+async function postJson(path, body) {
+  const base = await getBase();
+  const key = await getKey();
+  const headers = { accept: "application/json", "content-type": "application/json" };
+  if (key) headers["x-promptlens-key"] = key;
+  const res = await fetch(`${base}${path}`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body || {}),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
 // ---------------------------------------------------------------------------
 // Durable ingest queue
 //
@@ -295,6 +317,13 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
   if (msg.type === "promptlens-fetch") {
     fetchJson(msg.path)
+      .then((data) => sendResponse({ ok: true, data }))
+      .catch((err) => sendResponse({ ok: false, error: String(err && err.message) }));
+    return true;
+  }
+
+  if (msg.type === "promptlens-post") {
+    postJson(msg.path, msg.body)
       .then((data) => sendResponse({ ok: true, data }))
       .catch((err) => sendResponse({ ok: false, error: String(err && err.message) }));
     return true;
