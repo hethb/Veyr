@@ -499,8 +499,16 @@ fn spawn_windows_installer(installer_path: &Path) -> Result<(), String> {
     use std::process::Command;
 
     let plan = windows_installer_launch_plan(installer_path)?;
-    Command::new(&plan.program)
-        .args(&plan.args)
+    Command::new(windows_powershell_path())
+        .args([
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-WindowStyle",
+            "Hidden",
+            "-Command",
+            &windows_installer_apply_script(&plan, std::process::id()),
+        ])
         .spawn()
         .map_err(|e| format!("Failed to launch installer: {}", e))?;
     Ok(())
@@ -540,6 +548,45 @@ fn windows_installer_launch_plan(
         program: installer_path.to_path_buf(),
         args: vec![std::ffi::OsString::from("/S")],
     })
+}
+
+#[cfg(target_os = "windows")]
+fn windows_installer_apply_script(plan: &WindowsInstallerLaunchPlan, current_pid: u32) -> String {
+    format!(
+        "Wait-Process -Id {current_pid} -ErrorAction SilentlyContinue; \
+         Start-Process -FilePath {} -ArgumentList {}",
+        powershell_single_quoted(&plan.program.to_string_lossy()),
+        powershell_argument_list(&plan.args),
+    )
+}
+
+#[cfg(target_os = "windows")]
+fn powershell_argument_list(args: &[std::ffi::OsString]) -> String {
+    let args = args
+        .iter()
+        .map(|arg| powershell_single_quoted(&arg.to_string_lossy()))
+        .collect::<Vec<_>>()
+        .join(",");
+    format!("@({args})")
+}
+
+#[cfg(target_os = "windows")]
+fn powershell_single_quoted(value: &str) -> String {
+    format!("'{}'", value.replace('\'', "''"))
+}
+
+#[cfg(target_os = "windows")]
+fn windows_powershell_path() -> PathBuf {
+    std::env::var_os("SystemRoot")
+        .map(PathBuf::from)
+        .map(|root| {
+            root.join("System32")
+                .join("WindowsPowerShell")
+                .join("v1.0")
+                .join("powershell.exe")
+        })
+        .filter(|path| path.exists())
+        .unwrap_or_else(|| PathBuf::from("powershell.exe"))
 }
 
 /// Check if there's a pending update ready to install
@@ -758,6 +805,19 @@ mod tests {
 
     #[cfg(target_os = "windows")]
     #[test]
+    fn windows_apply_script_waits_for_current_process_before_installing() {
+        let path = PathBuf::from(r"C:\Temp\CodexBar-1.2.3-Setup.exe");
+        let plan = windows_installer_launch_plan(&path).expect("launch plan");
+
+        let script = windows_installer_apply_script(&plan, 12345);
+
+        assert!(script.contains("Wait-Process -Id 12345"));
+        assert!(script.contains(r"Start-Process -FilePath 'C:\Temp\CodexBar-1.2.3-Setup.exe'"));
+        assert!(script.contains("-ArgumentList @('/S')"));
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
     fn windows_msi_uses_msiexec_quiet_install() {
         let path = PathBuf::from(r"C:\Temp\CodexBar-1.2.3.msi");
 
@@ -772,6 +832,15 @@ mod tests {
                 std::ffi::OsString::from("/quiet"),
                 std::ffi::OsString::from("/norestart"),
             ]
+        );
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn powershell_quoting_escapes_single_quotes() {
+        assert_eq!(
+            powershell_single_quoted(r"C:\Temp\CodexBar's Setup.exe"),
+            r"'C:\Temp\CodexBar''s Setup.exe'"
         );
     }
 }
