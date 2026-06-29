@@ -309,6 +309,34 @@ fn test_start_at_login_keeps_current_exe_when_desktop_sibling_missing() {
 }
 
 #[test]
+fn test_start_at_login_repairs_stale_cli_command_after_update() {
+    let temp = tempfile::tempdir().expect("temp dir");
+    let cli_path = temp.path().join("codexbar.exe");
+    let desktop_path = temp.path().join("codexbar-desktop.exe");
+    std::fs::write(&cli_path, b"cli").expect("write cli");
+    std::fs::write(&desktop_path, b"desktop").expect("write desktop");
+    let stale_command = format!("\"{}\"", cli_path.display());
+
+    assert!(Settings::start_at_login_command_needs_repair(
+        &stale_command,
+        &desktop_path
+    ));
+}
+
+#[test]
+fn test_start_at_login_keeps_current_desktop_command_after_update() {
+    let temp = tempfile::tempdir().expect("temp dir");
+    let desktop_path = temp.path().join("codexbar-desktop.exe");
+    std::fs::write(&desktop_path, b"desktop").expect("write desktop");
+    let current_command = format!("\"{}\"", desktop_path.display());
+
+    assert!(!Settings::start_at_login_command_needs_repair(
+        &current_command,
+        &desktop_path
+    ));
+}
+
+#[test]
 fn test_language_defaults_to_english() {
     let settings = Settings::default();
     assert_eq!(settings.ui_language, Language::English);

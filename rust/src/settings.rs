@@ -360,10 +360,10 @@ impl Settings {
             _ => Self::default(),
         };
 
-        // Sync autostart toggle with actual registry state
+        // Sync autostart toggle with actual registry state and repair stale commands from older builds.
         #[cfg(target_os = "windows")]
         {
-            settings.start_at_login = Self::is_start_at_login_enabled();
+            settings.start_at_login = Self::sync_start_at_login_registry();
         }
 
         settings
@@ -406,6 +406,10 @@ impl Settings {
         format!("\"{}\"", exe_path.display())
     }
 
+    fn start_at_login_command_needs_repair(existing: &str, current_exe: &std::path::Path) -> bool {
+        existing != Self::start_at_login_command(current_exe)
+    }
+
     #[cfg(target_os = "windows")]
     pub fn apply_start_at_login_registry(enabled: bool) -> anyhow::Result<()> {
         use winreg::RegKey;
@@ -426,6 +430,41 @@ impl Settings {
         }
 
         Ok(())
+    }
+
+    #[cfg(target_os = "windows")]
+    fn sync_start_at_login_registry() -> bool {
+        use winreg::RegKey;
+        use winreg::enums::*;
+
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+        let Ok(run_key) = hkcu.open_subkey_with_flags(
+            r"Software\Microsoft\Windows\CurrentVersion\Run",
+            KEY_READ | KEY_WRITE,
+        ) else {
+            return false;
+        };
+
+        let Ok(existing) = run_key.get_value::<String, _>("CodexBar") else {
+            return false;
+        };
+
+        match std::env::current_exe() {
+            Ok(exe_path) if Self::start_at_login_command_needs_repair(&existing, &exe_path) => {
+                let command = Self::start_at_login_command(&exe_path);
+                if let Err(error) = run_key.set_value("CodexBar", &command) {
+                    tracing::warn!("Failed to repair CodexBar start-at-login command: {error}");
+                }
+            }
+            Err(error) => {
+                tracing::warn!(
+                    "Failed to resolve current executable for start-at-login sync: {error}"
+                );
+            }
+            _ => {}
+        }
+
+        true
     }
 
     #[cfg(not(target_os = "windows"))]
