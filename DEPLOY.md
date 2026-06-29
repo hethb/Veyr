@@ -179,7 +179,7 @@ Tell Supabase where to redirect after magic-link clicks:
    ```bash
    curl -X POST https://promptlens-yourname.fly.dev/openai/v1/chat/completions \
      -H "Content-Type: application/json" \
-     -H "x-promptlens-key: pl_..." \
+     -H "x-veyr-key: pl_..." \
      -H "Authorization: Bearer $GROQ_API_KEY" \
      -d '{"model":"llama-3.1-8b-instant","messages":[{"role":"user","content":"hi"}]}'
    ```
@@ -213,7 +213,7 @@ Tell Supabase where to redirect after magic-link clicks:
 - **Single-tenant:** drop `AUTH_ENABLED=true`, drop the Supabase secrets,
   redeploy. You'll fall back to local key-only auth — anyone who knows a
   `pl_…` key can use the proxy, but nobody has a dashboard login.
-- **Open demo:** also set `PROMPTLENS_ALLOW_ANON=true`. Logs every anonymous
+- **Open demo:** also set `VEYR_ALLOW_ANON=true`. Logs every anonymous
   hit against the "default" key. Only do this if you trust everyone who can
   reach the URL — there's no rate-limit baked in.
 

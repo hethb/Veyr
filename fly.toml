@@ -46,7 +46,7 @@ primary_region = "iad"            # us-east; pick the region closest to your use
 [env]
   NODE_ENV = "production"
   PORT = "8080"
-  PROMPTLENS_DB_PATH = "/data/promptlens.db"
+  VEYR_DB_PATH = "/data/promptlens.db"
   # Default OpenAI-compatible upstream. Groq's free tier is a sensible default
   # so new signups can hit "send" without bringing their own provider key.
   OPENAI_UPSTREAM_URL = "https://api.groq.com/openai/v1/chat/completions"

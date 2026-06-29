@@ -1,4 +1,4 @@
-# Render Blueprint for the PromptLens proxy (Node/Express).
+# Render Blueprint for the Veyr proxy (Node/Express).
 # Dashboard is deployed separately on Vercel.
 #
 # After first deploy, point DASHBOARD_ORIGIN at your Vercel URL, then run
@@ -27,7 +27,7 @@ services:
       - key: STORE_PROMPTS
         value: "false"
       # SQLite location on the mounted disk so data survives deploys.
-      - key: PROMPTLENS_DB_PATH
+      - key: VEYR_DB_PATH
         value: /var/data/promptlens.db
       # Comma-separated allowed dashboard origins (your Vercel URL).
       # Set this after the dashboard is deployed.

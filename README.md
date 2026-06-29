@@ -74,7 +74,7 @@ release** to make it live (and visible to the auto-updater).
 
 Same idea as [TokenGuard](https://github.com/hethb/TokenGuard) — minimal setup — but for **production LLM APIs** (not the browser). Customers add one env var and two lines of code. See [QUICKSTART.md](./QUICKSTART.md) for the full sellable flow vs self-host.
 
-**1. Get a key** — Open the dashboard → **API Keys** → copy `pl_live_…` → set `PROMPTLENS_KEY`. (Or run `npm run seed` to mint one from the CLI.)
+**1. Get a key** — Open the dashboard → **API Keys** → copy `pl_live_…` → set `VEYR_KEY`. (Or run `npm run seed` to mint one from the CLI.)
 
 **2. Install and wire the SDK**
 
@@ -84,10 +84,10 @@ npm install canopy-sdk openai
 
 ```ts
 import OpenAI from "openai";
-import { promptlensOpenAI } from "canopy-sdk";
+import { veyrOpenAI } from "canopy-sdk";
 
 const openai = new OpenAI(
-  promptlensOpenAI({
+  veyrOpenAI({
     apiKey: process.env.OPENAI_API_KEY!,
     feature: "my-feature", // optional — shows in dashboard
   })
@@ -100,9 +100,9 @@ const openai = new OpenAI(
 
 Per-request headers (or SDK flags):
 
-- `x-promptlens-compress: 1` — rule-based prompt compression (TokenGuard-style)
-- `x-promptlens-cache: 1` — provider prompt caching (see [Prompt caching](#prompt-caching))
-- `x-promptlens-max-tokens: 512` — cap completion tokens on outbound requests
+- `x-veyr-compress: 1` — rule-based prompt compression (TokenGuard-style)
+- `x-veyr-cache: 1` — provider prompt caching (see [Prompt caching](#prompt-caching))
+- `x-veyr-max-tokens: 512` — cap completion tokens on outbound requests
 
 Per-feature policies (dashboard API `PUT /api/policies`):
 
@@ -193,14 +193,14 @@ question, a random nonce — invalidates everything after it.
 Per-request:
 
 ```bash
-curl … -H "x-promptlens-cache: 1" …
+curl … -H "x-veyr-cache: 1" …
 ```
 
 Or in the SDK:
 
 ```ts
 const openai = new OpenAI(
-  promptlensOpenAI({
+  veyrOpenAI({
     apiKey: process.env.OPENAI_API_KEY!,
     feature: "policy-qa",
     enablePromptCaching: true, // 90% cheaper input on warm cache
@@ -220,7 +220,7 @@ least 1024 tokens (Anthropic's cache minimum). Below that it's a no-op.
 
 OpenAI prompt caching is automatic above ~1024 tokens of stable prefix — the
 flag is still useful because it opts your feature into the dashboard's cache
-telemetry headers (`x-promptlens-cache: applied`).
+telemetry headers (`x-veyr-cache: applied`).
 
 ### What gets tracked
 
@@ -376,7 +376,7 @@ ways:
   `/ingest/web-chat` on the proxy. The dashboard polls every 5s, so web chats
   show up in the cost-by-feature and time-series charts immediately
   (tagged `web-chatgpt` / `web-claude`). Single-tenant mode needs
-  `PROMPTLENS_ALLOW_ANON=true` on the proxy and at least one API key minted;
+  `VEYR_ALLOW_ANON=true` on the proxy and at least one API key minted;
   hosted/multi-tenant deployments use the **API key** field in the popup.
 - **Proxy data (when reachable)** — the widget and popup also show your real
   logged spend and your top optimization suggestion.
@@ -387,7 +387,7 @@ select `packages/browser-extension`. No build step. See its
 
 ### Terminal CLI
 
-`packages/cli` is the `promptlens` command — spend, suggestions, policies, and
+`packages/cli` is the `veyr` command — spend, suggestions, policies, and
 request logs from your terminal:
 
 ```bash
@@ -402,7 +402,7 @@ veyr integrate claude-code # route Claude Code through the proxy
 
 `veyr init` walks new users through local/hosted setup, key verification,
 and an integration (OpenAI SDK, Anthropic SDK, Claude Code, Cursor, or plain
-env vars). Config lives in `~/.promptlens/config.json`, shared with the desktop
+env vars). Config lives in `~/.veyr/config.json`, shared with the desktop
 app. See its [README](packages/cli/README.md).
 
 ### Desktop app
@@ -429,7 +429,7 @@ showing spend and optimization suggestions from the proxy, plus a command to
 **route Claude Code through Veyr**:
 
 ```bash
-PROMPTLENS_ALLOW_ANON=true npm run dev:proxy   # let key-less local tools log
+VEYR_ALLOW_ANON=true npm run dev:proxy   # let key-less local tools log
 ```
 
 Then run **Veyr: Route Claude Code through proxy** — it sets
@@ -437,8 +437,8 @@ Then run **Veyr: Route Claude Code through proxy** — it sets
 `claude` traffic is captured. Open the folder in VSCode and press **F5** to try
 it. See its [README](packages/vscode-extension/README.md).
 
-> `PROMPTLENS_ALLOW_ANON=true` attributes traffic that arrives without an
-> `x-promptlens-key` to a dedicated "Anonymous (local tools)" key, tagged by
+> `VEYR_ALLOW_ANON=true` attributes traffic that arrives without an
+> `x-veyr-key` to a dedicated "Anonymous (local tools)" key, tagged by
 > User-Agent (`claude-code-cli`, `cursor`, `python-script`, `node-script`).
 > Intended for local single-tenant use.
 
@@ -463,12 +463,12 @@ what you spent."
 ## Repository layout
 
 ```
-promptlens/
+veyr/
 ├── packages/
 │   ├── proxy/              # Express proxy server (Node, TypeScript) — local SQLite store
 │   ├── dashboard/          # React + Vite + Tailwind + Recharts dashboard
-│   ├── sdk/                # npm-publishable SDK wrapper (`promptlens`)
-│   ├── cli/                # `promptlens` terminal CLI (status, policies, logs, integrations)
+│   ├── sdk/                # npm-publishable SDK wrapper (`canopy-sdk`)
+│   ├── cli/                # `veyr` terminal CLI (status, policies, logs, integrations)
 │   ├── desktop/            # Electron app: tray spend, auto-started proxy, installers
 │   ├── vscode-extension/   # Veyr panel + Claude Code routing for VSCode
 │   └── browser-extension/  # Chrome MV3 overlay for chatgpt.com / claude.ai
@@ -484,7 +484,7 @@ promptlens/
 - Node.js 20+
 
 That's it — no database or cloud account. The proxy keeps keys and request
-logs in a local SQLite file at `packages/proxy/.promptlens/data.db`.
+logs in a local SQLite file at `packages/proxy/.veyr/data.db`.
 
 ### 1. Install + seed
 
@@ -521,7 +521,7 @@ npm run dev:dashboard    # http://localhost:5173
 ```
 
 Open the dashboard — no login. The **API Keys** page lets you create more keys;
-use any `pl_live_…` key as the `PROMPTLENS_KEY` in your application.
+use any `pl_live_…` key as the `VEYR_KEY` in your application.
 
 ### 4. Smoke-test the proxy
 
@@ -544,7 +544,7 @@ use any `pl_live_…` key as the `PROMPTLENS_KEY` in your application.
 4. Run the smoke script:
 
    ```bash
-   export PROMPTLENS_KEY=pl_live_…   # from dashboard → API Keys
+   export VEYR_KEY=pl_live_…   # from dashboard → API Keys
    export GROQ_API_KEY=gsk_…
    chmod +x scripts/smoke-groq.sh
    ./scripts/smoke-groq.sh
@@ -554,7 +554,7 @@ use any `pl_live_…` key as the `PROMPTLENS_KEY` in your application.
 
    ```bash
    curl -s http://localhost:3001/openai/v1/chat/completions \
-     -H "x-promptlens-key: pl_live_…" \
+     -H "x-veyr-key: pl_live_…" \
      -H "Authorization: Bearer $GROQ_API_KEY" \
      -H "Content-Type: application/json" \
      -H "x-feature-tag: smoke-test" \
@@ -592,7 +592,7 @@ just a different host.
 
 Point your client apps at the deployed proxy URL by setting `baseUrl` on
 `createOpenAIConfig` (or by relying on the public default once you publish
-the proxy at `https://api.promptlens.dev`).
+the proxy at `https://api.veyr.dev`).
 
 ## Privacy
 

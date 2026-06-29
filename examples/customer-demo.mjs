@@ -1,11 +1,11 @@
-// Canopy customer demo — exactly how a customer integrates the product.
+// Veyr customer demo — exactly how a customer integrates the product.
 //
-// This is the whole integration: wrap the OpenAI client with promptlensOpenAI()
+// This is the whole integration: wrap the OpenAI client with veyrOpenAI()
 // and keep using openai.chat.completions as normal. Every call is routed through
 // the proxy, logged, and attributed to a feature tag in the dashboard.
 //
 // Run:
-//   export PROMPTLENS_KEY=pl_live_...      # from dashboard → API Keys
+//   export VEYR_KEY=pl_live_...            # from dashboard → API Keys
 //   export GROQ_API_KEY=gsk_...            # the "OpenAI key" the customer brings
 //   node examples/customer-demo.mjs
 //
@@ -13,15 +13,15 @@
 // the feature tags below.
 
 import OpenAI from "openai";
-import { promptlensOpenAI } from "canopy-sdk";
+import { veyrOpenAI } from "canopy-sdk";
 
-const PROMPTLENS_KEY = process.env.PROMPTLENS_KEY;
+const VEYR_KEY = process.env.VEYR_KEY;
 const LLM_KEY = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY;
-const BASE_URL = process.env.PROMPTLENS_BASE_URL || "http://localhost:3001";
+const BASE_URL = process.env.VEYR_BASE_URL || "http://localhost:3001";
 const MODEL = process.env.DEMO_MODEL || "llama-3.1-8b-instant";
 
-if (!PROMPTLENS_KEY) {
-  console.error("Set PROMPTLENS_KEY (dashboard → API Keys → create a key).");
+if (!VEYR_KEY) {
+  console.error("Set VEYR_KEY (dashboard → API Keys → create a key).");
   process.exit(1);
 }
 if (!LLM_KEY) {
@@ -29,11 +29,12 @@ if (!LLM_KEY) {
   process.exit(1);
 }
 
-// --- The only Canopy-specific code a customer writes ---
+// --- The only Veyr-specific code a customer writes ---
 function clientFor(feature) {
   return new OpenAI(
-    promptlensOpenAI({
+    veyrOpenAI({
       apiKey: LLM_KEY,
+      veyrKey: VEYR_KEY,
       baseUrl: BASE_URL,
       feature,
     })
@@ -47,7 +48,7 @@ const calls = [
   { feature: "support-bot", prompt: "Say hello to a new customer in one short line." },
 ];
 
-console.log(`Routing ${calls.length} calls through Canopy (${BASE_URL}) → model ${MODEL}\n`);
+console.log(`Routing ${calls.length} calls through Veyr (${BASE_URL}) → model ${MODEL}\n`);
 
 for (const { feature, prompt } of calls) {
   const openai = clientFor(feature);

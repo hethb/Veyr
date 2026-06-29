@@ -17,12 +17,12 @@ npx getcanopy init
 
 ## Configuration
 
-The CLI reads `~/.promptlens/config.json` (also written by the Veyr
+The CLI reads `~/.veyr/config.json` (also written by the Veyr
 desktop app, so it finds a desktop-managed proxy automatically). Resolution
 order:
 
-1. `PROMPTLENS_PROXY_URL` / `PROMPTLENS_API_KEY` env vars
-2. `~/.promptlens/config.json`
+1. `VEYR_PROXY_URL` / `VEYR_API_KEY` env vars
+2. `~/.veyr/config.json`
 3. Defaults (`http://localhost:3001`)
 
 No config file is required — with a local proxy on the default port everything
@@ -38,7 +38,7 @@ just works.
 | `veyr policy list` | All feature policies as a table |
 | `veyr policy set <tag>` | Create/update a policy (`--budget`, `--model`, `--max-tokens`, `--rate-limit`, `--cache`) |
 | `veyr logs` | Recent requests (`--tag <feature>`, `--limit <n>`, `--follow` to tail) |
-| `veyr config` | Interactive wizard for `~/.promptlens/config.json` |
+| `veyr config` | Interactive wizard for `~/.veyr/config.json` |
 | `veyr open` | Open the dashboard in your browser |
 | `veyr integrate <tool>` | Route Claude Code, Cursor, or shell scripts through the proxy |
 
@@ -63,7 +63,7 @@ veyr integrate claude-code --check   # confirm ANTHROPIC_BASE_URL is set
 ```
 
 Claude Code traffic appears in the dashboard under the feature tag
-`claude-code-cli`. The proxy needs `PROMPTLENS_ALLOW_ANON=true` (the desktop
+`claude-code-cli`. The proxy needs `VEYR_ALLOW_ANON=true` (the desktop
 app sets this for you) since Claude Code can't send a Veyr key header.
 
 ### Cursor
@@ -83,7 +83,7 @@ veyr integrate shell
 ```
 
 Prints `OPENAI_BASE_URL` / `ANTHROPIC_BASE_URL` exports for your profile plus a
-`veyr-tag` helper that sets `PROMPTLENS_FEATURE_TAG` (read by the Veyr
+`veyr-tag` helper that sets `VEYR_FEATURE_TAG` (read by the Veyr
 SDK). Tools that can't send custom headers are tagged automatically from their
 User-Agent: `claude-code-cli`, `cursor`, `python-script`, `node-script`.
 

@@ -31,7 +31,7 @@ This extension is plain JS — no build step.
    a Veyr key):
 
    ```bash
-   PROMPTLENS_ALLOW_ANON=true npm run dev:proxy
+   VEYR_ALLOW_ANON=true npm run dev:proxy
    ```
 
 2. Run the command **Veyr: Route Claude Code through proxy** (Command
@@ -44,8 +44,8 @@ Run **Veyr: Stop routing Claude Code through proxy** to undo it.
 
 ## Settings
 
-- `promptlens.proxyUrl` — proxy base URL (default `http://localhost:3001`)
-- `promptlens.dashboardUrl` — dashboard URL opened by the "Open dashboard" button
+- `veyr.proxyUrl` — proxy base URL (default `http://localhost:3001`)
+- `veyr.dashboardUrl` — dashboard URL opened by the "Open dashboard" button
 
 ## Type-checking (optional)
 

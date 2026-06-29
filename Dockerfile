@@ -1,4 +1,4 @@
-# PromptLens proxy — production image
+# Veyr proxy — production image
 # ─────────────────────────────────────────────────────────────────────────────
 # Boring on purpose. Mirrors the install + build sequence that already works
 # in render.yaml so behaviour is identical across deploy targets.
@@ -53,7 +53,7 @@ COPY --from=builder /repo/packages/proxy/package.json ./packages/proxy/package.j
 COPY --from=builder /repo/packages/proxy/dist ./packages/proxy/dist
 
 # SQLite lives on a mounted volume so data survives redeploys.
-ENV PROMPTLENS_DB_PATH=/data/promptlens.db
+ENV VEYR_DB_PATH=/data/promptlens.db
 RUN mkdir -p /data
 
 ENV NODE_ENV=production

@@ -18,7 +18,7 @@ your app  →  Veyr proxy  →  OpenAI / Anthropic
 
 - Proxy logs metadata (tokens, cost, model, feature tag, prompt hash — not content by default)
 - Dashboard: today / week / month, cost by feature, top prompt templates
-- Integration: one env var + `promptlensOpenAI()` or base URL swap
+- Integration: one env var + `veyrOpenAI()` or base URL swap
 
 ---
 
@@ -27,9 +27,9 @@ your app  →  Veyr proxy  →  OpenAI / Anthropic
 **Customer promise:** “Stop paying for bloated prompts.”
 
 - Rule-based system-prompt compression before upstream (ported from TokenGuard)
-- Opt-in per request: `x-promptlens-compress: 1` or policy `compress_prompts`
+- Opt-in per request: `x-veyr-compress: 1` or policy `compress_prompts`
 - **Provider prompt caching** — auto-inject Anthropic `cache_control` on long
-  prompts (`x-promptlens-cache: 1` or policy `enable_prompt_caching`). Tracks
+  prompts (`x-veyr-cache: 1` or policy `enable_prompt_caching`). Tracks
   `cached_tokens` and `cache_creation_tokens` per request and discounts cost
   accordingly. Up to 90% input cost reduction on repeated calls.
 - **Document → Markdown** (`/api/convert`, **Documents** page) — turn PDFs,
@@ -64,7 +64,7 @@ your app  →  Veyr proxy  →  OpenAI / Anthropic
 
 ## Hosted vs self-host
 
-- **Sell:** Hosted proxy + dashboard (`PROMPTLENS_KEY`, no database for customers to run)
+- **Sell:** Hosted proxy + dashboard (`VEYR_KEY`, no database for customers to run)
 - **Enterprise:** Self-host this repo; same proxy, their data plane
 
 See [QUICKSTART.md](./QUICKSTART.md).

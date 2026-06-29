@@ -5,6 +5,8 @@ build/
 .env
 .env.local
 .env.*.local
+.veyr-dev-key
+.veyr/
 .promptlens-dev-key
 .promptlens/
 *.log

@@ -1,10 +1,10 @@
 {
-  "name": "promptlens-vscode",
+  "name": "veyr-vscode",
   "displayName": "Veyr",
   "description": "LLM cost attribution and optimization suggestions in your editor, plus one-click routing of Claude Code through the Veyr proxy.",
   "version": "0.1.0",
   "private": true,
-  "publisher": "promptlens",
+  "publisher": "veyr",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -15,16 +15,16 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "promptlens",
+          "id": "veyr",
           "title": "Veyr",
           "icon": "media/icon.svg"
         }
       ]
     },
     "views": {
-      "promptlens": [
+      "veyr": [
         {
-          "id": "promptlens.panel",
+          "id": "veyr.panel",
           "name": "Cost & Suggestions",
           "type": "webview"
         }
@@ -32,28 +32,28 @@
     },
     "commands": [
       {
-        "command": "promptlens.refresh",
+        "command": "veyr.refresh",
         "title": "Veyr: Refresh",
         "icon": "$(refresh)"
       },
       {
-        "command": "promptlens.routeClaudeCode",
+        "command": "veyr.routeClaudeCode",
         "title": "Veyr: Route Claude Code through proxy"
       },
       {
-        "command": "promptlens.unrouteClaudeCode",
+        "command": "veyr.unrouteClaudeCode",
         "title": "Veyr: Stop routing Claude Code through proxy"
       },
       {
-        "command": "promptlens.openDashboard",
+        "command": "veyr.openDashboard",
         "title": "Veyr: Open dashboard"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "promptlens.refresh",
-          "when": "view == promptlens.panel",
+          "command": "veyr.refresh",
+          "when": "view == veyr.panel",
           "group": "navigation"
         }
       ]
@@ -61,12 +61,12 @@
     "configuration": {
       "title": "Veyr",
       "properties": {
-        "promptlens.proxyUrl": {
+        "veyr.proxyUrl": {
           "type": "string",
           "default": "http://localhost:3001",
           "description": "Base URL of your Veyr proxy."
         },
-        "promptlens.dashboardUrl": {
+        "veyr.dashboardUrl": {
           "type": "string",
           "default": "http://localhost:5173/dashboard",
           "description": "URL of the Veyr dashboard."

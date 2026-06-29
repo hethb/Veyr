@@ -8,6 +8,7 @@
 # Locally-built artefacts — the image builds these from source.
 **/node_modules
 **/dist
+**/.veyr
 **/.promptlens
 **/*.tsbuildinfo
 

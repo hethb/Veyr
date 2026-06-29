@@ -1,4 +1,4 @@
-# promptlens
+# Veyr SDK
 
 Plug-in LLM cost tracking for production apps. One env var, two lines of code.
 
@@ -12,10 +12,10 @@ npm install canopy-sdk openai
 
 ```ts
 import OpenAI from "openai";
-import { promptlensOpenAI } from "canopy-sdk";
+import { veyrOpenAI } from "canopy-sdk";
 
 const openai = new OpenAI(
-  promptlensOpenAI({
+  veyrOpenAI({
     apiKey: process.env.OPENAI_API_KEY!,
     feature: "my-feature", // optional — appears in dashboard
   })
@@ -30,41 +30,41 @@ await openai.chat.completions.create({
 
 ```bash
 # Only new secret — from Veyr dashboard → API Keys
-export PROMPTLENS_KEY=pl_live_...
+export VEYR_KEY=pl_live_...
 ```
 
 ### Anthropic
 
 ```ts
 import Anthropic from "@anthropic-ai/sdk";
-import { promptlensAnthropic } from "canopy-sdk";
+import { veyrAnthropic } from "canopy-sdk";
 
 const anthropic = new Anthropic(
-  promptlensAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+  veyrAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 );
 ```
 
 ### Self-hosted proxy
 
 ```ts
-promptlensOpenAI({
+veyrOpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
-  baseUrl: "https://promptlens.mycompany.com",
+  baseUrl: "https://veyr.mycompany.com",
 });
 ```
 
-Or set `PROMPTLENS_BASE_URL` in the environment.
+Or set `VEYR_BASE_URL` in the environment.
 
 ## Lower-level API
 
 If you prefer spreading config yourself:
 
 ```ts
-import { createOpenAIConfig, resolvePromptLensConfig } from "canopy-sdk";
+import { createOpenAIConfig, resolveVeyrConfig } from "canopy-sdk";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
-  ...createOpenAIConfig(resolvePromptLensConfig()),
+  ...createOpenAIConfig(resolveVeyrConfig()),
 });
 ```
 

@@ -7,7 +7,7 @@ Veyr is the **production** counterpart to [TokenGuard](https://github.com/hethb/
 | **Who** | People using ChatGPT / Claude in the browser | Engineering teams shipping LLM features |
 | **Install** | Chrome extension | `npm install canopy-sdk` + one env var |
 | **What it does** | Cuts tokens in chat (optimize + strip fluff) | Tracks every API call: cost, tokens, feature, prompt template |
-| **Setup** | Load extension → optional API key | Copy `PROMPTLENS_KEY` → change 2 lines in your app |
+| **Setup** | Load extension → optional API key | Copy `VEYR_KEY` → change 2 lines in your app |
 
 You run TokenGuard on yourself. You plug Veyr into **your app** so finance and eng see where token spend goes.
 
@@ -17,7 +17,7 @@ You run TokenGuard on yourself. You plug Veyr into **your app** so finance and e
 
 **Customer steps (under 5 minutes):**
 
-1. **Sign up** at your hosted dashboard (e.g. `app.promptlens.dev`) → **API Keys** → copy `pl_live_…`
+1. **Sign up** at your hosted dashboard (e.g. `app.veyr.dev`) → **API Keys** → copy `pl_live_…`
 2. **In their app:**
 
    ```bash
@@ -26,10 +26,10 @@ You run TokenGuard on yourself. You plug Veyr into **your app** so finance and e
 
    ```ts
    import OpenAI from "openai";
-   import { promptlensOpenAI } from "canopy-sdk";
+   import { veyrOpenAI } from "canopy-sdk";
 
    const openai = new OpenAI(
-     promptlensOpenAI({
+     veyrOpenAI({
        apiKey: process.env.OPENAI_API_KEY!,
        feature: "checkout-assistant", // shows up in dashboard
      })
@@ -39,7 +39,7 @@ You run TokenGuard on yourself. You plug Veyr into **your app** so finance and e
    await openai.chat.completions.create({ ... });
    ```
 
-3. **Set env:** `PROMPTLENS_KEY=pl_live_…` (only new variable)
+3. **Set env:** `VEYR_KEY=pl_live_…` (only new variable)
 4. **Open dashboard** → see cost by feature, top prompts, tokens over time
 
 **You operate:** hosted proxy + dashboard (Render + Vercel per README Deployment). The proxy persists data to a local SQLite store — no external database to run.
@@ -56,9 +56,9 @@ For teams that want to run the proxy on their own infrastructure:
 4. Same SDK, with:
 
    ```ts
-   promptlensOpenAI({
+   veyrOpenAI({
      apiKey: process.env.OPENAI_API_KEY!,
-     promptlensKey: process.env.PROMPTLENS_KEY!,
+     veyrKey: process.env.VEYR_KEY!,
      baseUrl: "http://localhost:3001", // your proxy
    })
    ```

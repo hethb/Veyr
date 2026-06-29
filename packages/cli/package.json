@@ -20,8 +20,7 @@
   "type": "module",
   "bin": {
     "veyr": "./dist/index.js",
-    "canopy": "./dist/index.js",
-    "promptlens": "./dist/index.js"
+    "canopy": "./dist/index.js"
   },
   "files": [
     "dist"
