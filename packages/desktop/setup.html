@@ -96,9 +96,9 @@
     const url = params.get("url") || "http://localhost:3001";
 
     const snippet =
-      'import { promptlensOpenAI } from "canopy-sdk";\n' +
-      'const openai = new OpenAI(promptlensOpenAI({ apiKey: process.env.OPENAI_API_KEY, baseUrl: "' +
-      url + '", promptlensKey: "' + key + '" }));';
+      'import { veyrOpenAI } from "canopy-sdk";\n' +
+      'const openai = new OpenAI(veyrOpenAI({ apiKey: process.env.OPENAI_API_KEY, baseUrl: "' +
+      url + '", veyrKey: "' + key + '" }));';
 
     document.getElementById("key-text").textContent = key;
     document.getElementById("snippet-text").textContent = snippet;

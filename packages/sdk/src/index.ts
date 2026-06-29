@@ -2,19 +2,19 @@
  * Veyr SDK — drop-in LLM cost tracking for production apps.
  *
  *   import OpenAI from "openai";
- *   import { promptlensOpenAI } from "canopy-sdk";
+ *   import { veyrOpenAI } from "canopy-sdk";
  *
  *   const openai = new OpenAI(
- *     promptlensOpenAI({ apiKey: process.env.OPENAI_API_KEY! })
+ *     veyrOpenAI({ apiKey: process.env.OPENAI_API_KEY! })
  *   );
  *
- * Set PROMPTLENS_KEY once (from the Veyr dashboard). Every call is logged.
+ * Set VEYR_KEY once (from the Veyr dashboard). Every call is logged.
  */
 
-export interface PromptLensConfig {
+export interface VeyrConfig {
   apiKey: string;
   /**
-   * Override for self-hosted proxies. Defaults to PROMPTLENS_BASE_URL or the
+   * Override for self-hosted proxies. Defaults to VEYR_BASE_URL or the
    * public Veyr API.
    */
   baseUrl?: string;
@@ -37,40 +37,40 @@ export interface PromptLensConfig {
   maxCompletionTokens?: number;
 }
 
-// The hosted Veyr proxy. Override with `baseUrl` or PROMPTLENS_BASE_URL
+// The hosted Veyr proxy. Override with `baseUrl` or VEYR_BASE_URL
 // (e.g. http://localhost:3001 for the desktop app / local dev).
 const DEFAULT_BASE_URL = "https://promptlens.fly.dev";
 
-export class PromptLensConfigError extends Error {
+export class VeyrConfigError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "PromptLensConfigError";
+    this.name = "VeyrConfigError";
   }
 }
 
-function resolveBase(config: PromptLensConfig): string {
+function resolveBase(config: VeyrConfig): string {
   const base =
     config.baseUrl ??
-    (typeof process !== "undefined" ? process.env.PROMPTLENS_BASE_URL : undefined) ??
+    (typeof process !== "undefined" ? process.env.VEYR_BASE_URL : undefined) ??
     DEFAULT_BASE_URL;
   return base.replace(/\/$/, "");
 }
 
 /**
- * Reads PROMPTLENS_KEY (and optional PROMPTLENS_BASE_URL /
- * PROMPTLENS_FEATURE_TAG) from the environment, or uses values passed in
+ * Reads VEYR_KEY (and optional VEYR_BASE_URL /
+ * VEYR_FEATURE_TAG) from the environment, or uses values passed in
  * `overrides`.
  */
-export function resolvePromptLensConfig(
-  overrides?: Partial<PromptLensConfig>
-): PromptLensConfig {
+export function resolveVeyrConfig(
+  overrides?: Partial<VeyrConfig>
+): VeyrConfig {
   const apiKey =
     overrides?.apiKey ??
-    (typeof process !== "undefined" ? process.env.PROMPTLENS_KEY : undefined);
+    (typeof process !== "undefined" ? process.env.VEYR_KEY : undefined);
 
   if (!apiKey?.trim()) {
-    throw new PromptLensConfigError(
-      "Missing PROMPTLENS_KEY. Sign in to the Veyr dashboard → API Keys → create a key, then set PROMPTLENS_KEY=pl_live_… in your environment."
+    throw new VeyrConfigError(
+      "Missing VEYR_KEY. Sign in to the Veyr dashboard → API Keys → create a key, then set VEYR_KEY=pl_live_… in your environment."
     );
   }
 
@@ -79,7 +79,7 @@ export function resolvePromptLensConfig(
     baseUrl: overrides?.baseUrl,
     feature:
       overrides?.feature ??
-      (typeof process !== "undefined" ? process.env.PROMPTLENS_FEATURE_TAG : undefined),
+      (typeof process !== "undefined" ? process.env.VEYR_FEATURE_TAG : undefined),
     compress: overrides?.compress,
     enablePromptCaching: overrides?.enablePromptCaching,
     maxCompletionTokens: overrides?.maxCompletionTokens,
@@ -89,20 +89,20 @@ export function resolvePromptLensConfig(
 /**
  * Returns config you can spread into the OpenAI client constructor.
  */
-function controlPlaneHeaders(config: PromptLensConfig): Record<string, string> {
+function controlPlaneHeaders(config: VeyrConfig): Record<string, string> {
   const headers: Record<string, string> = {
-    "x-promptlens-key": config.apiKey,
+    "x-veyr-key": config.apiKey,
   };
   if (config.feature) headers["x-feature-tag"] = config.feature;
-  if (config.compress) headers["x-promptlens-compress"] = "1";
-  if (config.enablePromptCaching) headers["x-promptlens-cache"] = "1";
+  if (config.compress) headers["x-veyr-compress"] = "1";
+  if (config.enablePromptCaching) headers["x-veyr-cache"] = "1";
   if (config.maxCompletionTokens != null && config.maxCompletionTokens > 0) {
-    headers["x-promptlens-max-tokens"] = String(config.maxCompletionTokens);
+    headers["x-veyr-max-tokens"] = String(config.maxCompletionTokens);
   }
   return headers;
 }
 
-export function createOpenAIConfig(config: PromptLensConfig): {
+export function createOpenAIConfig(config: VeyrConfig): {
   baseURL: string;
   defaultHeaders: Record<string, string>;
 } {
@@ -115,7 +115,7 @@ export function createOpenAIConfig(config: PromptLensConfig): {
 /**
  * Returns config for the Anthropic SDK constructor.
  */
-export function createAnthropicConfig(config: PromptLensConfig): {
+export function createAnthropicConfig(config: VeyrConfig): {
   baseURL: string;
   defaultHeaders: Record<string, string>;
 } {
@@ -128,8 +128,8 @@ export function createAnthropicConfig(config: PromptLensConfig): {
 export interface ProviderOpenAIOptions {
   /** Your OpenAI (or Groq-compatible) API key — unchanged. */
   apiKey: string;
-  /** Veyr key; defaults to PROMPTLENS_KEY env var. */
-  promptlensKey?: string;
+  /** Veyr key; defaults to VEYR_KEY env var. */
+  veyrKey?: string;
   baseUrl?: string;
   /** Tag spend in the dashboard (e.g. "billing-bot"). */
   feature?: string;
@@ -141,15 +141,15 @@ export interface ProviderOpenAIOptions {
 /**
  * One-call OpenAI constructor options: provider key + Veyr routing.
  *
- *   const openai = new OpenAI(promptlensOpenAI({ apiKey: process.env.OPENAI_API_KEY! }));
+ *   const openai = new OpenAI(veyrOpenAI({ apiKey: process.env.OPENAI_API_KEY! }));
  */
-export function promptlensOpenAI(options: ProviderOpenAIOptions): {
+export function veyrOpenAI(options: ProviderOpenAIOptions): {
   apiKey: string;
   baseURL: string;
   defaultHeaders: Record<string, string>;
 } {
-  const pl = resolvePromptLensConfig({
-    apiKey: options.promptlensKey,
+  const pl = resolveVeyrConfig({
+    apiKey: options.veyrKey,
     baseUrl: options.baseUrl,
     feature: options.feature,
     compress: options.compress,
@@ -165,7 +165,7 @@ export function promptlensOpenAI(options: ProviderOpenAIOptions): {
 
 export interface ProviderAnthropicOptions {
   apiKey: string;
-  promptlensKey?: string;
+  veyrKey?: string;
   baseUrl?: string;
   feature?: string;
   compress?: boolean;
@@ -176,13 +176,13 @@ export interface ProviderAnthropicOptions {
 /**
  * One-call Anthropic constructor options: provider key + Veyr routing.
  */
-export function promptlensAnthropic(options: ProviderAnthropicOptions): {
+export function veyrAnthropic(options: ProviderAnthropicOptions): {
   apiKey: string;
   baseURL: string;
   defaultHeaders: Record<string, string>;
 } {
-  const pl = resolvePromptLensConfig({
-    apiKey: options.promptlensKey,
+  const pl = resolveVeyrConfig({
+    apiKey: options.veyrKey,
     baseUrl: options.baseUrl,
     feature: options.feature,
     compress: options.compress,

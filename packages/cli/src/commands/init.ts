@@ -48,7 +48,7 @@ async function startLocalProxy(): Promise<boolean> {
   const child = spawn(process.execPath, [entry], {
     detached: true,
     stdio: "ignore",
-    env: { ...process.env, PORT: "3001", PROMPTLENS_ALLOW_ANON: "true" },
+    env: { ...process.env, PORT: "3001", VEYR_ALLOW_ANON: "true" },
   });
   child.unref();
 
@@ -74,10 +74,10 @@ async function verifyKey(baseUrl: string, key: string): Promise<boolean | null> 
 }
 
 function showSdkSnippet(kind: "openai" | "anthropic", baseUrl: string, apiKey?: string): void {
-  const fn = kind === "openai" ? "promptlensOpenAI" : "promptlensAnthropic";
+  const fn = kind === "openai" ? "veyrOpenAI" : "veyrAnthropic";
   const client = kind === "openai" ? "OpenAI" : "Anthropic";
   const envKey = kind === "openai" ? "OPENAI_API_KEY" : "ANTHROPIC_API_KEY";
-  const plKey = apiKey ? `, promptlensKey: "${apiKey}"` : "";
+  const plKey = apiKey ? `, veyrKey: "${apiKey}"` : "";
   console.log();
   console.log(chalk.dim("// npm install canopy-sdk"));
   console.log(chalk.cyan(`import { ${fn} } from "canopy-sdk";`));

@@ -14,7 +14,7 @@ declare module "express-serve-static-core" {
 }
 
 /**
- * Authenticates a proxy request using the `x-promptlens-key` header.
+ * Authenticates a proxy request using the `x-veyr-key` header.
  *
  * Strategy:
  *  1. Hot path: in-memory cache lookup (avoids per-request bcrypt).
@@ -28,14 +28,14 @@ export async function apiKeyAuth(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const headerVal = req.header("x-promptlens-key");
+  const headerVal = req.header("x-veyr-key");
   const raw = typeof headerVal === "string" ? headerVal.trim() : "";
 
   if (!raw) {
     // Local single-tenant convenience: tools like Claude Code can't send a
-    // Veyr key. When PROMPTLENS_ALLOW_ANON=true we attribute their
+    // Veyr key. When VEYR_ALLOW_ANON=true we attribute their
     // traffic to a fixed "anon" key id so it still gets logged.
-    if (process.env.PROMPTLENS_ALLOW_ANON === "true") {
+    if (process.env.VEYR_ALLOW_ANON === "true") {
       try {
         req.apiKeyId = ensureAnonApiKey();
         next();
@@ -46,7 +46,7 @@ export async function apiKeyAuth(
         return;
       }
     }
-    res.status(401).json({ error: "Missing x-promptlens-key header" });
+    res.status(401).json({ error: "Missing x-veyr-key header" });
     return;
   }
 

@@ -255,7 +255,7 @@ function buildSuggestions(rows: AnalysisRow[]): Suggestion[] {
           avg_completion_tokens: Math.round(avgCompletion),
           ratio: round2(ratio),
         },
-        action: `Add x-promptlens-max-tokens (or a max_completion_tokens policy) for "${agg.tag}".`,
+        action: `Add x-veyr-max-tokens (or a max_completion_tokens policy) for "${agg.tag}".`,
       });
     }
 
@@ -339,7 +339,7 @@ function buildSuggestions(rows: AnalysisRow[]): Suggestion[] {
           cache_hit_rate: round2(cacheHitRate),
           calls: agg.count,
         },
-        action: `Set x-promptlens-cache: 1 on requests for "${agg.tag}" (or enable_prompt_caching=true in the feature policy) so Veyr injects Anthropic cache_control automatically.`,
+        action: `Set x-veyr-cache: 1 on requests for "${agg.tag}" (or enable_prompt_caching=true in the feature policy) so Veyr injects Anthropic cache_control automatically.`,
       });
     } else {
       // Burst-only fallback for pre-instrumentation traffic.
@@ -363,7 +363,7 @@ function buildSuggestions(rows: AnalysisRow[]): Suggestion[] {
             burst_count: bursts,
             calls_per_burst: maxCalls,
           },
-          action: `Set x-promptlens-cache: 1 on requests for "${agg.tag}" (or enable_prompt_caching=true in the feature policy) so Veyr injects Anthropic cache_control automatically.`,
+          action: `Set x-veyr-cache: 1 on requests for "${agg.tag}" (or enable_prompt_caching=true in the feature policy) so Veyr injects Anthropic cache_control automatically.`,
         });
       }
     }

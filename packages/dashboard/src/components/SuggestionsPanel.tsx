@@ -11,7 +11,7 @@ import {
 } from "../lib/api";
 import { formatUsd } from "../lib/format";
 
-const DISMISSED_KEY = "promptlens:dismissed-suggestions";
+const DISMISSED_KEY = "veyr:dismissed-suggestions";
 
 function loadDismissed(): Set<string> {
   try {

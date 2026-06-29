@@ -124,7 +124,7 @@ export function transformAnthropicBody(
       }
       // First call pays ~1.25x to write; subsequent reads cost ~0.1x. We
       // optimistically credit the steady-state saving (~90%) so the
-      // x-promptlens-tokens-saved-estimate header reflects what a warm cache
+      // x-veyr-tokens-saved-estimate header reflects what a warm cache
       // saves per call. This is an upper-bound estimate by design.
       tokensSavedEstimate += Math.floor((chars / 4) * 0.9);
     }

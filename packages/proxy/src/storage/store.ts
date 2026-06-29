@@ -85,7 +85,7 @@ export function findApiKeysByPrefix(
 
 /**
  * Fixed owner for anonymous local traffic (e.g. Claude Code) when
- * `PROMPTLENS_ALLOW_ANON=true`. The row is created on first use; its
+ * `VEYR_ALLOW_ANON=true`. The row is created on first use; its
  * key_hash ("!") can never match a bcrypt comparison, so the id exists for
  * attribution only and is not a usable credential.
  */

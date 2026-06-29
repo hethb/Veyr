@@ -13,8 +13,8 @@ export const ingestRouter: Router = Router();
 // provider). The browser extension calls this after each send so the
 // dashboard reflects web-chat usage alongside SDK / CLI traffic.
 //
-// Auth: same as the upstream LLM routes — accepts `x-promptlens-key` or, in
-// single-tenant local mode (`PROMPTLENS_ALLOW_ANON=true`), falls back to the
+// Auth: same as the upstream LLM routes — accepts `x-veyr-key` or, in
+// single-tenant local mode (`VEYR_ALLOW_ANON=true`), falls back to the
 // default API key. The extension can store a key in chrome.storage for hosted
 // multi-tenant deployments.
 //

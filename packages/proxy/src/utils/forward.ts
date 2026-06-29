@@ -17,7 +17,7 @@ const STRIP_REQUEST_HEADERS = new Set([
   "transfer-encoding",
   "upgrade",
   "content-length",
-  "x-promptlens-key",
+  "x-veyr-key",
   "x-feature-tag",
   "x-request-path",
 ]);

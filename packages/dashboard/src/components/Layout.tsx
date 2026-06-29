@@ -18,7 +18,7 @@ const navItems = [
 ];
 
 // Once per browser session: play the intro splash a single time.
-const INTRO_KEY = "promptlens:intro-played";
+const INTRO_KEY = "veyr:intro-played";
 
 function introAlreadyPlayed() {
   try {

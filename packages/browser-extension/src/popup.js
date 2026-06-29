@@ -15,7 +15,7 @@ function sendBg(message) {
     });
   });
 }
-const proxyFetch = (path) => sendBg({ type: "promptlens-fetch", path });
+const proxyFetch = (path) => sendBg({ type: "veyr-fetch", path });
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"]/g, (c) =>
@@ -41,7 +41,7 @@ function syncLabel(s) {
 }
 
 async function loadHistory() {
-  const summary = await sendBg({ type: "promptlens-usage" });
+  const summary = await sendBg({ type: "veyr-usage" });
   if (!summary) return;
   document.getElementById("h-today").textContent =
     `${summary.today.prompts} sent · ~${fmtTok(summary.today.tokens)} tok`;
@@ -71,7 +71,7 @@ async function loadHistory() {
 
 function initClear() {
   document.getElementById("clear").addEventListener("click", async () => {
-    await sendBg({ type: "promptlens-clear" });
+    await sendBg({ type: "veyr-clear" });
     loadHistory();
   });
 }
@@ -102,7 +102,7 @@ async function initProxyInput() {
   input.value = proxyUrl || "https://promptlens.fly.dev";
   input.addEventListener("change", () => {
     chrome.storage.local.set({ proxyUrl: input.value.trim() }, async () => {
-      await sendBg({ type: "promptlens-flush" });
+      await sendBg({ type: "veyr-flush" });
       load();
       loadHistory();
     });
@@ -111,12 +111,12 @@ async function initProxyInput() {
 
 async function initKeyInput() {
   const input = document.getElementById("key");
-  const { promptlensKey } = await chrome.storage.local.get("promptlensKey");
-  input.value = promptlensKey || "";
+  const { veyrKey } = await chrome.storage.local.get("veyrKey");
+  input.value = veyrKey || "";
   input.addEventListener("change", () => {
-    chrome.storage.local.set({ promptlensKey: input.value.trim() }, async () => {
+    chrome.storage.local.set({ veyrKey: input.value.trim() }, async () => {
       // New key may unblock both reads and the pending ingest queue.
-      await sendBg({ type: "promptlens-flush" });
+      await sendBg({ type: "veyr-flush" });
       load();
       loadHistory();
     });

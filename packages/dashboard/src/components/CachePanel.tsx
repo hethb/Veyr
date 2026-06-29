@@ -388,7 +388,7 @@ function EmptyState({ totalRequests }: { totalRequests: number }) {
         {totalRequests > 0
           ? `${formatNumber(totalRequests)} requests in this window — none used a provider cache. `
           : "No requests have been logged yet. "}
-        Flip <code className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-xs text-neutral-200">x-promptlens-cache: 1</code>{" "}
+        Flip <code className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-xs text-neutral-200">x-veyr-cache: 1</code>{" "}
         on a feature with a long, repeated system prompt, or enable the{" "}
         <code className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-xs text-neutral-200">enable_prompt_caching</code>{" "}
         policy. Up to 90% input cost reduction on repeated calls.

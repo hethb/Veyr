@@ -6,7 +6,7 @@
 //      the first free port in 3001-3010).
 //   3. Opens the dashboard in a native window; closing it hides to the tray.
 //   4. Tray shows live spend, proxy status, copy actions, start-at-login.
-//   5. First launch (no ~/.promptlens/config.json) shows a setup window with
+//   5. First launch (no ~/.veyr/config.json) shows a setup window with
 //      the freshly minted demo API key.
 
 import {
@@ -27,7 +27,7 @@ import { existsSync, readFile } from "node:fs";
 import { extname, join, normalize, resolve } from "node:path";
 import { CONFIG_DIR, configExists, loadConfig, saveConfig } from "./config.js";
 
-const STATIC_PORT = Number(process.env.PROMPTLENS_UI_PORT || 5273);
+const STATIC_PORT = Number(process.env.VEYR_UI_PORT || 5273);
 const UI_ORIGIN = `http://localhost:${STATIC_PORT}`;
 const PROXY_PORT_MIN = 3001;
 const PROXY_PORT_MAX = 3010;
@@ -206,7 +206,7 @@ interface HealthResponse {
   status?: string;
 }
 
-async function isPromptLensAt(port: number): Promise<boolean> {
+async function isVeyrAt(port: number): Promise<boolean> {
   const health = await httpGetJson<HealthResponse>(`http://localhost:${port}/health`, 1000);
   return health?.status === "ok";
 }
@@ -229,7 +229,7 @@ async function ensureProxy(): Promise<boolean> {
 
   for (let port = PROXY_PORT_MIN; port <= PROXY_PORT_MAX; port++) {
     // Reuse an already-running Veyr proxy if present.
-    if (await isPromptLensAt(port)) {
+    if (await isVeyrAt(port)) {
       activeProxyPort = port;
       saveConfig({ proxyUrl: proxyBase() });
       return true;
@@ -255,7 +255,7 @@ async function ensureProxy(): Promise<boolean> {
         PORT: String(port),
         NODE_ENV: "production",
         // Keep the SQLite store in the user's home dir, not the install dir.
-        PROMPTLENS_DB_PATH: join(CONFIG_DIR, "data.db"),
+        VEYR_DB_PATH: join(CONFIG_DIR, "data.db"),
         // Guarantee CORS works for our UI origin regardless of any .env value.
         DASHBOARD_ORIGIN: UI_ORIGIN,
         // Let the forked proxy resolve its deps from the packaged app.
@@ -272,7 +272,7 @@ async function ensureProxy(): Promise<boolean> {
 
     const deadline = Date.now() + PROXY_START_TIMEOUT_MS;
     while (Date.now() < deadline) {
-      if (await isPromptLensAt(port)) {
+      if (await isVeyrAt(port)) {
         activeProxyPort = port;
         saveConfig({ proxyUrl: proxyBase() });
         return true;
@@ -448,7 +448,7 @@ function createTray(): void {
 
 async function updateTray(): Promise<void> {
   if (!tray) return;
-  const healthy = await isPromptLensAt(activeProxyPort);
+  const healthy = await isVeyrAt(activeProxyPort);
   const overview = healthy
     ? await httpGetJson<Overview>(`${proxyBase()}/api/stats/overview`)
     : null;

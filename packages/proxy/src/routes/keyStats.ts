@@ -11,7 +11,7 @@ import {
 //
 // The dashboard /api/stats routes require a Supabase session (dashboardAuth),
 // which the browser extension and other API-key clients don't have. These
-// routes authenticate with the same `x-promptlens-key` the client already uses
+// routes authenticate with the same `x-veyr-key` the client already uses
 // to write, and scope every figure to that one key — so what a client reads
 // here is exactly the subset of dashboard data it produced. That keeps the
 // extension's numbers consistent with the dashboard by construction.

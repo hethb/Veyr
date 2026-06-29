@@ -53,7 +53,7 @@ app.use("/openai", openaiRouter);
 app.use("/anthropic", anthropicRouter);
 // /ingest is for clients that didn't go through the proxy (e.g. the browser
 // extension capturing chats on chatgpt.com / claude.ai). Same key auth as the
-// LLM routes — NOT dashboardAuth — so it works with PROMPTLENS_ALLOW_ANON in
+// LLM routes — NOT dashboardAuth — so it works with VEYR_ALLOW_ANON in
 // local single-tenant mode.
 app.use("/ingest", ingestRouter);
 // Key-authenticated read of this key's own stats — the read counterpart to

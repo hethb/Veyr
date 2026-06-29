@@ -8,7 +8,7 @@
 const vscode = require("vscode");
 
 function cfg() {
-  return vscode.workspace.getConfiguration("promptlens");
+  return vscode.workspace.getConfiguration("veyr");
 }
 function proxyUrl() {
   return (cfg().get("proxyUrl") || "http://localhost:3001").replace(/\/$/, "");
@@ -40,7 +40,7 @@ function escapeHtml(s) {
 // ---------------------------------------------------------------------------
 // Webview view
 // ---------------------------------------------------------------------------
-class PromptLensViewProvider {
+class VeyrViewProvider {
   constructor() {
     this.view = undefined;
     this.timer = undefined;
@@ -183,7 +183,7 @@ async function routeClaudeCode() {
   await config.update(section, current, target);
 
   const choice = await vscode.window.showInformationMessage(
-    "Claude Code will now route through Veyr in new terminals. Make sure the proxy runs with PROMPTLENS_ALLOW_ANON=true so its traffic is logged.",
+    "Claude Code will now route through Veyr in new terminals. Make sure the proxy runs with VEYR_ALLOW_ANON=true so its traffic is logged.",
     "Open new terminal",
     "Copy env line"
   );
@@ -213,13 +213,13 @@ async function unrouteClaudeCode() {
 // Activation
 // ---------------------------------------------------------------------------
 function activate(context) {
-  const provider = new PromptLensViewProvider();
+  const provider = new VeyrViewProvider();
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider("promptlens.panel", provider),
-    vscode.commands.registerCommand("promptlens.refresh", () => provider.refresh()),
-    vscode.commands.registerCommand("promptlens.routeClaudeCode", routeClaudeCode),
-    vscode.commands.registerCommand("promptlens.unrouteClaudeCode", unrouteClaudeCode),
-    vscode.commands.registerCommand("promptlens.openDashboard", () =>
+    vscode.window.registerWebviewViewProvider("veyr.panel", provider),
+    vscode.commands.registerCommand("veyr.refresh", () => provider.refresh()),
+    vscode.commands.registerCommand("veyr.routeClaudeCode", routeClaudeCode),
+    vscode.commands.registerCommand("veyr.unrouteClaudeCode", unrouteClaudeCode),
+    vscode.commands.registerCommand("veyr.openDashboard", () =>
       vscode.env.openExternal(vscode.Uri.parse(dashboardUrl()))
     )
   );

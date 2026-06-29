@@ -172,7 +172,7 @@ export async function integrateShell(): Promise<void> {
   console.log();
   console.log("# Optional: tag requests by project (read by the Veyr SDK)");
   console.log(chalk.cyan("veyr-tag() {"));
-  console.log(chalk.cyan('  export PROMPTLENS_FEATURE_TAG="$1"'));
+  console.log(chalk.cyan('  export VEYR_FEATURE_TAG="$1"'));
   console.log(chalk.cyan('  echo "✓ Veyr feature tag set to: $1"'));
   console.log(chalk.cyan("}"));
   console.log();

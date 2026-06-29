@@ -25,8 +25,8 @@ async function getBase() {
 
 async function getKey() {
   try {
-    const { promptlensKey } = await chrome.storage.local.get("promptlensKey");
-    return typeof promptlensKey === "string" ? promptlensKey.trim() : "";
+    const { veyrKey } = await chrome.storage.local.get("veyrKey");
+    return typeof veyrKey === "string" ? veyrKey.trim() : "";
   } catch {
     return "";
   }
@@ -45,7 +45,7 @@ async function fetchJson(path) {
     ? path.replace("/api/stats/", "/api/key-stats/")
     : path;
   const headers = { accept: "application/json" };
-  if (key) headers["x-promptlens-key"] = key;
+  if (key) headers["x-veyr-key"] = key;
   const res = await fetch(`${base}${realPath}`, { headers });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
@@ -63,7 +63,7 @@ async function postJson(path, body) {
   const base = await getBase();
   const key = await getKey();
   const headers = { accept: "application/json", "content-type": "application/json" };
-  if (key) headers["x-promptlens-key"] = key;
+  if (key) headers["x-veyr-key"] = key;
   const res = await fetch(`${base}${path}`, {
     method: "POST",
     headers,
@@ -162,7 +162,7 @@ async function flushQueue() {
   const base = await getBase();
   const key = await getKey();
   const headers = { "content-type": "application/json", accept: "application/json" };
-  if (key) headers["x-promptlens-key"] = key;
+  if (key) headers["x-veyr-key"] = key;
 
   const now = Date.now();
   const remaining = [];
@@ -315,28 +315,28 @@ async function summarize(u) {
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (!msg) return false;
 
-  if (msg.type === "promptlens-fetch") {
+  if (msg.type === "veyr-fetch") {
     fetchJson(msg.path)
       .then((data) => sendResponse({ ok: true, data }))
       .catch((err) => sendResponse({ ok: false, error: String(err && err.message) }));
     return true;
   }
 
-  if (msg.type === "promptlens-post") {
+  if (msg.type === "veyr-post") {
     postJson(msg.path, msg.body)
       .then((data) => sendResponse({ ok: true, data }))
       .catch((err) => sendResponse({ ok: false, error: String(err && err.message) }));
     return true;
   }
 
-  if (msg.type === "promptlens-log") {
+  if (msg.type === "veyr-log") {
     logEntry(msg.entry || {})
       .then(({ id, summary }) => sendResponse({ ok: true, data: summary, id }))
       .catch(() => sendResponse({ ok: false }));
     return true;
   }
 
-  if (msg.type === "promptlens-ingest") {
+  if (msg.type === "veyr-ingest") {
     // Enqueue a durable job (id ties it to the local history row); retried until
     // the proxy accepts it. If completion tokens are supplied, release the hold.
     const e = msg.entry || {};
@@ -349,7 +349,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
 
-  if (msg.type === "promptlens-usage") {
+  if (msg.type === "veyr-usage") {
     loadUsage()
       .then((u) => summarize(u))
       .then((data) => sendResponse({ ok: true, data }))
@@ -357,14 +357,14 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
 
-  if (msg.type === "promptlens-flush") {
+  if (msg.type === "veyr-flush") {
     flushQueue()
       .then(() => sendResponse({ ok: true }))
       .catch(() => sendResponse({ ok: false }));
     return true;
   }
 
-  if (msg.type === "promptlens-clear") {
+  if (msg.type === "veyr-clear") {
     Promise.all([saveUsage({ recent: [], days: {} }), saveQueue([]), setSync("idle")])
       .then(() => sendResponse({ ok: true }))
       .catch(() => sendResponse({ ok: false }));

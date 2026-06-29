@@ -48,7 +48,7 @@ const FEATURE_DETAILS = [
   {
     icon: Database,
     title: "Prompt caching support",
-    body: "Set x-promptlens-cache: 1 (or enable_prompt_caching on a feature policy) and the proxy injects Anthropic cache_control automatically. Cache hits, writes, and savings are tracked in a dedicated dashboard panel — and a caching suggestion fires when a long, repeated prompt has a low hit rate.",
+    body: "Set x-veyr-cache: 1 (or enable_prompt_caching on a feature policy) and the proxy injects Anthropic cache_control automatically. Cache hits, writes, and savings are tracked in a dedicated dashboard panel — and a caching suggestion fires when a long, repeated prompt has a low hit rate.",
   },
   {
     icon: FileText,

@@ -47,8 +47,8 @@ anthropicRouter.post(
         finishReason: usage.finishReason,
         promptHash,
         errorMessage: result.ok ? null : usage.errorMessage ?? `HTTP ${result.status}`,
-        compressionApplied: req.promptLens?.compressionApplied,
-        tokensSavedEstimate: req.promptLens?.tokensSavedEstimate,
+        compressionApplied: req.veyr?.compressionApplied,
+        tokensSavedEstimate: req.veyr?.tokensSavedEstimate,
         cachedTokens: usage.cachedTokens,
         cacheCreationTokens: usage.cacheCreationTokens,
       });

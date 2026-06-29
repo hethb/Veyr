@@ -105,7 +105,7 @@ statsRouter.get("/overview", (req: Request, res: Response): void => {
 
 // ---------------------------------------------------------------------------
 // GET /api/stats/recent?limit=20&tag=<feature-tag>
-//   Most recent requests, newest first. Backs `promptlens logs [--follow]`.
+//   Most recent requests, newest first. Backs `veyr logs [--follow]`.
 // ---------------------------------------------------------------------------
 
 statsRouter.get("/recent", (req: Request, res: Response): void => {

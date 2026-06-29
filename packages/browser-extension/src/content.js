@@ -12,8 +12,8 @@
 
 (() => {
   "use strict";
-  if (window.__promptlensInjected) return;
-  window.__promptlensInjected = true;
+  if (window.__veyrInjected) return;
+  window.__veyrInjected = true;
 
   // Veyr mark (two arcs + three dots), monochrome to the surrounding accent.
   const CANOPY_MARK =
@@ -207,8 +207,8 @@
     });
   }
   const sendBg = (message) => sendBgRaw(message).then((r) => (r ? r.data : null));
-  const proxyFetch = (path) => sendBg({ type: "promptlens-fetch", path });
-  const proxyPost = (path, body) => sendBg({ type: "promptlens-post", path, body });
+  const proxyFetch = (path) => sendBg({ type: "veyr-fetch", path });
+  const proxyPost = (path, body) => sendBg({ type: "veyr-post", path, body });
 
   // ---- personalization (retrieval-based, pre-send) -------------------------
   // Calls the proxy's personalized-suggest with the live draft. Works against a
@@ -349,7 +349,7 @@
     lastLoggedAt = now;
     const promptTokens = estimateTokens(text);
     const resp = await sendBgRaw({
-      type: "promptlens-log",
+      type: "veyr-log",
       entry: {
         site: SITE,
         tokens: promptTokens,
@@ -365,7 +365,7 @@
     // prompt reaches the dashboard even if this tab closes before the response
     // finishes. Completion tokens are attached later if/when capture completes.
     void sendBg({
-      type: "promptlens-ingest",
+      type: "veyr-ingest",
       entry: { id, site: SITE, prompt: text.slice(0, 4000), promptTokens },
     });
 
@@ -373,7 +373,7 @@
     // same queued job and release it — so the dashboard row has accurate cost.
     captureAssistantResponse((completionText) => {
       void sendBg({
-        type: "promptlens-ingest",
+        type: "veyr-ingest",
         entry: { id, completionTokens: estimateTokens(completionText) },
       });
       void refreshHistory();
@@ -472,7 +472,7 @@
     }
   }
   async function refreshHistory() {
-    renderHistory(await sendBg({ type: "promptlens-usage" }));
+    renderHistory(await sendBg({ type: "veyr-usage" }));
   }
 
   // ---- canary logic --------------------------------------------------------
@@ -646,7 +646,7 @@
 
   // ---- mount UI in shadow root --------------------------------------------
   const host = document.createElement("div");
-  host.id = "promptlens-host";
+  host.id = "veyr-host";
   (document.body || document.documentElement).appendChild(host);
   const shadow = host.attachShadow({ mode: "open" });
   const style = document.createElement("style");
@@ -695,7 +695,7 @@
   shadow.appendChild(bubble);
 
   const $ = (sel) => shadow.querySelector(sel);
-  let minimized = localStorage.getItem("promptlens-min") === "1";
+  let minimized = localStorage.getItem("veyr-min") === "1";
   function applyMin() {
     panel.style.display = minimized ? "none" : "block";
     bubble.style.display = minimized ? "flex" : "none";
@@ -703,12 +703,12 @@
   applyMin();
   panel.querySelector(".pl-min").addEventListener("click", () => {
     minimized = true;
-    localStorage.setItem("promptlens-min", "1");
+    localStorage.setItem("veyr-min", "1");
     applyMin();
   });
   bubble.addEventListener("click", () => {
     minimized = false;
-    localStorage.setItem("promptlens-min", "0");
+    localStorage.setItem("veyr-min", "0");
     applyMin();
     refreshProxy();
   });

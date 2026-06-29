@@ -93,7 +93,7 @@ integrate
 
 program
   .command("config")
-  .description("Interactive configuration wizard (~/.promptlens/config.json)")
+  .description("Interactive configuration wizard (~/.veyr/config.json)")
   .action(() => run(configCommand));
 
 program

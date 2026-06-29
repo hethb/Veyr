@@ -104,14 +104,14 @@ function HowItWorks() {
         accent: ACCENTS[0],
         title: "Sign up with your email",
         body: "Enter your email at the bottom of this page and click the magic link — no password, no credit card. Copy the key from your welcome page and export it:",
-        code: "export PROMPTLENS_KEY=pl_live_…  # your key — shown once",
+        code: "export VEYR_KEY=pl_live_…  # your key — shown once",
       }
     : {
         icon: Code2,
         accent: ACCENTS[0],
         title: "Get your API key",
         body: "Run it locally with no account, or deploy with email sign-in. Create a key and you're set.",
-        code: "export PROMPTLENS_KEY=pl_live_…",
+        code: "export VEYR_KEY=pl_live_…",
       };
 
   const steps = [
@@ -120,8 +120,8 @@ function HowItWorks() {
       icon: Zap,
       accent: ACCENTS[1],
       title: "Plug into your app",
-      body: "One npm install. Wrap your existing OpenAI client — it picks up PROMPTLENS_KEY from step 1 and routes through Veyr automatically.",
-      code: `npm install canopy-sdk openai\n\nimport { promptlensOpenAI } from "canopy-sdk";\nconst openai = new OpenAI(\n  promptlensOpenAI({ apiKey: process.env.OPENAI_API_KEY! })\n);`,
+      body: "One npm install. Wrap your existing OpenAI client — it picks up VEYR_KEY from step 1 and routes through Veyr automatically.",
+      code: `npm install canopy-sdk openai\n\nimport { veyrOpenAI } from "canopy-sdk";\nconst openai = new OpenAI(\n  veyrOpenAI({ apiKey: process.env.OPENAI_API_KEY! })\n);`,
     },
     {
       icon: BarChart3,
@@ -217,14 +217,14 @@ function GetRunning() {
         {
           title: "Install the SDK and wrap your OpenAI client",
           detail:
-            "In your project, run the install, then create the client like this. Replace pl_live_… with the key from step 1. Your OpenAI key stays in OPENAI_API_KEY exactly as it is today. Then use `openai` exactly as before — nothing else changes. (Anthropic? Use promptlensAnthropic the same way.)",
+            "In your project, run the install, then create the client like this. Replace pl_live_… with the key from step 1. Your OpenAI key stays in OPENAI_API_KEY exactly as it is today. Then use `openai` exactly as before — nothing else changes. (Anthropic? Use veyrAnthropic the same way.)",
           code:
             "npm install canopy-sdk openai\n\n" +
             'import OpenAI from "openai";\n' +
-            'import { promptlensOpenAI } from "canopy-sdk";\n\n' +
-            "const openai = new OpenAI(promptlensOpenAI({\n" +
+            'import { veyrOpenAI } from "canopy-sdk";\n\n' +
+            "const openai = new OpenAI(veyrOpenAI({\n" +
             "  apiKey: process.env.OPENAI_API_KEY!,  // your OpenAI key — unchanged\n" +
-            '  promptlensKey: "pl_live_…",           // ← paste YOUR key from step 1\n' +
+            '  veyrKey: "pl_live_…",           // ← paste YOUR key from step 1\n' +
             `  baseUrl: "${proxyBase}",\n` +
             "}));",
         },
@@ -234,7 +234,7 @@ function GetRunning() {
             "Run these in the same terminal where you run `claude` (replace pl_live_… with your key). Every Claude Code request is then metered. To make it permanent, add both lines to your ~/.zshrc.",
           code:
             `export ANTHROPIC_BASE_URL=${proxyBase}/anthropic\n` +
-            'export ANTHROPIC_CUSTOM_HEADERS="x-promptlens-key: pl_live_…"\n' +
+            'export ANTHROPIC_CUSTOM_HEADERS="x-veyr-key: pl_live_…"\n' +
             "claude",
         },
         {
@@ -255,7 +255,7 @@ function GetRunning() {
         {
           title: "Route a CLI agent like Claude Code through Veyr",
           code:
-            "# enable local logging (in .env)\nPROMPTLENS_ALLOW_ANON=true\n\n" +
+            "# enable local logging (in .env)\nVEYR_ALLOW_ANON=true\n\n" +
             "# point Claude Code at the proxy, then run it\nexport ANTHROPIC_BASE_URL=http://localhost:3001/anthropic\nclaude",
         },
         {
@@ -271,9 +271,9 @@ function GetRunning() {
         {
           title: "Clone the repo and launch the desktop app",
           detail:
-            "Requires Node 20+. The dashboard opens in its own window, the proxy starts automatically on port 3001, and a first-run screen shows your local API key. No account, no cloud — data stays in ~/.promptlens on your machine.",
+            "Requires Node 20+. The dashboard opens in its own window, the proxy starts automatically on port 3001, and a first-run screen shows your local API key. No account, no cloud — data stays in ~/.veyr on your machine.",
           code:
-            "git clone https://github.com/hethb/PromptLens\ncd PromptLens && npm install\nnpm run desktop",
+            "git clone https://github.com/hethb/PromptLens\ncd Veyr && npm install\nnpm run desktop",
         },
         {
           title: "Or set up from the terminal in one command",
@@ -442,7 +442,7 @@ function ProductLayers() {
       title: "Optimization",
       detail:
         "Compress bloated system prompts before they hit the model. TokenGuard logic, running in your proxy — 20–40% input savings on verbose prompts.",
-      code: "compress: true  // SDK flag → x-promptlens-compress",
+      code: "compress: true  // SDK flag → x-veyr-compress",
     },
     {
       phase: "Layer 3 — Foundation",

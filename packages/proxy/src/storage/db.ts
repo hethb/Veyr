@@ -4,12 +4,12 @@ import Database from "better-sqlite3";
 
 let cached: Database.Database | null = null;
 
-/** Resolves the SQLite file path (override with PROMPTLENS_DB_PATH). */
+/** Resolves the SQLite file path (override with VEYR_DB_PATH). */
 function resolveDbPath(): string {
-  const fromEnv = process.env.PROMPTLENS_DB_PATH?.trim();
+  const fromEnv = process.env.VEYR_DB_PATH?.trim();
   if (fromEnv) return resolve(fromEnv);
-  // __dirname is packages/proxy/{src,dist}/storage -> ../../.promptlens/data.db
-  return resolve(__dirname, "..", "..", ".promptlens", "data.db");
+  // __dirname is packages/proxy/{src,dist}/storage -> ../../.veyr/data.db
+  return resolve(__dirname, "..", "..", ".veyr", "data.db");
 }
 
 const SCHEMA = `

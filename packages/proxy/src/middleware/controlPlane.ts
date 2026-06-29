@@ -7,7 +7,7 @@ import { isCompressionEnabledByDefault } from "../config.js";
 
 declare module "express-serve-static-core" {
   interface Request {
-    promptLens?: {
+    veyr?: {
       compressionApplied: boolean;
       tokensSavedEstimate: number;
       /** True when we injected provider-side prompt caching into the request. */
@@ -17,7 +17,7 @@ declare module "express-serve-static-core" {
 }
 
 function wantsCompression(req: Request, policyCompress: boolean): boolean {
-  const header = req.header("x-promptlens-compress");
+  const header = req.header("x-veyr-compress");
   if (header === "1" || header === "true") return true;
   if (header === "0" || header === "false") return false;
   if (policyCompress) return true;
@@ -25,14 +25,14 @@ function wantsCompression(req: Request, policyCompress: boolean): boolean {
 }
 
 function wantsCaching(req: Request, policyCache: boolean): boolean {
-  const header = req.header("x-promptlens-cache");
+  const header = req.header("x-veyr-cache");
   if (header === "1" || header === "true") return true;
   if (header === "0" || header === "false") return false;
   return policyCache;
 }
 
 function headerMaxTokens(req: Request): number | null {
-  const raw = req.header("x-promptlens-max-tokens");
+  const raw = req.header("x-veyr-max-tokens");
   if (!raw) return null;
   const n = parseInt(raw, 10);
   return Number.isFinite(n) && n > 0 ? n : null;
@@ -87,7 +87,7 @@ export async function controlPlane(
       enablePromptCaching,
     });
     req.body = result.body;
-    req.promptLens = {
+    req.veyr = {
       compressionApplied: result.compressionApplied,
       tokensSavedEstimate: result.tokensSavedEstimate,
       cachingApplied: result.cachingApplied,
@@ -101,23 +101,23 @@ export async function controlPlane(
       maxCompletionTokens,
     });
     req.body = result.body;
-    req.promptLens = {
+    req.veyr = {
       compressionApplied: result.compressionApplied,
       tokensSavedEstimate: result.tokensSavedEstimate,
       cachingApplied: enablePromptCaching,
     };
   }
 
-  if (req.promptLens.compressionApplied) {
-    res.setHeader("x-promptlens-compression", "applied");
+  if (req.veyr.compressionApplied) {
+    res.setHeader("x-veyr-compression", "applied");
     res.setHeader(
-      "x-promptlens-tokens-saved-estimate",
-      String(req.promptLens.tokensSavedEstimate)
+      "x-veyr-tokens-saved-estimate",
+      String(req.veyr.tokensSavedEstimate)
     );
   }
-  if (req.promptLens.cachingApplied) {
+  if (req.veyr.cachingApplied) {
     res.setHeader(
-      "x-promptlens-cache",
+      "x-veyr-cache",
       isAnthropic ? "applied" : "passthrough"
     );
   }

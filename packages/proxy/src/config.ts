@@ -8,7 +8,7 @@ export function getOpenAIUpstreamUrl(): string {
   );
 }
 
-/** When true, compress system/user prompts unless x-promptlens-compress: 0 */
+/** When true, compress system/user prompts unless x-veyr-compress: 0 */
 export function isCompressionEnabledByDefault(): boolean {
   return process.env.ENABLE_COMPRESSION === "true";
 }
