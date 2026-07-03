@@ -30,7 +30,7 @@ chat content and stores an API key. Options:
 - Add `PRIVACY.md` as a page on your site (e.g. a `/privacy` route on the Vercel
   dashboard) and use that URL, **or**
 - Use the GitHub-rendered file URL once pushed:
-  `https://github.com/hethb/PromptLens/blob/main/packages/browser-extension/PRIVACY.md`
+  `https://github.com/hethb/Veyr/blob/main/packages/browser-extension/PRIVACY.md`
 
 ## 3. Create the listing
 

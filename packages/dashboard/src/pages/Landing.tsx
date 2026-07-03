@@ -33,7 +33,7 @@ const ACCENTS = ["#076EFF", "#4FABFF", "#B1C5FF"] as const;
 
 // Desktop app installers (mac/win/linux) are published here by the
 // release-desktop GitHub Actions workflow.
-const RELEASES_URL = "https://github.com/hethb/PromptLens/releases/latest";
+const RELEASES_URL = "https://github.com/hethb/Veyr/releases/latest";
 
 export function Landing() {
   return (
@@ -273,7 +273,7 @@ function GetRunning() {
           detail:
             "Requires Node 20+. The dashboard opens in its own window, the proxy starts automatically on port 3001, and a first-run screen shows your local API key. No account, no cloud — data stays in ~/.veyr on your machine.",
           code:
-            "git clone https://github.com/hethb/PromptLens\ncd Veyr && npm install\nnpm run desktop",
+            "git clone https://github.com/hethb/Veyr\ncd Veyr && npm install\nnpm run desktop",
         },
         {
           title: "Or set up from the terminal in one command",

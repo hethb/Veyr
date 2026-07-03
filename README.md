@@ -46,7 +46,7 @@ The easiest way to run Veyr — no terminal, no account. The app auto-starts the
 proxy, opens the dashboard in a native window, and shows today's spend in your
 menu bar.
 
-**[⬇︎ Download for macOS · Windows · Linux](https://github.com/hethb/PromptLens/releases/latest)**
+**[⬇︎ Download for macOS · Windows · Linux](https://github.com/hethb/Veyr/releases/latest)**
 
 Builds are produced for every platform by the
 [`release-desktop`](.github/workflows/release-desktop.yml) CI pipeline and ship

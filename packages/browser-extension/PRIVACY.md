@@ -60,4 +60,4 @@ stored data.
 
 ## Contact
 
-Questions: open an issue at https://github.com/hethb/PromptLens
+Questions: open an issue at https://github.com/hethb/Veyr
