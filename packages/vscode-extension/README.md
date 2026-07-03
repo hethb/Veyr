@@ -54,3 +54,31 @@ For editor type hints, install VSCode types in this folder:
 ```bash
 npm install -D @types/vscode
 ```
+
+## Live session from the Veyr agent feed (no proxy needed)
+
+When the Veyr menu bar app is running, the extension reads
+`~/.veyr/agent-status/VEYR_STATUS.json` (local file, nothing leaves your
+machine) and shows:
+
+- **Status bar** (right side): `$(graph-line) $0.84 · 14k↓ 3k↑` — live session
+  cost and tokens, with a ● dot while the session is active. Shows
+  `Veyr: inactive` when the feed is missing or stale (>2 min). Click to open
+  the Veyr panel.
+- **Panel → Live session**: model, cost, burn rate, cache hit rate, tokens, and
+  the top optimization recommendation with a one-click copy button
+  (`/model …`, `/compact`).
+
+Settings: `veyr.agentStatusPath`, `veyr.showCostInStatusBar`,
+`veyr.pollIntervalSeconds`, and `veyr.autoInjectClaudeMd` (shared with the Mac
+app via `~/.veyr/config.json`; the Mac app performs the CLAUDE.md updates).
+
+## Development
+
+```bash
+npm install
+npm run build     # tsc → out/
+```
+
+Open this folder in VS Code and press **F5**. Package with `vsce package`
+(runs the build via `vscode:prepublish`).

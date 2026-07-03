@@ -8,8 +8,10 @@
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["Other"],
-  "main": "./src/extension.js",
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/extension.js",
   "activationEvents": [],
   "contributes": {
     "viewsContainers": {
@@ -47,6 +49,10 @@
       {
         "command": "veyr.openDashboard",
         "title": "Veyr: Open dashboard"
+      },
+      {
+        "command": "veyr.showPanel",
+        "title": "Veyr: Show panel"
       }
     ],
     "menus": {
@@ -70,11 +76,39 @@
           "type": "string",
           "default": "http://localhost:5173/dashboard",
           "description": "URL of the Veyr dashboard."
+        },
+        "veyr.agentStatusPath": {
+          "type": "string",
+          "default": "~/.veyr/agent-status/VEYR_STATUS.json",
+          "description": "Path to the Veyr agent status feed written by the Veyr menu bar app."
+        },
+        "veyr.showCostInStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the live session cost in the status bar."
+        },
+        "veyr.pollIntervalSeconds": {
+          "type": "number",
+          "default": 10,
+          "minimum": 2,
+          "description": "How often to re-read the Veyr agent status feed."
+        },
+        "veyr.autoInjectClaudeMd": {
+          "type": "boolean",
+          "default": false,
+          "description": "Append Veyr spend status to your project's CLAUDE.md so Claude Code reads it automatically. Mirrors the Veyr menu bar app setting (shared via ~/.veyr/config.json); the menu bar app performs the updates."
         }
       }
     }
   },
   "scripts": {
-    "build": "echo 'No build step — open this folder in VSCode and press F5, or package with vsce.'"
+    "build": "tsc -p ./",
+    "watch": "tsc -w -p ./",
+    "vscode:prepublish": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.4.0"
   }
 }
