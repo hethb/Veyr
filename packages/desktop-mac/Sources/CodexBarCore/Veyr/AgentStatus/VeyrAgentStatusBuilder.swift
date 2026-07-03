@@ -12,6 +12,7 @@ public enum VeyrAgentStatusBuilder {
         sessions: [SessionEntry],
         latestActivityAt: Date?,
         controls: VeyrBudgetControls,
+        engineSuggestions: [Suggestion] = [],
         now: Date = Date(),
         calendar: Calendar = .current) -> VeyrAgentStatusPayload
     {
@@ -40,7 +41,22 @@ public enum VeyrAgentStatusBuilder {
             now: now,
             calendar: calendar)
         let alerts = Self.alerts(budget: budget, currentTag: current?.featureTag)
-        let recommendations = Self.recommendations(current: current, isActive: isActive)
+        var recommendations = Self.recommendations(current: current, isActive: isActive)
+        // Merge 30-day engine suggestions; real-time rules win per action.
+        let presentActions = Set(recommendations.map(\.action))
+        for suggestion in engineSuggestions where !presentActions.contains(suggestion.action.rawValue) {
+            recommendations.append(.init(
+                id: suggestion.id,
+                priority: suggestion.severity.rawValue,
+                action: suggestion.action.rawValue,
+                suggestedModel: suggestion.suggestedModel,
+                reason: suggestion.detail,
+                estimatedSavingsPerHourUsd: Self.round2(
+                    suggestion.estimatedHourlySavingsUSD > 0
+                        ? suggestion.estimatedHourlySavingsUSD
+                        : suggestion.estimatedMonthlySavingsUSD / 720)))
+        }
+        recommendations = Array(recommendations.prefix(6))
         let instructions = Self.instructions(
             session: currentSession,
             budget: budget,
@@ -141,10 +157,17 @@ public enum VeyrAgentStatusBuilder {
         let avgInputPerTurn = session.entryCount > 0
             ? session.usage.inputTokens / session.entryCount
             : 0
+        // Cache-aware: heavy cache reads mean the model is carrying large context
+        // even when fresh input is tiny — that is not "light work".
+        let avgContextPerTurn = session.entryCount > 0
+            ? (session.usage.inputTokens + session.usage.cacheReadTokens) / session.entryCount
+            : 0
         let frontier = ["opus", "fable", "gpt-4o", "o1", "o3"]
             .contains { session.modelId.lowercased().contains($0) }
         let isFrontierMini = session.modelId.lowercased().contains("mini")
-        if frontier, !isFrontierMini, avgInputPerTurn < 500, session.usage.costUSD > 0.50 {
+        if frontier, !isFrontierMini, avgInputPerTurn < 500, avgContextPerTurn < 20_000,
+           session.usage.costUSD > 0.50
+        {
             let suggested = session.modelId.hasPrefix("claude") ? "claude-haiku-4-5" : "gpt-4o-mini"
             recommendations.append(.init(
                 id: "switch-model",

@@ -185,6 +185,73 @@ claudeMd = try! String(contentsOf: projDir.appendingPathComponent("CLAUDE.md"), 
 check(!claudeMd.contains("Veyr spend status"), "section removable")
 check(claudeMd.contains("Existing notes."), "content survives removal")
 
+// MARK: - 5. Suggestion engine
+
+print("— suggestion engine —")
+func engineSession(
+    tag: String, model: String = "claude-opus-4-8", cost: Double, input: Int, output: Int = 500,
+    cacheRead: Int = 0, entries: Int = 5, daysAgo: Double = 1, hour: Double = 0) -> SessionEntry
+{
+    let ts = Date().addingTimeInterval(-daysAgo * 86400 + hour * 3600)
+    return SessionEntry(
+        timestamp: ts, startedAt: ts.addingTimeInterval(-300),
+        provider: "claude", modelId: model, featureTag: tag,
+        usage: TokenUsage(inputTokens: input, outputTokens: output, cacheReadTokens: cacheRead, costUSD: cost),
+        projectPath: "/Users/x/\(tag)", entryCount: entries)
+}
+
+// Rule 1: light frontier sessions (small fresh input AND small total context)
+let lightSessions = (0..<6).map { i in
+    engineSession(tag: "light", cost: 1.0, input: 1000, cacheRead: 2000, entries: 10, daysAgo: Double(i))
+}
+var engineOut = VeyrSuggestionEngine.analyze(sessions: lightSessions)
+check(engineOut.contains { $0.action == .switchModel && $0.suggestedModel == "claude-haiku-4-5" },
+    "rule 1 fires on light frontier sessions")
+check(engineOut.first { $0.action == .switchModel }?.estimatedMonthlySavingsUSD == 6.0 * 0.8,
+    "rule 1 savings = 80% of tag cost")
+
+// Rule 1 cache-aware: same fresh input but huge cache reads → no false positive
+let cachedSessions = (0..<6).map { i in
+    engineSession(tag: "deep", cost: 1.0, input: 1000, cacheRead: 2_000_000, entries: 10, daysAgo: Double(i))
+}
+engineOut = VeyrSuggestionEngine.analyze(sessions: cachedSessions)
+check(!engineOut.contains { $0.action == .switchModel },
+    "rule 1 cache-aware: no false positive on heavily cached deep work")
+
+// Rule 4: dominance
+let domSessions = [engineSession(tag: "big", cost: 9.0, input: 9000)]
+    + [engineSession(tag: "small", cost: 1.0, input: 9000)]
+engineOut = VeyrSuggestionEngine.analyze(sessions: domSessions)
+check(engineOut.contains { $0.action == .setBudgetCap && $0.id == "dominant-tag:big" },
+    "rule 4 fires when one tag > 60%")
+
+// Rule 3: runaway current session
+let runaway = engineSession(tag: "hot", cost: 5.0, input: 9000, daysAgo: 0)
+engineOut = VeyrSuggestionEngine.analyze(
+    sessions: [runaway], currentSession: runaway, currentSessionIsActive: true)
+check(engineOut.contains { $0.action == .compactContext }, "rule 3 fires on runaway active session")
+engineOut = VeyrSuggestionEngine.analyze(
+    sessions: [runaway], currentSession: runaway, currentSessionIsActive: false)
+check(!engineOut.contains { $0.action == .compactContext }, "rule 3 silent when idle")
+
+// Quick win marking + sorting
+let mixed = lightSessions + domSessions
+engineOut = VeyrSuggestionEngine.analyze(sessions: mixed)
+if let first = engineOut.first {
+    check(first.isQuickWin && first.estimatedMonthlySavingsUSD > 0, "top non-zero suggestion is quick win")
+}
+check(engineOut.count <= 6, "capped at 6 suggestions")
+
+// Engine suggestions flow into the agent feed
+let feedPayload = VeyrAgentStatusBuilder.build(
+    sessions: lightSessions,
+    latestActivityAt: nil,
+    controls: VeyrBudgetControls(),
+    engineSuggestions: engineOut)
+check(feedPayload.recommendations.contains { $0.action == "set_budget_cap" }
+    || feedPayload.recommendations.contains { $0.action == "switch_model" },
+    "engine suggestions merged into feed recommendations")
+
 // MARK: - 4. Real logs
 
 print("— real ~/.claude/projects scan —")
