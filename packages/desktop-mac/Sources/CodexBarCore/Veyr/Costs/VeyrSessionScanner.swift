@@ -300,6 +300,16 @@ public final class VeyrSessionScanner: @unchecked Sendable {
         CostUsageScanner.dateFromTimestamp(text)
     }
 
+    /// Most recent modification time across all known session files.
+    /// Drives the "active session" indicator in the menu bar.
+    public func latestActivityAt() -> Date? {
+        self.lock.lock()
+        defer { self.lock.unlock() }
+        self.loadCacheIfNeeded()
+        let maxMtime = self.cache.files.values.map(\.mtimeMs).max()
+        return maxMtime.map { Date(timeIntervalSince1970: Double($0) / 1000) }
+    }
+
     // MARK: - Cache persistence
 
     private func loadCacheIfNeeded() {
