@@ -405,6 +405,27 @@ and an integration (OpenAI SDK, Anthropic SDK, Claude Code, Cursor, or plain
 env vars). Config lives in `~/.veyr/config.json`, shared with the desktop
 app. See its [README](packages/cli/README.md).
 
+### Native macOS menu bar app
+
+`packages/desktop-mac` is a native Swift menu bar app that reads coding-agent
+logs directly from disk — Claude Code's `~/.claude/projects/**/*.jsonl`, Codex
+CLI sessions, and 50+ other providers — no proxy required. All computation is
+on-device; nothing leaves your machine.
+
+**Veyr's native Mac app is built on top of
+[CodexBar](https://github.com/steipete/CodexBar) by Peter Steinberger
+(steipete). MIT licensed.**
+
+It's a Swift Package Manager project (not part of the npm workspace):
+
+```bash
+cd packages/desktop-mac
+make start   # build, package Veyr.app, launch
+```
+
+Requires macOS 14+ and Xcode 16+. See its
+[README](packages/desktop-mac/README.md).
+
 ### Desktop app
 
 `packages/desktop` is an Electron app for a zero-terminal local experience: it
