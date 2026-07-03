@@ -1,0 +1,162 @@
+import CodexBarCore
+import Foundation
+
+// Veyr cost-layer smoke test. `swift test` needs Xcode's Testing/XCTest modules,
+// which Command Line Tools lack, so this executable covers the same fixtures and
+// then scans the real ~/.claude/projects logs. Run: swift run VeyrSmoke
+
+var failures = 0
+
+@MainActor
+func check(_ condition: Bool, _ label: String) {
+    if condition {
+        print("  ok  \(label)")
+    } else {
+        failures += 1
+        print("FAIL  \(label)")
+    }
+}
+
+func assistantLine(
+    model: String = "claude-sonnet-4-20250514",
+    input: Int,
+    output: Int,
+    cacheRead: Int = 0,
+    cacheWrite: Int = 0,
+    timestamp: String,
+    cwd: String = "/Users/heth/projects/veyr",
+    messageId: String? = nil,
+    requestId: String? = nil) -> String
+{
+    var message: [String: Any] = [
+        "model": model,
+        "usage": [
+            "input_tokens": input,
+            "output_tokens": output,
+            "cache_read_input_tokens": cacheRead,
+            "cache_creation_input_tokens": cacheWrite,
+        ] as [String: Any],
+    ]
+    if let messageId { message["id"] = messageId }
+    var obj: [String: Any] = [
+        "type": "assistant",
+        "timestamp": timestamp,
+        "cwd": cwd,
+        "sessionId": "sess-1",
+        "message": message,
+    ]
+    if let requestId { obj["requestId"] = requestId }
+    let data = try! JSONSerialization.data(withJSONObject: obj)
+    return String(data: data, encoding: .utf8)!
+}
+
+// MARK: - 1. Pricing
+
+print("— pricing —")
+check(
+    ModelPricing.cost(for: "claude-sonnet-4-20250514", inputTokens: 1_000_000, outputTokens: 1_000_000) == 18.0,
+    "claude-sonnet-4 via upstream pricing = $18/M+M")
+check(
+    ModelPricing.cost(for: "gpt-4o-2024-08-06", inputTokens: 1_000_000, outputTokens: 1_000_000) == 12.5,
+    "gpt-4o via static table = $12.50/M+M")
+check(
+    ModelPricing.cost(for: "gpt-4o-mini-2024-07-18", inputTokens: 1_000_000, outputTokens: 1_000_000) == 0.75,
+    "gpt-4o-mini not shadowed by gpt-4o prefix")
+check(
+    ModelPricing.cost(for: "totally-new-model", inputTokens: 1_000_000, outputTokens: 1_000_000) == 10.0,
+    "unknown model falls back to $2/$8")
+
+// MARK: - 2. Feature tags
+
+print("— feature tags —")
+let inferrer = FeatureTagInferrer()
+check(inferrer.inferTag(from: "/Users/someone/code/src/acme-app") == "acme-app", "generic components skipped")
+check(inferrer.inferTag(from: nil) == "untagged", "nil path untagged")
+let overridden = FeatureTagInferrer(overrides: ["/Users/x/projects/veyr": "veyr-core"])
+check(overridden.inferTag(from: "/Users/x/projects/veyr/packages/cli") == "veyr-core", "override prefix match")
+
+// MARK: - 3. Scanner fixtures
+
+print("— scanner fixtures —")
+let tempRoot = FileManager.default.temporaryDirectory
+    .appendingPathComponent("veyr-smoke-\(UUID().uuidString)", isDirectory: true)
+try! FileManager.default.createDirectory(at: tempRoot, withIntermediateDirectories: true)
+defer { try? FileManager.default.removeItem(at: tempRoot) }
+
+let fixtureFile = tempRoot.appendingPathComponent("session-a.jsonl")
+try! [
+    assistantLine(input: 100, output: 50, timestamp: "2026-07-01T10:00:00.000Z"),
+    assistantLine(input: 200, output: 80, cacheRead: 500, timestamp: "2026-07-01T10:05:00.000Z"),
+    assistantLine(
+        input: 999, output: 1, timestamp: "2026-07-01T10:06:00.000Z",
+        messageId: "m1", requestId: "r1"),
+    assistantLine(
+        input: 999, output: 42, timestamp: "2026-07-01T10:06:05.000Z",
+        messageId: "m1", requestId: "r1"),
+    #"{"type":"user","message":{"content":"never read"}}"#,
+].joined(separator: "\n").write(to: fixtureFile, atomically: true, encoding: .utf8)
+
+let scanner = VeyrSessionScanner(
+    cacheFileURL: tempRoot.appendingPathComponent("cache.json"),
+    projectsRoots: [tempRoot])
+let fixtureSessions = scanner.scan(tagInferrer: FeatureTagInferrer())
+check(fixtureSessions.count == 1, "one file = one session")
+if let session = fixtureSessions.first {
+    check(session.usage.inputTokens == 100 + 200 + 999, "summed input tokens (chunks deduped)")
+    check(session.usage.outputTokens == 50 + 80 + 42, "streaming chunk: last write wins")
+    check(session.usage.cacheReadTokens == 500, "cache read tokens captured")
+    check(session.entryCount == 3, "entry count after dedupe")
+    check(session.featureTag == "veyr", "feature tag from cwd")
+    check(session.usage.costUSD > 0, "cost computed")
+    check(session.durationMinutes > 5.9 && session.durationMinutes < 6.1, "duration from first/last entry")
+}
+
+// Incremental append
+let handle = try! FileHandle(forWritingTo: fixtureFile)
+try! handle.seekToEnd()
+try! handle.write(contentsOf: Data(
+    ("\n" + assistantLine(input: 40, output: 20, timestamp: "2026-07-01T10:10:00.000Z")).utf8))
+try! handle.close()
+try! FileManager.default.setAttributes(
+    [.modificationDate: Date().addingTimeInterval(5)], ofItemAtPath: fixtureFile.path)
+let incremental = scanner.scan(tagInferrer: FeatureTagInferrer())
+check(incremental.first?.usage.inputTokens == 100 + 200 + 999 + 40, "incremental append picked up")
+check(incremental.first?.entryCount == 4, "entry count grew by one")
+
+// MARK: - 4. Real logs
+
+print("— real ~/.claude/projects scan —")
+let realScanner = VeyrSessionScanner(
+    cacheFileURL: tempRoot.appendingPathComponent("real-cache.json"))
+let start = Date()
+let real = realScanner.scan()
+let elapsed = Date().timeIntervalSince(start)
+let totalCost = real.reduce(0.0) { $0 + $1.usage.costUSD }
+print(String(format: "  %d sessions, $%.2f all-time, scanned in %.1fs", real.count, totalCost, elapsed))
+
+let tags = Dictionary(grouping: real, by: \.featureTag)
+    .map { (tag: $0.key, cost: $0.value.reduce(0.0) { $0 + $1.usage.costUSD }, count: $0.value.count) }
+    .sorted { $0.cost > $1.cost }
+for entry in tags.prefix(8) {
+    let tag = entry.tag.padding(toLength: 28, withPad: " ", startingAt: 0)
+    print("  \(tag) " + String(format: "$%8.2f  %3d sessions", entry.cost, entry.count))
+}
+print("  most recent sessions:")
+for session in real.prefix(5) {
+    let df = DateFormatter()
+    df.dateFormat = "MMM d HH:mm"
+    let model = String(session.modelId.prefix(24)).padding(toLength: 24, withPad: " ", startingAt: 0)
+    let tag = String(session.featureTag.prefix(18)).padding(toLength: 18, withPad: " ", startingAt: 0)
+    let stats = String(
+        format: "$%6.2f  %6d↓ %6d↑ cache %.0f%%",
+        session.usage.costUSD,
+        session.usage.inputTokens,
+        session.usage.outputTokens,
+        session.usage.cacheHitRate * 100)
+    print("  \(df.string(from: session.timestamp))  \(model) \(tag) \(stats)")
+}
+check(!real.isEmpty, "real Claude Code sessions found")
+check(real.allSatisfy { $0.usage.costUSD >= 0 }, "no negative costs")
+
+print(failures == 0 ? "\nSMOKE PASSED" : "\nSMOKE FAILED (\(failures))")
+exit(failures == 0 ? 0 : 1)

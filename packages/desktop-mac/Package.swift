@@ -105,6 +105,15 @@ let package = Package(
                 swiftSettings: [
                     .enableUpcomingFeature("StrictConcurrency"),
                 ]),
+            // Veyr: dev-only smoke runner for the cost layer (swift test needs
+            // Xcode's Testing module, unavailable with Command Line Tools).
+            .executableTarget(
+                name: "VeyrSmoke",
+                dependencies: ["CodexBarCore"],
+                path: "Sources/VeyrSmoke",
+                swiftSettings: [
+                    .enableUpcomingFeature("StrictConcurrency"),
+                ]),
             .executableTarget(
                 name: "CodexBar",
                 dependencies: [
