@@ -123,6 +123,68 @@ let incremental = scanner.scan(tagInferrer: FeatureTagInferrer())
 check(incremental.first?.usage.inputTokens == 100 + 200 + 999 + 40, "incremental append picked up")
 check(incremental.first?.entryCount == 4, "entry count grew by one")
 
+// MARK: - 4. Agent status feed
+
+print("— agent status —")
+let statusSessions = [
+    SessionEntry(
+        timestamp: Date(),
+        startedAt: Date().addingTimeInterval(-600),
+        provider: "claude", modelId: "claude-opus-4-8", featureTag: "veyr",
+        usage: TokenUsage(inputTokens: 2000, outputTokens: 900, cacheReadTokens: 8000, costUSD: 2.50),
+        projectPath: "/Users/heth/projects/veyr", entryCount: 10),
+]
+let controls = VeyrBudgetControls(
+    globalMonthlyCapUSD: 50,
+    perTag: ["veyr": .init(monthlyCapUSD: 3.0)])
+let payload = VeyrAgentStatusBuilder.build(
+    sessions: statusSessions,
+    latestActivityAt: Date(),
+    controls: controls)
+check(payload.currentSession?.project == "veyr", "current session detected")
+check(payload.currentSession?.isActive == true, "session marked active")
+check(payload.budget.projectPctUsed == 83, "project budget pct (2.50/3.00 = 83%)")
+check(payload.alerts.contains { $0.level == "warning" }, "80% budget alert raised")
+check(
+    payload.recommendations.contains { $0.action == "compact_context" },
+    "runaway session triggers compact recommendation")
+check(payload.agentInstructions.contains("/compact") || payload.agentInstructions.contains("compact"),
+    "instructions mention compaction")
+
+let statusBase = tempRoot
+try! VeyrAgentStatusWriter.write(payload: payload, base: statusBase)
+let statusFile = VeyrAgentStatusWriter.statusFileURL(base: statusBase)
+let mdFile = VeyrAgentStatusWriter.markdownFileURL(base: statusBase)
+check(FileManager.default.fileExists(atPath: statusFile.path), "VEYR_STATUS.json written")
+check(FileManager.default.fileExists(atPath: mdFile.path), "VEYR_PROJECT_STATUS.md written")
+if let data = try? Data(contentsOf: statusFile),
+   let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+{
+    check(obj["agent_instructions"] is String, "snake_case agent_instructions present")
+    check((obj["current_session"] as? [String: Any])?["cost_per_minute"] is NSNumber,
+        "snake_case cost_per_minute present")
+} else {
+    check(false, "status JSON parseable")
+}
+
+// CLAUDE.md injection round-trip
+let projDir = tempRoot.appendingPathComponent("proj-claude-md", isDirectory: true)
+try! FileManager.default.createDirectory(at: projDir, withIntermediateDirectories: true)
+try! "# My project\n\nExisting notes.\n".write(
+    to: projDir.appendingPathComponent("CLAUDE.md"), atomically: true, encoding: .utf8)
+try! VeyrAgentStatusWriter.updateClaudeMd(projectPath: projDir.path, payload: payload)
+var claudeMd = try! String(contentsOf: projDir.appendingPathComponent("CLAUDE.md"), encoding: .utf8)
+check(claudeMd.contains("## Veyr spend status"), "CLAUDE.md section appended")
+check(claudeMd.contains("Existing notes."), "existing CLAUDE.md content preserved")
+try! VeyrAgentStatusWriter.updateClaudeMd(projectPath: projDir.path, payload: payload)
+claudeMd = try! String(contentsOf: projDir.appendingPathComponent("CLAUDE.md"), encoding: .utf8)
+check(claudeMd.components(separatedBy: "## Veyr spend status").count == 2,
+    "second update replaces section, no duplicates")
+try! VeyrAgentStatusWriter.removeClaudeMdSection(projectPath: projDir.path)
+claudeMd = try! String(contentsOf: projDir.appendingPathComponent("CLAUDE.md"), encoding: .utf8)
+check(!claudeMd.contains("Veyr spend status"), "section removable")
+check(claudeMd.contains("Existing notes."), "content survives removal")
+
 // MARK: - 4. Real logs
 
 print("— real ~/.claude/projects scan —")
