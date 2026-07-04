@@ -238,6 +238,38 @@ engineOut = VeyrSuggestionEngine.analyze(
     sessions: [runaway], currentSession: runaway, currentSessionIsActive: false)
 check(!engineOut.contains { $0.action == .compactContext }, "rule 3 silent when idle")
 
+// Rule 1: no dominant model → silent
+let splitSessions = (0..<3).map { i in
+    engineSession(tag: "split", cost: 1.0, input: 1000, entries: 10, daysAgo: Double(i))
+} + (0..<3).map { i in
+    engineSession(tag: "split", model: "claude-haiku-4-5", cost: 1.0, input: 1000, entries: 10, daysAgo: Double(i), hour: 2)
+}
+engineOut = VeyrSuggestionEngine.analyze(sessions: splitSessions)
+check(!engineOut.contains { $0.action == .switchModel }, "rule 1 silent without a dominant model")
+
+// Rule 2: fires with recurring path, silent when scattered
+let lowCache = (0..<21).map { i in
+    engineSession(tag: "nocache", cost: 0.5, input: 10000, output: 200, cacheRead: 500, daysAgo: Double(i) * 0.5)
+}
+engineOut = VeyrSuggestionEngine.analyze(sessions: lowCache)
+check(engineOut.contains { $0.action == .enableCaching }, "rule 2 fires on recurring low-cache path")
+
+// Rule 6: >5 sessions/day on >3 days
+let bursty = (1...4).flatMap { day in
+    (0..<6).map { i in
+        engineSession(tag: "bursty", cost: 0.2, input: 2000, daysAgo: Double(day), hour: Double(i))
+    }
+}
+engineOut = VeyrSuggestionEngine.analyze(sessions: bursty)
+check(engineOut.contains { $0.action == .useContextFile }, "rule 6 fires on 4 busy days")
+let bursty3 = (1...3).flatMap { day in
+    (0..<6).map { i in
+        engineSession(tag: "bursty3", cost: 0.2, input: 2000, daysAgo: Double(day), hour: Double(i))
+    }
+}
+engineOut = VeyrSuggestionEngine.analyze(sessions: bursty3)
+check(!engineOut.contains { $0.action == .useContextFile }, "rule 6 silent on only 3 busy days")
+
 // Quick win marking + sorting
 let mixed = lightSessions + domSessions
 engineOut = VeyrSuggestionEngine.analyze(sessions: mixed)

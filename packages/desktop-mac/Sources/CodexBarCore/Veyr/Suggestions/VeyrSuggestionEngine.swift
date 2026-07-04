@@ -154,19 +154,23 @@ public enum VeyrSuggestionEngine {
     static func ruleWrongModel(_ stats: TagStats) -> Suggestion? {
         guard stats.costUSD > 3.0 else { return nil }
         guard stats.avgFreshInputPerTurn < 500, stats.avgContextPerTurn < 20_000 else { return nil }
-        let frontierSessions = stats.sessions.filter { Self.isFrontier($0.modelId) }
-        guard frontierSessions.count * 2 > stats.sessions.count else { return nil }
+        // Dominant model = used in >50% of the tag's sessions (frequency count).
+        let frequency = Dictionary(grouping: stats.sessions, by: \.modelId).mapValues(\.count)
+        guard let dominant = frequency.max(by: { $0.value < $1.value }),
+              dominant.value * 2 > stats.sessions.count,
+              Self.isFrontier(dominant.key)
+        else { return nil }
 
-        let anthropic = frontierSessions.contains { $0.modelId.hasPrefix("claude") }
-        let suggested = anthropic ? "claude-haiku-4-5" : "gpt-4o-mini"
+        let suggested = dominant.key.hasPrefix("claude") ? "claude-haiku-4-5" : "gpt-4o-mini"
         let savings = stats.costUSD * 0.80
         return Suggestion(
             id: "wrong-model:\(stats.tag)",
             severity: .high,
             action: .switchModel,
             title: "Switch \(stats.tag) to a faster model",
-            detail: "Sessions average \(stats.avgFreshInputPerTurn) fresh input tokens per turn — light work " +
-                "for a frontier model. \(suggested) cuts this cost ~80%.",
+            detail: "Most \(stats.tag) sessions run on \(dominant.key), but they average " +
+                "\(stats.avgFreshInputPerTurn) fresh input tokens per turn — light work for a " +
+                "frontier model. \(suggested) cuts this cost ~80%.",
             actionLabel: "Copy /model \(suggested)",
             estimatedMonthlySavingsUSD: savings,
             suggestedModel: suggested)
@@ -178,6 +182,10 @@ public enum VeyrSuggestionEngine {
         guard stats.sessions.count > 20 else { return nil }
         guard stats.inputTokens > 0,
               Double(stats.cacheReadTokens) / Double(stats.inputTokens) < 0.2 else { return nil }
+        // Caching only pays off for repeated context: require one projectPath
+        // to recur across >10 sessions.
+        let pathCounts = Dictionary(grouping: stats.sessions, by: \.projectPath).mapValues(\.count)
+        guard (pathCounts.values.max() ?? 0) > 10 else { return nil }
 
         let inputCost = stats.sessions.reduce(0.0) { total, session in
             total + ModelPricing.cost(
@@ -213,7 +221,8 @@ public enum VeyrSuggestionEngine {
                 "Run /compact to trim accumulated context.",
             actionLabel: "Copy /compact",
             estimatedMonthlySavingsUSD: 0,
-            estimatedHourlySavingsUSD: burnRate * 60 * 0.5)
+            // Remaining-session estimate (next hour at current burn) × 0.60.
+            estimatedHourlySavingsUSD: burnRate * 60 * 0.60)
     }
 
     // MARK: - Rule 4: one tag dominates
@@ -264,8 +273,10 @@ public enum VeyrSuggestionEngine {
     static func ruleContextFileOpportunity(_ stats: TagStats) -> Suggestion? {
         let calendar = Calendar.current
         let byDay = Dictionary(grouping: stats.sessions) { calendar.startOfDay(for: $0.timestamp) }
-        let busiestDayCount = byDay.values.map(\.count).max() ?? 0
-        guard busiestDayCount > 5, byDay.keys.count >= 2 else { return nil }
+        let busyDays = byDay.values.filter { $0.count > 5 }
+        // Spec: >5 sessions per day on >3 different days.
+        guard busyDays.count > 3 else { return nil }
+        let busiestDayCount = busyDays.map(\.count).max() ?? 0
 
         let freshInputCost = stats.sessions.reduce(0.0) { total, session in
             total + ModelPricing.cost(
@@ -278,8 +289,9 @@ public enum VeyrSuggestionEngine {
             severity: .low,
             action: .useContextFile,
             title: "Many short sessions in \(stats.tag)",
-            detail: "Up to \(busiestDayCount) sessions in a single day. A VEYR_CONTEXT.md handoff file " +
-                "lets each new session start warm instead of re-explaining context.",
+            detail: "More than 5 sessions per day on \(busyDays.count) days (up to \(busiestDayCount) in one " +
+                "day). A VEYR_CONTEXT.md handoff file lets each new session start warm instead of " +
+                "re-explaining context.",
             actionLabel: "Copy file template",
             estimatedMonthlySavingsUSD: freshInputCost * 0.30)
     }

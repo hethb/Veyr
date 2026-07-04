@@ -11,7 +11,8 @@ struct VeyrSuggestionEngineTests {
         output: Int = 500,
         cacheRead: Int = 0,
         entries: Int = 5,
-        daysAgo: Double = 1) -> SessionEntry
+        daysAgo: Double = 1,
+        projectPath: String? = nil) -> SessionEntry
     {
         let timestamp = Date().addingTimeInterval(-daysAgo * 86400)
         return SessionEntry(
@@ -25,7 +26,7 @@ struct VeyrSuggestionEngineTests {
                 outputTokens: output,
                 cacheReadTokens: cacheRead,
                 costUSD: cost),
-            projectPath: "/Users/x/\(tag)",
+            projectPath: projectPath ?? "/Users/x/\(tag)",
             entryCount: entries)
     }
 
@@ -61,6 +62,83 @@ struct VeyrSuggestionEngineTests {
         }
         let suggestions = VeyrSuggestionEngine.analyze(sessions: sessions)
         #expect(!suggestions.contains { $0.action == .switchModel })
+    }
+
+    @Test
+    func `wrong model rule needs a single dominant frontier model`() {
+        // 3 opus + 3 haiku: no model exceeds 50% — must not fire.
+        let sessions = (0..<3).map { day in
+            session(tag: "split", cost: 1.0, input: 1000, entries: 10, daysAgo: Double(day))
+        } + (0..<3).map { day in
+            session(
+                tag: "split", model: "claude-haiku-4-5", cost: 1.0, input: 1000,
+                entries: 10, daysAgo: Double(day) + 0.5)
+        }
+        let suggestions = VeyrSuggestionEngine.analyze(sessions: sessions)
+        #expect(!suggestions.contains { $0.action == .switchModel })
+    }
+
+    @Test
+    func `low cache rule fires only with a recurring project path`() {
+        // 21 sessions, low cache coverage, all in one projectPath → fires.
+        let recurring = (0..<21).map { i in
+            session(
+                tag: "nocache", cost: 0.5, input: 10_000, output: 200, cacheRead: 500,
+                daysAgo: Double(i) * 0.5)
+        }
+        #expect(VeyrSuggestionEngine.analyze(sessions: recurring)
+            .contains { $0.action == .enableCaching })
+
+        // Same sessions spread across unique paths → repeated-context condition fails.
+        let scattered = (0..<21).map { i in
+            session(
+                tag: "nocache", cost: 0.5, input: 10_000, output: 200, cacheRead: 500,
+                daysAgo: Double(i) * 0.5, projectPath: "/Users/x/proj-\(i)")
+        }
+        #expect(!VeyrSuggestionEngine.analyze(sessions: scattered)
+            .contains { $0.action == .enableCaching })
+    }
+
+    @Test
+    func `long output rule compares output to full context`() {
+        // 11 sessions, 2000 output vs 200 context per turn (>3×) → fires.
+        let chatty = (0..<11).map { i in
+            session(
+                tag: "chatty", cost: 0.5, input: 200, output: 2000, entries: 1,
+                daysAgo: Double(i))
+        }
+        #expect(VeyrSuggestionEngine.analyze(sessions: chatty)
+            .contains { $0.action == .addOutputConstraints })
+
+        // 400 output vs 200 context (<3×) → silent.
+        let terse = (0..<11).map { i in
+            session(
+                tag: "terse", cost: 0.5, input: 200, output: 400, entries: 1,
+                daysAgo: Double(i))
+        }
+        #expect(!VeyrSuggestionEngine.analyze(sessions: terse)
+            .contains { $0.action == .addOutputConstraints })
+    }
+
+    @Test
+    func `context file rule needs five-plus sessions on four-plus days`() {
+        // 6 sessions/day on 4 distinct days → fires.
+        let bursty = (1...4).flatMap { day in
+            (0..<6).map { _ in
+                session(tag: "bursty", cost: 0.2, input: 2000, daysAgo: Double(day))
+            }
+        }
+        #expect(VeyrSuggestionEngine.analyze(sessions: bursty)
+            .contains { $0.action == .useContextFile })
+
+        // Only 3 busy days → silent.
+        let threeDays = (1...3).flatMap { day in
+            (0..<6).map { _ in
+                session(tag: "bursty3", cost: 0.2, input: 2000, daysAgo: Double(day))
+            }
+        }
+        #expect(!VeyrSuggestionEngine.analyze(sessions: threeDays)
+            .contains { $0.action == .useContextFile })
     }
 
     @Test
