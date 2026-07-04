@@ -62,7 +62,7 @@ public final class VeyrSessionScanner: @unchecked Sendable {
 
     // MARK: - Roots (same resolution as CostUsageScanner+Claude)
 
-    static func defaultProjectsRoots(
+    public static func defaultProjectsRoots(
         environment: [String: String] = ProcessInfo.processInfo.environment,
         home: URL = FileManager.default.homeDirectoryForCurrentUser) -> [URL]
     {

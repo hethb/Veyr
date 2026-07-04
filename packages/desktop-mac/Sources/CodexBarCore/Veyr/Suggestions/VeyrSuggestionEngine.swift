@@ -98,6 +98,7 @@ public enum VeyrSuggestionEngine {
         sessions: [SessionEntry],
         currentSession: SessionEntry? = nil,
         currentSessionIsActive: Bool = false,
+        classifications: [VeyrClassificationRecord] = [],
         now: Date = Date()) -> [Suggestion]
     {
         guard let windowStart = Calendar.current.date(byAdding: .day, value: -30, to: now) else { return [] }
@@ -120,6 +121,8 @@ public enum VeyrSuggestionEngine {
         {
             suggestions.append(runaway)
         }
+        suggestions.append(contentsOf: Self.ruleAIModelMismatch(
+            classifications: classifications, now: now))
 
         suggestions.sort { $0.estimatedMonthlySavingsUSD > $1.estimatedMonthlySavingsUSD }
         suggestions = Array(suggestions.prefix(Self.maxSuggestions))
@@ -144,7 +147,7 @@ public enum VeyrSuggestionEngine {
         return byTag
     }
 
-    static func isFrontier(_ modelId: String) -> Bool {
+    public static func isFrontier(_ modelId: String) -> Bool {
         let lower = modelId.lowercased()
         guard !lower.contains("mini"), !lower.contains("haiku") else { return false }
         return Self.frontierMarkers.contains { lower.contains($0) }
@@ -227,6 +230,39 @@ public enum VeyrSuggestionEngine {
             estimatedMonthlySavingsUSD: 0,
             // Remaining-session estimate (next hour at current burn) × 0.60.
             estimatedHourlySavingsUSD: burnRate * 60 * 0.60)
+    }
+
+    // MARK: - Rule 7: AI-detected model mismatch (from classifier data)
+
+    static func ruleAIModelMismatch(
+        classifications: [VeyrClassificationRecord],
+        now: Date,
+        calendar: Calendar = .current) -> [Suggestion]
+    {
+        guard !classifications.isEmpty else { return [] }
+        let store = VeyrClassificationStore(entries: classifications)
+        let statsByTag = store.monthlyStatsByTag(
+            now: now, calendar: calendar, isFrontier: Self.isFrontier)
+
+        return statsByTag.values.compactMap { stats in
+            guard stats.classifiedTurns >= 5,
+                  stats.simpleOnFrontierPct > 0.30,
+                  stats.wastedCostUSD > 2.00
+            else { return nil }
+            let pct = Int((stats.simpleOnFrontierPct * 100).rounded())
+            let wasted = String(format: "$%.2f", stats.wastedCostUSD)
+            return Suggestion(
+                id: "ai-mismatch:\(stats.tag)",
+                severity: .high,
+                action: .switchModel,
+                title: "AI analysis: \(pct)% of \(stats.tag) tasks are simple",
+                detail: "AI analysis found that \(pct)% of your \(stats.tag) tasks are simple. " +
+                    "You spent \(wasted) this month using a frontier model for tasks that " +
+                    "claude-haiku-4-5 handles equally well.",
+                actionLabel: "Copy /model claude-haiku-4-5",
+                estimatedMonthlySavingsUSD: stats.wastedCostUSD,
+                suggestedModel: "claude-haiku-4-5")
+        }
     }
 
     // MARK: - Rule 4: one tag dominates

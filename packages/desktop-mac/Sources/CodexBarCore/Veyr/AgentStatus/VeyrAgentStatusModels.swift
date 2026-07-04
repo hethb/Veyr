@@ -66,12 +66,32 @@ public struct VeyrAgentStatusPayload: Codable, Equatable, Sendable {
         }
     }
 
+    public struct ComplexityAnalysis: Codable, Equatable, Sendable {
+        public var classifierEnabled: Bool
+        public var classifiedTurnsThisMonth: Int
+        public var simpleOnFrontierPct: Int
+        public var wastedCostThisMonthUsd: Double
+
+        public init(
+            classifierEnabled: Bool,
+            classifiedTurnsThisMonth: Int,
+            simpleOnFrontierPct: Int,
+            wastedCostThisMonthUsd: Double)
+        {
+            self.classifierEnabled = classifierEnabled
+            self.classifiedTurnsThisMonth = classifiedTurnsThisMonth
+            self.simpleOnFrontierPct = simpleOnFrontierPct
+            self.wastedCostThisMonthUsd = wastedCostThisMonthUsd
+        }
+    }
+
     public var generatedAt: Date
     public var currentSession: CurrentSession?
     public var budget: Budget
     public var alerts: [Alert]
     public var recommendations: [Recommendation]
     public var agentInstructions: String
+    public var complexity: ComplexityAnalysis?
 }
 
 /// `~/.veyr/budget-controls.json` (camelCase keys, per the controls-file contract).

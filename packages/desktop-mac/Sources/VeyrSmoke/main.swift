@@ -288,6 +288,54 @@ check(feedPayload.recommendations.contains { $0.action == "set_budget_cap" }
     || feedPayload.recommendations.contains { $0.action == "switch_model" },
     "engine suggestions merged into feed recommendations")
 
+// MARK: - 6. Complexity classifier (offline pieces)
+
+print("— complexity classifier —")
+let reqBody = try! VeyrTaskComplexityClassifier.requestBody(
+    userMessage: String(repeating: "x", count: 2000),
+    assistantResponse: "done", model: "claude-opus-4-8")
+let reqObj = try! JSONSerialization.jsonObject(with: reqBody) as! [String: Any]
+check(reqObj["model"] as? String == "claude-haiku-4-5", "classifier always uses haiku")
+let sysBlocks = reqObj["system"] as! [[String: Any]]
+check((sysBlocks[0]["cache_control"] as? [String: String])?["type"] == "ephemeral",
+    "system prompt carries cache_control ephemeral")
+
+let fenced = "```json\n{\"complexity\":\"simple\",\"reasoning\":\"r\",\"suggestedModel\":\"claude-haiku-4-5\",\"estimatedTokensNeeded\":300}\n```"
+let respData = try! JSONSerialization.data(withJSONObject: ["content": [["type": "text", "text": fenced]]])
+let parsed = try! VeyrTaskComplexityClassifier.parseResponse(respData)
+check(parsed.complexity == .simple, "fenced JSON response parsed")
+
+let turnLog = tempRoot.appendingPathComponent("turns.jsonl")
+try! """
+{"type":"user","cwd":"/Users/x/proj","message":{"role":"user","content":"read main.swift"}}
+{"type":"assistant","sessionId":"s1","timestamp":"2026-07-04T10:00:00Z","message":{"model":"claude-opus-4-8","content":[{"type":"text","text":"Here."}],"usage":{"input_tokens":100,"output_tokens":50}}}
+
+""".write(to: turnLog, atomically: true, encoding: .utf8)
+let extracted = VeyrTurnExtractor.extractNewTurns(from: turnLog, offset: 0, startAtEndIfNew: false)
+check(extracted.turns.count == 1 && extracted.turns[0].cwd == "/Users/x/proj",
+    "turn extractor pairs user/assistant with cwd")
+
+let wasted = VeyrClassificationRecord.wastedCost(
+    modelUsed: "claude-opus-4", modelRecommended: "claude-haiku-4",
+    inputTokens: 1_000_000, outputTokens: 0)
+check(abs(wasted - 14.20) < 0.01, "wasted cost = used minus recommended")
+
+func classRecord(tag: String, complexity: String, wasted: Double) -> VeyrClassificationRecord {
+    VeyrClassificationRecord(
+        sessionId: "s", timestamp: Date(), featureTag: tag, complexity: complexity,
+        modelUsed: "claude-opus-4-8", modelRecommended: "claude-haiku-4-5",
+        estimatedTokensNeeded: 300, actualInputTokens: 1000, actualOutputTokens: 200,
+        wastedCostUSD: wasted)
+}
+let mismatchRecords = (0..<4).map { _ in classRecord(tag: "veyr", complexity: "simple", wasted: 0.60) }
+    + (0..<6).map { _ in classRecord(tag: "veyr", complexity: "complex", wasted: 0) }
+engineOut = VeyrSuggestionEngine.analyze(sessions: [], classifications: mismatchRecords)
+check(engineOut.contains { $0.id == "ai-mismatch:veyr" }, "rule 7 fires on AI-detected mismatch")
+let lowWasteRecords = (0..<5).map { _ in classRecord(tag: "b", complexity: "simple", wasted: 0.10) }
+    + (0..<5).map { _ in classRecord(tag: "b", complexity: "complex", wasted: 0) }
+engineOut = VeyrSuggestionEngine.analyze(sessions: [], classifications: lowWasteRecords)
+check(!engineOut.contains { $0.action == .switchModel }, "rule 7 silent under $2 wasted")
+
 // MARK: - 4. Real logs
 
 print("— real ~/.claude/projects scan —")

@@ -24,6 +24,18 @@ struct VeyrAgentDashboardView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                if !VeyrComplexityService.shared.classifierEnabled {
+                    HStack(spacing: 8) {
+                        Image(systemName: "sparkles")
+                            .foregroundStyle(.orange)
+                        Text("Add your Anthropic API key in Veyr Settings to enable AI-powered optimization.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                    .padding(10)
+                    .background(.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
+                }
                 self.currentSessionCard
                 self.recommendationsSection
                 self.overridePanel

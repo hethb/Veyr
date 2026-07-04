@@ -82,16 +82,21 @@ public final class VeyrAgentStatusService {
 
         let controls = VeyrBudgetControls.load()
         let currentSession = store.sessions.max { $0.timestamp < $1.timestamp }
+        let classifications = await VeyrComplexityService.shared.processNewTurns(
+            isSessionActive: store.isSessionActive)
         let suggestions = VeyrSuggestionEngine.analyze(
             sessions: store.sessions,
             currentSession: currentSession,
-            currentSessionIsActive: store.isSessionActive)
+            currentSessionIsActive: store.isSessionActive,
+            classifications: classifications)
         self.latestSuggestions = suggestions
         let payload = VeyrAgentStatusBuilder.build(
             sessions: store.sessions,
             latestActivityAt: store.latestActivityAt,
             controls: controls,
-            engineSuggestions: suggestions)
+            engineSuggestions: suggestions,
+            complexity: VeyrComplexityService.shared.complexityAnalysis(
+                currentTag: currentSession?.featureTag))
         self.latestPayload = payload
         VeyrBudgetNotifier.checkAndNotify(sessions: store.sessions, controls: controls)
         self.resetDismissalsIfSessionChanged(payload: payload)

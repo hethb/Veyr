@@ -328,9 +328,10 @@ function PrivacySection() {
     </>,
     <>No proxy. No traffic interception. No account required.</>,
     <>
-      The Mac app&apos;s only network call fetches the public models.dev pricing
-      catalog so costs stay accurate. Your code and prompts are never sent
-      anywhere.
+      By default the Mac app&apos;s only network call fetches the public
+      models.dev pricing catalog. Optionally, add your own Anthropic API key to
+      enable AI task-complexity analysis — a small Haiku call using your key,
+      which you control. Off until you add a key.
     </>,
     <>
       Session history is stored in{" "}

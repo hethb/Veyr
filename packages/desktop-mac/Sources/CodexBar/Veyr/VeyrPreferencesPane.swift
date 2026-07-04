@@ -19,6 +19,8 @@ struct VeyrPreferencesPane: View {
     @State private var showClearConfirmation = false
     @State private var clearedFlash = false
     @State private var copiedPath = false
+    @State private var apiKeyText = ""
+    @State private var apiKeySavedFlash = false
 
     struct OverrideRow: Identifiable, Equatable {
         let id = UUID()
@@ -38,6 +40,8 @@ struct VeyrPreferencesPane: View {
                 self.overridesSection
                 Divider()
                 self.togglesSection
+                Divider()
+                self.apiKeySection
                 Divider()
                 self.agentFeedSection
                 Divider()
@@ -154,6 +158,49 @@ struct VeyrPreferencesPane: View {
                 binding: Binding(
                     get: { VeyrAgentStatusService.shared.autoUpdateClaudeMdEnabled },
                     set: { VeyrAgentStatusService.shared.autoUpdateClaudeMdEnabled = $0 }))
+        }
+    }
+
+    // MARK: - Anthropic API key (optimization features)
+
+    @ViewBuilder
+    private var apiKeySection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Anthropic API key (for optimization features)")
+                .font(.body)
+            Text("Enables AI-powered task-complexity analysis (classified with Haiku, ~$0.01/day " +
+                "typical). Stored in the macOS Keychain — never in a plaintext file.")
+                .font(.footnote)
+                .foregroundStyle(.tertiary)
+            HStack(spacing: 8) {
+                SecureField("sk-ant-…", text: self.$apiKeyText)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 280)
+                Button(self.apiKeySavedFlash ? "Saved ✓" : "Save") {
+                    VeyrAnthropicKey.saveToKeychain(
+                        self.apiKeyText.trimmingCharacters(in: .whitespaces))
+                    VeyrComplexityService.shared.refreshAvailability()
+                    self.apiKeySavedFlash = true
+                    Task {
+                        try? await Task.sleep(for: .seconds(2))
+                        self.apiKeySavedFlash = false
+                    }
+                }
+                .controlSize(.small)
+                if VeyrAnthropicKey.hasKeychainKey {
+                    Button("Remove") {
+                        VeyrAnthropicKey.deleteFromKeychain()
+                        self.apiKeyText = ""
+                        VeyrComplexityService.shared.refreshAvailability()
+                    }
+                    .controlSize(.small)
+                }
+            }
+            if VeyrComplexityService.shared.classifierEnabled {
+                Text("Classifier active ✓")
+                    .font(.caption)
+                    .foregroundStyle(.green)
+            }
         }
     }
 

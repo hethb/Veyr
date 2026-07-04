@@ -17,6 +17,7 @@ public enum VeyrAgentStatusBuilder {
         latestActivityAt: Date?,
         controls: VeyrBudgetControls,
         engineSuggestions: [Suggestion] = [],
+        complexity: VeyrAgentStatusPayload.ComplexityAnalysis? = nil,
         now: Date = Date(),
         calendar: Calendar = .current) -> VeyrAgentStatusPayload
     {
@@ -73,7 +74,8 @@ public enum VeyrAgentStatusBuilder {
             budget: budget,
             alerts: alerts,
             recommendations: recommendations,
-            agentInstructions: instructions)
+            agentInstructions: instructions,
+            complexity: complexity)
     }
 
     // MARK: - Budget
