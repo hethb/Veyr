@@ -40,6 +40,8 @@ struct ZaiQuotaResponse {
     #[serde(default)]
     code: Option<i32>,
     #[serde(default)]
+    message: Option<String>,
+    #[serde(default)]
     data: Option<ZaiQuotaData>,
     /// Legacy flat limits array (backwards compat)
     #[serde(default)]
@@ -249,6 +251,17 @@ impl ZaiProvider {
         &self,
         quota: &ZaiQuotaResponse,
     ) -> Result<UsageSnapshot, ProviderError> {
+        if quota.code.is_some_and(|code| code != 0 && code != 200) {
+            return Err(ProviderError::Other(
+                quota
+                    .message
+                    .as_deref()
+                    .filter(|message| !message.trim().is_empty())
+                    .unwrap_or("z.ai API returned an error")
+                    .to_string(),
+            ));
+        }
+
         // Get limits from data.limits (upstream) or flat limits (legacy)
         let limits = if let Some(data) = &quota.data {
             &data.limits
@@ -513,5 +526,43 @@ mod tests {
 
         assert_eq!(parsed.organization_id, "org-team");
         assert_eq!(parsed.project_id, "project-team");
+    }
+
+    #[test]
+    fn parses_successful_response_without_message() {
+        let provider = ZaiProvider::new();
+        let quota: ZaiQuotaResponse = serde_json::from_value(serde_json::json!({
+            "code": 200,
+            "data": {
+                "planName": "BigModel CN",
+                "limits": [{
+                    "type": "TOKENS_LIMIT",
+                    "used": 10,
+                    "limit": 100,
+                    "unit": 3,
+                    "number": 5
+                }]
+            }
+        }))
+        .unwrap();
+
+        let usage = provider.parse_quota_response(&quota).unwrap();
+
+        assert_eq!(usage.login_method.as_deref(), Some("BigModel CN"));
+        assert_eq!(usage.primary.used_percent, 10.0);
+    }
+
+    #[test]
+    fn preserves_api_code_error_message() {
+        let provider = ZaiProvider::new();
+        let quota: ZaiQuotaResponse = serde_json::from_value(serde_json::json!({
+            "code": 401,
+            "message": "invalid token"
+        }))
+        .unwrap();
+
+        let error = provider.parse_quota_response(&quota).unwrap_err();
+
+        assert!(error.to_string().contains("invalid token"));
     }
 }

@@ -22,6 +22,7 @@ use crate::core::{
 
 const BASE_URL: &str = "https://opencode.ai";
 const SERVER_URL: &str = "https://opencode.ai/_server";
+const MAX_RESET_SECONDS: i64 = 366 * 24 * 60 * 60;
 const WORKSPACES_SERVER_ID: &str =
     "def39973159c7f0483d8793a822b8dbb10d067e12c65455fcb4608459ba0234f";
 const SUBSCRIPTION_SERVER_ID: &str =
@@ -346,7 +347,9 @@ impl OpenCodeProvider {
     fn reset_at_to_seconds(obj: &Value, keys: &[&str]) -> Option<i64> {
         let reset_at = Self::first_i64(obj, keys)?;
         let now = chrono::Utc::now().timestamp();
-        Some((reset_at - now).max(0))
+        reset_at
+            .checked_sub(now)
+            .filter(|seconds| (0..=MAX_RESET_SECONDS).contains(seconds))
     }
 
     fn find_datetime(&self, json: &Value, keys: &[&str]) -> Option<DateTime<Utc>> {
@@ -560,5 +563,12 @@ mod tests {
             renewal.window.resets_at.unwrap().to_rfc3339(),
             "2026-06-01T12:00:00+00:00"
         );
+    }
+
+    #[test]
+    fn ignores_out_of_range_reset_timestamps() {
+        let payload = serde_json::json!({ "resetAt": i64::MAX });
+
+        assert_eq!(OpenCodeProvider::window_reset_seconds(&payload), None);
     }
 }

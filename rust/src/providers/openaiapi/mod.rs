@@ -439,11 +439,12 @@ fn clean_project_id(project_id: Option<&str>) -> Option<String> {
 }
 
 fn number_value(value: &serde_json::Value) -> Option<f64> {
-    match value {
+    let value = match value {
         serde_json::Value::Number(number) => number.as_f64(),
         serde_json::Value::String(text) => text.trim().replace(',', "").parse().ok(),
         _ => None,
-    }
+    }?;
+    value.is_finite().then_some(value)
 }
 
 impl Default for OpenAIApiProvider {
@@ -592,6 +593,12 @@ mod tests {
                 .as_deref()
                 == Some("175 tokens"))
         );
+    }
+
+    #[test]
+    fn openai_admin_usage_rejects_nonfinite_cost_amounts() {
+        assert_eq!(number_value(&serde_json::json!("NaN")), None);
+        assert_eq!(number_value(&serde_json::json!("Infinity")), None);
     }
 
     #[test]

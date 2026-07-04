@@ -1,5 +1,15 @@
 # Changelog
 
+## [Windows] 0.38.1 - 2026-07-04
+
+### Changed
+- Bump the Windows/Tauri release version to 0.38.1 after merging the tray flyout, vertical-taskbar placement, Claude OAuth refresh, Claude cost, README language, and repo cleanup fixes.
+
+### Fixed
+- Port upstream 0.38.1 parser hardening for OpenAI API non-finite cost values, OpenCode reset timestamps, and z.ai BigModel CN quota responses without optional messages.
+
+---
+
 ## [Windows] 0.38.0 - 2026-07-03
 
 ### Added
