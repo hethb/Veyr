@@ -1,5 +1,8 @@
 # Veyr
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Built on CodexBar](https://img.shields.io/badge/Built%20on-CodexBar-orange)](https://github.com/steipete/CodexBar)
+
 **LLM spend management** — a hosted proxy between your app and OpenAI/Anthropic.
 
 Change where requests go. Veyr logs every call (metadata only by default), shows which **feature** is costing you money, compresses bloated prompts, and enforces budgets — from the same integration point.

@@ -1,3 +1,6 @@
+// Portions of this file are derived from CodexBar by Peter Steinberger (steipete).
+// CodexBar: https://github.com/steipete/CodexBar
+// Licensed under the MIT License.
 import Foundation
 
 /// Maps Codex `additional_rate_limits` entries (model-specific limits such as GPT-5.3-Codex-Spark)

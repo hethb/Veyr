@@ -1,79 +1,67 @@
 import {
+  Bell,
+  Bot,
+  Code2,
   Database,
-  FileText,
-  Globe,
-  Layers,
-  Sparkles,
-  Tags,
-  Wand2,
-  Zap,
+  DollarSign,
+  Route,
 } from "lucide-react";
 import DisplayCards from "@/components/ui/display-cards";
 
 const FEATURE_CARDS = [
   {
-    icon: <Globe className="size-4 text-[#B1C5FF]" />,
-    title: "Web chats captured",
-    description: "chatgpt.com & claude.ai usage ingested live",
-    date: "New",
+    icon: <DollarSign className="size-4 text-[#B1C5FF]" />,
+    title: "Menu bar spend",
+    description: "Today's cost with a live-session pulse",
+    date: "Live",
     titleClassName: "text-[#076EFF]",
   },
   {
-    icon: <Wand2 className="size-4 text-[#B1C5FF]" />,
-    title: "Prompt Helper",
-    description: "Paste a draft → get tighter phrasing instantly",
-    date: "Pre-send",
+    icon: <Bot className="size-4 text-[#B1C5FF]" />,
+    title: "Agent feed",
+    description: "VEYR_STATUS.json — your agent reads its own burn rate",
+    date: "Agent-native",
     titleClassName: "text-[#4FABFF]",
   },
   {
-    icon: <Database className="size-4 text-[#B1C5FF]" />,
-    title: "Prompt caching",
-    description: "Auto cache_control + 70–90% cheaper repeats",
-    date: "Caching",
+    icon: <Bell className="size-4 text-[#B1C5FF]" />,
+    title: "Budget caps",
+    description: "Per-project caps with 80% / 100% alerts",
+    date: "Controls",
     titleClassName: "text-[#B1C5FF]",
   },
 ];
 
 const FEATURE_DETAILS = [
   {
-    icon: Globe,
-    title: "Web-chat ingest (browser extension)",
-    body: "Every send on chatgpt.com or claude.ai is intercepted in a Shadow-DOM widget. A MutationObserver waits for the assistant response to stabilize, then ingests prompt + completion tokens into your dashboard — tagged web-chatgpt or web-claude. The dashboard polls every 5 seconds, so web usage shows up alongside SDK and CLI traffic in the same charts.",
+    icon: DollarSign,
+    title: "Real-time spend in your menu bar",
+    body: "Today's cost, this week, this month. See which project is burning the most and which model is responsible — at a glance, without opening a dashboard.",
   },
   {
-    icon: Wand2,
-    title: "Pre-send Prompt Helper",
-    body: "A rule-based linter (POST /api/analysis/prompt-lint) flags vague openers, missing constraints, bloated context, and chat-history bloat — then suggests a tighter template. Surfaced in the dashboard's Prompt Helper page and inline in the browser extension before you hit send.",
+    icon: Bot,
+    title: "Optimization your agent reads and acts on",
+    body: "Veyr writes a spend status block into your CLAUDE.md (opt-in). When you open Claude Code, it already knows its burn rate, budget status, and what to do differently — no manual input from you.",
+  },
+  {
+    icon: Route,
+    title: "Right model for the right task",
+    body: "Veyr spots projects where light work is running on frontier models. Simple tasks shouldn't run on Opus — Veyr tells your agent when to switch and estimates how much that saves.",
   },
   {
     icon: Database,
-    title: "Prompt caching support",
-    body: "Set x-veyr-cache: 1 (or enable_prompt_caching on a feature policy) and the proxy injects Anthropic cache_control automatically. Cache hits, writes, and savings are tracked in a dedicated dashboard panel — and a caching suggestion fires when a long, repeated prompt has a low hit rate.",
+    title: "Prompt caching insights",
+    body: "Veyr tracks your cache hit rate per project and flags where caching isn't working. Route API traffic through the optional Veyr proxy and it can inject Anthropic cache_control headers automatically — repeated turns cost up to 90% less.",
   },
   {
-    icon: FileText,
-    title: "Document → Markdown converter",
-    body: "POST /api/convert turns PDFs, Word docs, HTML, CSV, JSON, and XML into compact LLM-ready Markdown — typically 70–90% fewer input tokens than raw text. Inspired by Microsoft's MarkItDown; runs in-process, no external API.",
+    icon: Bell,
+    title: "Per-project budget caps",
+    body: "Set a monthly cap for each project. Veyr alerts you at 80% and 100% via macOS notifications. Your agent sees the budget status and adjusts its behavior accordingly.",
   },
   {
-    icon: Tags,
-    title: "Cost attribution by feature",
-    body: "Auto-inferred from your request path or set via x-feature-tag. The dashboard breaks spend down per endpoint — /api/summarize, /api/chat — with no manual tagging or SDK rewrite.",
-  },
-  {
-    icon: Sparkles,
-    title: "Actionable optimization rules",
-    body: "Seven post-hoc rules analyze your last 30 days — expensive model on simple feature, ballooning completions, error-burning tokens, dominating spend, redundant templates, low cache efficiency, and a quick-win flag on the highest-impact item.",
-  },
-  {
-    icon: Layers,
-    title: "Desktop app & VSCode panel",
-    body: "Electron app auto-starts the proxy, opens the dashboard natively, and shows today's spend in your menu bar. VSCode extension adds a Veyr panel + a one-click command to route Claude Code through the proxy.",
-  },
-  {
-    icon: Zap,
-    title: "Per-request logging",
-    body: "Every OpenAI and Anthropic call is logged with model, token counts, latency, cache hits, and computed cost. Filter by time range, feature, or template to find outliers fast — all stored locally in SQLite by default.",
+    icon: Code2,
+    title: "Live cost in your editor",
+    body: "The Veyr VS Code extension shows current session cost in the status bar and surfaces the top optimization suggestion in its panel with a one-click copy — without leaving your editor.",
   },
 ];
 
@@ -87,15 +75,15 @@ export function FeaturesSection() {
               Features
             </p>
             <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-              Every surface where you use LLMs — captured, costed, optimized.
+              Your coding agent's spend — tracked, budgeted, optimized.
             </h2>
             <p className="mt-4 text-base leading-relaxed text-neutral-500">
               Most observability tools stop at totals. Veyr tells you{" "}
               <span className="text-neutral-300">where</span>,{" "}
               <span className="text-neutral-300">why</span>, and{" "}
-              <span className="text-neutral-300">what to fix</span> — from your
-              production API traffic to chatgpt.com tabs to your CLI agents,
-              all in one dashboard.
+              <span className="text-neutral-300">what to fix</span> — and puts
+              that answer where it matters most: in your menu bar, in your
+              editor, and in your agent&apos;s own context.
             </p>
 
             <ul className="mt-10 space-y-6">

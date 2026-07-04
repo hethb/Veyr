@@ -1,3 +1,7 @@
+// Veyr — original code
+// https://github.com/hethb/Veyr
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Heth Bhatt
 import Foundation
 
 /// Token counts and cost for one session (or one aggregation bucket).

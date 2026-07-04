@@ -4,9 +4,14 @@ Native macOS menu bar app for Veyr — live LLM spend tracking read directly fro
 coding-agent logs (Claude Code, Codex, and 50+ other providers). All computation is
 on-device; nothing leaves your machine.
 
-**Veyr's native Mac app is built on top of [CodexBar](https://github.com/steipete/CodexBar)
-by Peter Steinberger (steipete). MIT licensed.** See `LICENSE` (CodexBar's original MIT
-license) and `../../ARCHITECTURE_CODEXBAR.md` for an architecture map of the inherited code.
+## Attribution
+
+This app is built on top of [CodexBar](https://github.com/steipete/CodexBar)
+by [Peter Steinberger](https://github.com/steipete), used under the MIT License.
+Veyr extends CodexBar with LLM cost tracking, spend management, and agent optimization.
+
+See `LICENSE` in this directory (CodexBar's original MIT license) and
+`../../ARCHITECTURE_CODEXBAR.md` for an architecture map of the inherited code.
 
 ## Requirements
 

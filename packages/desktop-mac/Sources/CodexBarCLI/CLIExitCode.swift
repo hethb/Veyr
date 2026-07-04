@@ -1,3 +1,6 @@
+// Portions of this file are derived from CodexBar by Peter Steinberger (steipete).
+// CodexBar: https://github.com/steipete/CodexBar
+// Licensed under the MIT License.
 enum ExitCode: Int32 {
     case success = 0
     case failure = 1

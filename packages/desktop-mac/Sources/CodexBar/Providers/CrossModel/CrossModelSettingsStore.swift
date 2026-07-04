@@ -1,0 +1,17 @@
+// Portions of this file are derived from CodexBar by Peter Steinberger (steipete).
+// CodexBar: https://github.com/steipete/CodexBar
+// Licensed under the MIT License.
+import CodexBarCore
+import Foundation
+
+extension SettingsStore {
+    var crossModelAPIToken: String {
+        get { self.configSnapshot.providerConfig(for: .crossmodel)?.sanitizedAPIKey ?? "" }
+        set {
+            self.updateProviderConfig(provider: .crossmodel) { entry in
+                entry.apiKey = self.normalizedConfigValue(newValue)
+            }
+            self.logSecretUpdate(provider: .crossmodel, field: "apiKey", value: newValue)
+        }
+    }
+}

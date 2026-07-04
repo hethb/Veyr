@@ -5,7 +5,6 @@ import {
   BarChart3,
   CheckCircle2,
   Code2,
-  Globe,
   Home,
   Layers,
   Monitor,
@@ -32,10 +31,6 @@ const LANDING_NAV_ITEMS = [
 
 const ACCENTS = ["#076EFF", "#4FABFF", "#B1C5FF"] as const;
 
-// Desktop app installers (mac/win/linux) are published here by the
-// release-desktop GitHub Actions workflow.
-const RELEASES_URL = "https://github.com/hethb/Veyr/releases/latest";
-
 export function Landing() {
   return (
     <div className="min-h-screen bg-black text-white">
@@ -43,6 +38,7 @@ export function Landing() {
       <HeroSection authEnabled={authEnabled} />
       <HowItWorks />
       <GetRunning />
+      <PrivacySection />
       <ProductLayers />
       <FeaturesSection />
       <DemoSection />
@@ -98,37 +94,27 @@ function Header() {
 }
 
 function HowItWorks() {
-  const firstStep = authEnabled
-    ? {
-        icon: Code2,
-        accent: ACCENTS[0],
-        title: "Sign up with your email",
-        body: "Enter your email at the bottom of this page and click the magic link — no password, no credit card. Copy the key from your welcome page and export it:",
-        code: "export VEYR_KEY=pl_live_…  # your key — shown once",
-      }
-    : {
-        icon: Code2,
-        accent: ACCENTS[0],
-        title: "Get your API key",
-        body: "Run it locally with no account, or deploy with email sign-in. Create a key and you're set.",
-        code: "export VEYR_KEY=pl_live_…",
-      };
-
   const steps = [
-    firstStep,
     {
-      icon: Zap,
-      accent: ACCENTS[1],
-      title: "Plug into your app",
-      body: "One npm install. Wrap your existing OpenAI client — it picks up VEYR_KEY from step 1 and routes through Veyr automatically.",
-      code: `npm install canopy-sdk openai\n\nimport { veyrOpenAI } from "canopy-sdk";\nconst openai = new OpenAI(\n  veyrOpenAI({ apiKey: process.env.OPENAI_API_KEY! })\n);`,
+      icon: Monitor,
+      accent: ACCENTS[0],
+      title: "Install Veyr",
+      body: "Veyr is a native Mac app that lives in your menu bar. Download the DMG below (Homebrew coming soon). No account, no API key, no configuration needed to get started.",
+      code: "# one download — no account, no API key",
     },
     {
-      icon: BarChart3,
+      icon: Terminal,
+      accent: ACCENTS[1],
+      title: "Open Claude Code",
+      body: "Veyr reads your local session logs automatically. The moment you start a session, Veyr shows you the cost in real time — by project, by model, by session. (Cursor support is on the roadmap.)",
+      code: "ls ~/.claude/projects  # the logs Veyr reads",
+    },
+    {
+      icon: Zap,
       accent: ACCENTS[2],
-      title: "See spend by feature",
-      body: "Every API call is logged. Dashboard shows cost, tokens, and top prompts — live.",
-      code: "# your existing chat.completions code — unchanged",
+      title: "Let Veyr optimize",
+      body: "Veyr analyzes your usage patterns and can inject recommendations directly into your Claude Code context. Your agent learns to switch models for simple tasks and compact context when sessions get long.",
+      code: "cat ~/.veyr/agent-status/VEYR_STATUS.json",
     },
   ];
 
@@ -137,31 +123,29 @@ function HowItWorks() {
       <div className="mx-auto max-w-6xl px-6 py-24">
         <SectionHeader
           eyebrow="How it works"
-          title="Three steps to LLM cost visibility"
-          subtitle="Built for engineering teams — like TokenGuard for the browser, but for your production LLM stack. One env var, two lines of code."
+          title="Three steps to knowing your burn rate"
+          subtitle="No proxy, no traffic interception, no account. Veyr reads the session logs Claude Code already writes to your disk."
         />
-
-        <div className="mt-14 grid gap-4 md:grid-cols-3">
-          {steps.map((s) => (
-            <div
-              key={s.title}
-              className="border border-white/10 bg-black p-6"
-            >
+        <div className="mt-14 grid gap-6 md:grid-cols-3">
+          {steps.map((step, i) => (
+            <div key={i} className="flex flex-col border border-white/10 bg-black p-6">
               <div
                 className="grid h-10 w-10 place-items-center border"
                 style={{
-                  borderColor: `${s.accent}40`,
-                  backgroundColor: `${s.accent}10`,
-                  color: s.accent,
+                  borderColor: `${step.accent}40`,
+                  backgroundColor: `${step.accent}10`,
+                  color: step.accent,
                 }}
               >
-                <s.icon className="h-5 w-5" />
+                <step.icon className="h-5 w-5" />
               </div>
-              <h3 className="mt-5 text-lg font-semibold text-white">{s.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-neutral-500">
-                {s.body}
+              <h3 className="mt-4 text-lg font-semibold text-white">
+                {i + 1}. {step.title}
+              </h3>
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-neutral-500">
+                {step.body}
               </p>
-              <CopyCodeBlock code={s.code} />
+              <CopyCodeBlock code={step.code} className="mt-4" />
             </div>
           ))}
         </div>
@@ -199,119 +183,61 @@ function StepList({ steps }: { steps: SetupStep[] }) {
 }
 
 function GetRunning() {
-  // The proxy this deployment fronts — baked in at build time so the copyable
-  // commands are correct for wherever this page is served from.
-  const proxyBase =
-    (import.meta.env.VITE_PROXY_URL as string | undefined)?.replace(/\/+$/, "") ||
-    "http://localhost:3001";
+  const macSteps: SetupStep[] = [
+    {
+      title: "Download Veyr",
+      detail: "Grab Veyr-0.1.0.dmg with the button below (or in the Download section).",
+    },
+    {
+      title: "Install",
+      detail: "Open the DMG, drag Veyr to your Applications folder, then open Veyr from Applications.",
+    },
+    {
+      title: "Bypass Gatekeeper (required for unsigned builds)",
+      detail:
+        "Veyr is not yet notarized with Apple. This command removes the quarantine flag so macOS allows it to run. It is safe — it only affects the Veyr app.",
+      code: "xattr -cr /Applications/Veyr.app",
+    },
+    {
+      title: "Start a Claude Code session",
+      detail:
+        "Veyr will automatically detect your Claude Code sessions and begin tracking cost. No configuration needed.",
+    },
+    {
+      title: "Optional — enable CLAUDE.md injection",
+      detail:
+        "Open Veyr → Settings → Veyr → Auto-update CLAUDE.md. Veyr will inject spend status and optimization tips into your project's CLAUDE.md so Claude Code sees them automatically.",
+    },
+  ];
 
-  // Hosted visitors get hosted commands; the local/desktop build keeps the
-  // run-on-your-machine instructions.
-  const primarySteps: SetupStep[] = authEnabled
-    ? [
-        {
-          title: "Create your account and copy your Veyr key",
-          detail:
-            "Scroll to the bottom of this page (or click “Get started” top-right), enter your email, and click the magic link we send you. You'll land on a welcome page showing a key starting with pl_live_… — click Copy. It is shown only once, so save it now.",
-        },
-        {
-          title: "Install the SDK and wrap your OpenAI client",
-          detail:
-            "In your project, run the install, then create the client like this. Replace pl_live_… with the key from step 1. Your OpenAI key stays in OPENAI_API_KEY exactly as it is today. Then use `openai` exactly as before — nothing else changes. (Anthropic? Use veyrAnthropic the same way.)",
-          code:
-            "npm install canopy-sdk openai\n\n" +
-            'import OpenAI from "openai";\n' +
-            'import { veyrOpenAI } from "canopy-sdk";\n\n' +
-            "const openai = new OpenAI(veyrOpenAI({\n" +
-            "  apiKey: process.env.OPENAI_API_KEY!,  // your OpenAI key — unchanged\n" +
-            '  veyrKey: "pl_live_…",           // ← paste YOUR key from step 1\n' +
-            `  baseUrl: "${proxyBase}",\n` +
-            "}));",
-        },
-        {
-          title: "Using Claude Code instead? Paste these two lines",
-          detail:
-            "Run these in the same terminal where you run `claude` (replace pl_live_… with your key). Every Claude Code request is then metered. To make it permanent, add both lines to your ~/.zshrc.",
-          code:
-            `export ANTHROPIC_BASE_URL=${proxyBase}/anthropic\n` +
-            'export ANTHROPIC_CUSTOM_HEADERS="x-veyr-key: pl_live_…"\n' +
-            "claude",
-        },
-        {
-          title: "Send one request, then open your dashboard",
-          detail:
-            "Make any LLM call through the client (or just ask Claude Code something). Then open the Dashboard link in the footer below (it's /dashboard — you're already signed in). The request appears within seconds with its cost, tokens, and feature tag.",
-        },
-      ]
-    : [
-        {
-          title: "Install and launch the desktop app",
-          code: "npm install\nnpm run desktop",
-        },
-        {
-          title: "Optional — load demo data to explore the dashboard",
-          code: "npm run seed -- --reset",
-        },
-        {
-          title: "Route a CLI agent like Claude Code through Veyr",
-          code:
-            "# enable local logging (in .env)\nVEYR_ALLOW_ANON=true\n\n" +
-            "# point Claude Code at the proxy, then run it\nexport ANTHROPIC_BASE_URL=http://localhost:3001/anthropic\nclaude",
-        },
-        {
-          title: "…or wrap your own OpenAI / Anthropic code",
-          code:
-            "import { createOpenAIConfig } from 'canopy-sdk'\n\n" +
-            "const openai = new OpenAI({\n  apiKey: process.env.OPENAI_API_KEY,\n  ...createOpenAIConfig({ apiKey: 'pl_live_…', baseUrl: 'http://localhost:3001' })\n})",
-        },
-      ];
-
-  const secondarySteps: SetupStep[] = authEnabled
-    ? [
-        {
-          title: "Clone the repo and launch the desktop app",
-          detail:
-            "Requires Node 20+. The dashboard opens in its own window, the proxy starts automatically on port 3001, and a first-run screen shows your local API key. No account, no cloud — data stays in ~/.veyr on your machine.",
-          code:
-            "git clone https://github.com/hethb/Veyr\ncd Veyr && npm install\nnpm run desktop",
-        },
-        {
-          title: "Or set up from the terminal in one command",
-          detail:
-            "An interactive wizard: choose “Local”, let it start the proxy, then pick your integration (OpenAI SDK, Anthropic SDK, Claude Code, or Cursor). It prints the exact snippet to paste.",
-          code: "npx getcanopy init",
-        },
-        {
-          title: "Local proxies log Claude Code with zero config",
-          detail:
-            "No key needed locally — anonymous requests are logged automatically and tagged claude-code-cli.",
-          code:
-            "# localhost = the proxy the desktop app runs on YOUR machine\n" +
-            "# (using the hosted instance instead? see the steps on the left)\n" +
-            "export ANTHROPIC_BASE_URL=http://localhost:3001/anthropic\nclaude",
-        },
-      ]
-    : [
-        { title: "Open chrome://extensions and turn on Developer mode" },
-        { title: "Click “Load unpacked” and select packages/browser-extension" },
-        { title: "Open chatgpt.com or claude.ai — the widget appears bottom-right" },
-      ];
+  const vscodeSteps: SetupStep[] = [
+    {
+      title: "Download the extension",
+      detail: "Grab veyr-vscode-0.1.0.vsix with the button below.",
+    },
+    {
+      title: "Install from VSIX",
+      detail:
+        "Open VS Code → Extensions panel (Cmd+Shift+X) → click ··· (top right) → \"Install from VSIX…\" → choose the downloaded file.",
+    },
+    {
+      title: "Done — it activates automatically",
+      detail:
+        "You'll see Veyr in the status bar the next time a Claude Code session is active (the Mac app must be running — it writes the feed the extension reads).",
+    },
+  ];
 
   return (
     <section id="setup" className="border-t border-white/10 bg-black">
       <div className="mx-auto max-w-6xl px-6 py-24">
         <SectionHeader
           eyebrow="Get started"
-          title="Two ways to run Veyr"
-          subtitle={
-            authEnabled
-              ? "Use this hosted instance with a free account, or clone the repo and run everything on your own machine."
-              : "Pick the surface that matches how you use LLMs. Both run on your machine — no cloud account required."
-          }
+          title="Get started in 5 minutes"
+          subtitle="Install the Mac app, open Claude Code, and your spend appears. Add the VS Code extension to see it in your editor."
         />
 
         <div className="mt-14 grid gap-6 lg:grid-cols-2">
-          {/* Option 1 — Desktop app + proxy */}
+          {/* Option A — macOS app */}
           <div className="flex flex-col border border-white/10 bg-black p-6">
             <div className="flex items-center gap-3">
               <div
@@ -326,43 +252,23 @@ function GetRunning() {
               </div>
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#4FABFF]">
-                  {authEnabled ? "Hosted — this site" : "For CLI agents & code"}
+                  Option A — recommended
                 </p>
-                <h3 className="text-lg font-semibold text-white">
-                  {authEnabled ? "Use the hosted proxy" : "Desktop app + proxy"}
-                </h3>
+                <h3 className="text-lg font-semibold text-white">macOS app</h3>
               </div>
             </div>
-            <p className="mt-4 text-sm leading-relaxed text-neutral-500">
-              {authEnabled ? (
-                <>
-                  Sign up with an email, get a key, and point your existing
-                  OpenAI/Anthropic client (or{" "}
-                  <span className="text-neutral-300">Claude Code</span>) at the
-                  Veyr proxy. Your provider API key stays yours — Veyr
-                  forwards it and meters the traffic.
-                </>
-              ) : (
-                <>
-                  Best if you use a CLI agent like{" "}
-                  <span className="text-neutral-300">Claude Code</span> or call
-                  the OpenAI/Anthropic APIs from your own code. The desktop app
-                  auto-starts the proxy and dashboard, shows today&apos;s spend
-                  in your menu bar, and includes a{" "}
-                  <span className="text-neutral-300">Prompt Helper</span> that
-                  tightens your prompts before you send them.
-                </>
-              )}
-            </p>
-            <StepList steps={primarySteps} />
-            <p className="mt-6 text-xs text-neutral-600">
-              {authEnabled
-                ? "The npm packages are public: canopy-sdk (wrapper) and getcanopy (CLI)."
-                : "Prefer your editor? A VSCode extension offers the same panel and one-click Claude Code routing."}
-            </p>
+            <StepList steps={macSteps} />
+            <a
+              href="/downloads/Veyr-0.1.0.dmg"
+              download
+              className="mt-6 inline-flex w-fit items-center gap-2 border border-white bg-white px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
+            >
+              <Monitor className="h-4 w-4" />
+              Download Veyr-0.1.0.dmg
+            </a>
           </div>
 
-          {/* Option 2 — Browser extension */}
+          {/* Option B — VS Code extension */}
           <div className="flex flex-col border border-white/10 bg-black p-6">
             <div className="flex items-center gap-3">
               <div
@@ -373,56 +279,82 @@ function GetRunning() {
                   color: ACCENTS[1],
                 }}
               >
-                <Globe className="h-5 w-5" />
+                <Code2 className="h-5 w-5" />
               </div>
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#4FABFF]">
-                  {authEnabled ? "Self-hosted / local" : "For chatgpt.com & claude.ai"}
+                  Option B
                 </p>
                 <h3 className="text-lg font-semibold text-white">
-                  {authEnabled ? "Run it on your machine" : "Browser extension"}
+                  VS Code extension
                 </h3>
               </div>
             </div>
-            <p className="mt-4 text-sm leading-relaxed text-neutral-500">
-              {authEnabled ? (
-                <>
-                  Everything is open source. The{" "}
-                  <span className="text-neutral-300">desktop app</span> runs the
-                  proxy and dashboard locally with no account — your traffic and
-                  keys never leave your machine. Deploying your own instance is
-                  one <span className="text-neutral-300">fly deploy</span> (see
-                  DEPLOY.md in the repo).
-                </>
-              ) : (
-                <>
-                  Want Veyr right inside the{" "}
-                  <span className="text-neutral-300">ChatGPT and Claude</span>{" "}
-                  web apps? The extension overlays live token &amp; cost
-                  estimates and suggests better prompts as you type — before you
-                  hit send. No proxy required.
-                </>
-              )}
-            </p>
-            <StepList steps={secondarySteps} />
-            {authEnabled && (
-              <a
-                href={RELEASES_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-6 inline-flex w-fit items-center gap-2 border border-white bg-white px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
-              >
-                <Monitor className="h-4 w-4" />
-                Download the desktop app
-              </a>
-            )}
-            <p className="mt-6 text-xs text-neutral-600">
-              {authEnabled
-                ? "macOS · Windows · Linux. A browser extension (ChatGPT/Claude overlay) and VSCode extension ship in the repo too."
-                : "Running the desktop app too? The widget will also surface your real logged spend and top suggestion."}
-            </p>
+            <StepList steps={vscodeSteps} />
+            <a
+              href="/downloads/veyr-vscode-0.1.0.vsix"
+              download
+              className="mt-6 inline-flex w-fit items-center gap-2 border border-white bg-white px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
+            >
+              <Code2 className="h-4 w-4" />
+              Download veyr-vscode-0.1.0.vsix
+            </a>
+
+            {/* Option C — Homebrew (coming soon) */}
+            <div className="relative mt-8">
+              <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#4FABFF]">
+                Option C
+              </p>
+              <div className="relative mt-2">
+                <CopyCodeBlock code="brew install --cask veyr" />
+                <span className="absolute -top-2 right-2 border border-[#f5a623]/50 bg-black px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#f5a623]">
+                  Coming soon
+                </span>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+function PrivacySection() {
+  const points = [
+    <>
+      Veyr reads your Claude Code and Codex log files from your local disk — the
+      same files your terminal shows with{" "}
+      <code className="text-neutral-300">ls ~/.claude/projects/</code>
+    </>,
+    <>No proxy. No traffic interception. No account required.</>,
+    <>
+      The Mac app&apos;s only network call fetches the public models.dev pricing
+      catalog so costs stay accurate. Your code and prompts are never sent
+      anywhere.
+    </>,
+    <>
+      Session history is stored in{" "}
+      <code className="text-neutral-300">~/.veyr/</code> on your machine.
+      Nothing is uploaded.
+    </>,
+  ];
+
+  return (
+    <section id="privacy" className="border-t border-white/10 bg-black">
+      <div className="mx-auto max-w-6xl px-6 py-24">
+        <SectionHeader
+          eyebrow="Privacy"
+          title="Your code never leaves your machine"
+          subtitle="Veyr is local-first by construction, not by policy."
+        />
+        <ul className="mx-auto mt-10 max-w-2xl space-y-4">
+          {points.map((point, i) => (
+            <li key={i} className="flex gap-3 text-sm leading-relaxed text-neutral-400">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#4FABFF]" />
+              <span>{point}</span>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );
@@ -724,10 +656,39 @@ function Footer() {
           <a href="#built-for" className="transition-colors hover:text-white">
             Built for
           </a>
+          <a
+            href="https://github.com/hethb/Veyr"
+            target="_blank"
+            rel="noreferrer"
+            className="transition-colors hover:text-white"
+          >
+            GitHub
+          </a>
           <Link to="/dashboard" className="transition-colors hover:text-white">
             Dashboard
           </Link>
         </div>
+      </div>
+      <div className="mx-auto max-w-6xl border-t border-white/5 px-6 py-4 text-center text-xs text-neutral-600">
+        Veyr&apos;s macOS app is built on{" "}
+        <a
+          href="https://github.com/steipete/CodexBar"
+          target="_blank"
+          rel="noreferrer"
+          className="underline decoration-neutral-700 underline-offset-2 transition-colors hover:text-neutral-400"
+        >
+          CodexBar
+        </a>{" "}
+        by Peter Steinberger (
+        <a
+          href="https://github.com/steipete"
+          target="_blank"
+          rel="noreferrer"
+          className="underline decoration-neutral-700 underline-offset-2 transition-colors hover:text-neutral-400"
+        >
+          steipete
+        </a>
+        ) · MIT License
       </div>
     </footer>
   );

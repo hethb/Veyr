@@ -1,3 +1,6 @@
+// Portions of this file are derived from CodexBar by Peter Steinberger (steipete).
+// CodexBar: https://github.com/steipete/CodexBar
+// Licensed under the MIT License.
 import Foundation
 
 /// Request usage snapshot for legacy Cursor plans (request-based instead of token-based).

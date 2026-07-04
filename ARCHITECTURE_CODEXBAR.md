@@ -1,8 +1,11 @@
-# CodexBar Architecture Summary
+# CodexBar architecture notes
+
+> **Attribution:** Veyr's macOS app is forked from [CodexBar](https://github.com/steipete/CodexBar)
+> by Peter Steinberger ([@steipete](https://github.com/steipete)), licensed MIT.
+> This document summarizes the CodexBar architecture as a reference for Veyr's extensions.
 
 > Reference notes for the Veyr native Mac app sprint. CodexBar is cloned read-only at
-> `CodexBar/` (gitignored, never committed, never modified). MIT licensed, by Peter
-> Steinberger (steipete). Veyr's native Mac app will be built on top of it with credit.
+> `CodexBar/` (gitignored, never committed, never modified).
 
 ## What CodexBar is
 

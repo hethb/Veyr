@@ -1,3 +1,7 @@
+// Veyr — original code
+// https://github.com/hethb/Veyr
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Heth Bhatt
 import Foundation
 
 /// Infers a "feature tag" — what the user was working on — from a session's
