@@ -57,6 +57,26 @@ public struct FeatureTagInferrer: Sendable {
         return tag.isEmpty ? Self.untagged : tag
     }
 
+    /// Raw overrides dict for the Settings editor (path → tag, as stored on disk).
+    public static func loadRawOverrides(
+        from url: URL = VeyrPaths.tagOverridesFile()) -> [String: String]
+    {
+        guard let data = try? Data(contentsOf: url),
+              let dict = try? JSONDecoder().decode([String: String].self, from: data)
+        else { return [:] }
+        return dict
+    }
+
+    public static func saveRawOverrides(
+        _ overrides: [String: String],
+        to url: URL = VeyrPaths.tagOverridesFile()) throws
+    {
+        VeyrPaths.ensureDirectoryExists(url.deletingLastPathComponent())
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        try encoder.encode(overrides).write(to: url, options: [.atomic])
+    }
+
     private static func normalize(_ path: String) -> String {
         var normalized = (path as NSString).expandingTildeInPath
         while normalized.count > 1, normalized.hasSuffix("/") {

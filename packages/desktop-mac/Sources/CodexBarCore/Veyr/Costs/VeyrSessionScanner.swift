@@ -300,6 +300,16 @@ public final class VeyrSessionScanner: @unchecked Sendable {
         CostUsageScanner.dateFromTimestamp(text)
     }
 
+    /// Clears the in-memory and on-disk row cache. The next scan rebuilds it
+    /// from the JSONL logs (which are never touched).
+    public func resetCache() {
+        self.lock.lock()
+        defer { self.lock.unlock() }
+        self.cache = Cache()
+        self.cacheLoaded = true
+        try? FileManager.default.removeItem(at: self.cacheFileURL)
+    }
+
     /// Most recent modification time across all known session files.
     /// Drives the "active session" indicator in the menu bar.
     public func latestActivityAt() -> Date? {
