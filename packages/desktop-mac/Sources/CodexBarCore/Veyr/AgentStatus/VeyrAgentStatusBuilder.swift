@@ -58,7 +58,8 @@ public enum VeyrAgentStatusBuilder {
                 estimatedSavingsPerHourUsd: Self.round2(
                     suggestion.estimatedHourlySavingsUSD > 0
                         ? suggestion.estimatedHourlySavingsUSD
-                        : suggestion.estimatedMonthlySavingsUSD / 720)))
+                        : suggestion.estimatedMonthlySavingsUSD / 720),
+                avgOutputTokens: suggestion.avgOutputTokens))
         }
         recommendations = Array(recommendations.prefix(6))
         let instructions = Self.instructions(
@@ -188,6 +189,7 @@ public enum VeyrAgentStatusBuilder {
 
     // MARK: - Agent instructions (the most important field)
 
+    /// Direct, specific instructions Claude Code can act on without interpretation.
     static func instructions(
         session: VeyrAgentStatusPayload.CurrentSession?,
         budget: VeyrAgentStatusPayload.Budget,
@@ -196,32 +198,63 @@ public enum VeyrAgentStatusBuilder {
         guard let session else {
             return "No recent coding-agent session detected. No spend guidance."
         }
-        var parts: [String] = []
-        parts.append("You are currently spending \(Self.usd(session.costPerMinute))/minute on \(session.model).")
+        var lines: [String] = []
+
+        // Opening context.
+        lines.append("You are currently in a Veyr-monitored session.")
+        lines.append("Session cost so far: \(Self.usd(session.sessionCostUsd)) at " +
+            String(format: "$%.3f", session.costPerMinute) + "/min on \(session.model).")
+
+        // Budget context.
         if let pct = budget.projectPctUsed {
-            parts.append("Your project budget (\(session.project)) is \(pct)% used" +
-                (budget.projectRemainingUsd.map { " — \(Self.usd($0)) remaining this month" } ?? "") + ".")
-        }
-        if let pct = budget.globalPctUsed {
-            parts.append("Global budget is \(pct)% used.")
-        }
-        if !recommendations.isEmpty {
-            let actions = recommendations.enumerated().map { index, rec -> String in
-                switch rec.action {
-                case "switch_model":
-                    "(\(index + 1)) switch to \(rec.suggestedModel ?? "a smaller model") for tasks that " +
-                        "don't need deep reasoning (file edits, simple refactors, reading files, running commands)"
-                case "compact_context":
-                    "(\(index + 1)) run /compact now to reduce context size"
-                default:
-                    "(\(index + 1)) \(rec.reason)"
-                }
+            let cap = budget.projectMonthlyCapUsd.map { String(format: "$%.0f", $0) } ?? "its"
+            if pct > 80 {
+                lines.append("WARNING: the \(session.project) project is at \(pct)% of its " +
+                    "\(cap)/mo budget. Be conservative with tokens.")
+            } else if pct > 50 {
+                lines.append("Note: the \(session.project) project is at \(pct)% of its monthly budget.")
             }
-            parts.append("Consider: " + actions.joined(separator: ", ") + ".")
-        } else {
-            parts.append("Spend profile looks healthy — no changes recommended right now.")
         }
-        return parts.joined(separator: " ")
+
+        // Cache efficiency.
+        let cachePct = Int((session.cacheHitRate * 100).rounded())
+        if session.cacheHitRate < 0.20 {
+            lines.append("Your cache hit rate is \(cachePct)% — low. Reuse system prompts across " +
+                "turns without modification to improve caching.")
+        } else if session.cacheHitRate > 0.60 {
+            lines.append("Cache hit rate is \(cachePct)% — good. Keep system prompts stable.")
+        }
+
+        // Top recommendations as direct instructions.
+        for rec in recommendations.prefix(2) {
+            switch rec.action {
+            case "switch_model":
+                lines.append("For simple tasks (file reads, edits under 50 lines, running " +
+                    "commands), use \(rec.suggestedModel ?? "a cheaper model") instead of " +
+                    "\(session.model). Switch back for complex reasoning.")
+            case "compact_context":
+                lines.append("This session is long and expensive. Run /compact now to compress " +
+                    "context and reduce per-turn cost by ~60%.")
+            case "enable_caching":
+                lines.append("Your system prompt changes between turns. Stabilize it to enable " +
+                    "prompt caching and reduce input costs by up to 90%.")
+            case "add_output_constraints":
+                if let avg = rec.avgOutputTokens, avg > 0 {
+                    lines.append("Your responses have been averaging \(avg) tokens — very long. " +
+                        "Unless the task requires it, aim for responses under 500 tokens.")
+                } else {
+                    lines.append("Your responses have been very long for this project. Unless the " +
+                        "task requires it, aim for responses under 500 tokens.")
+                }
+            default:
+                break
+            }
+        }
+
+        if recommendations.isEmpty {
+            lines.append("Spend profile looks healthy — no changes recommended right now.")
+        }
+        return lines.joined(separator: " ")
     }
 
     // MARK: - Markdown rendering (VEYR_PROJECT_STATUS.md)

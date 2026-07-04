@@ -149,8 +149,8 @@ struct VeyrPreferencesPane: View {
             PreferenceToggleRow(
                 title: "Auto-update CLAUDE.md with spend status",
                 subtitle: "Appends spend status and optimization tips to your project's CLAUDE.md " +
-                    "every 5 minutes, so Claude Code reads them automatically. Shared with the " +
-                    "VS Code extension via ~/.veyr/config.json.",
+                    "every 5 minutes, so Claude Code reads them automatically. On by default; " +
+                    "shared with the VS Code extension via ~/.veyr/config.json.",
                 binding: Binding(
                     get: { VeyrAgentStatusService.shared.autoUpdateClaudeMdEnabled },
                     set: { VeyrAgentStatusService.shared.autoUpdateClaudeMdEnabled = $0 }))

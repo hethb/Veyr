@@ -30,6 +30,8 @@ public struct Suggestion: Identifiable, Codable, Equatable, Sendable {
     public var estimatedHourlySavingsUSD: Double
     public var suggestedModel: String?
     public var isQuickWin: Bool
+    /// Populated for output-constraint suggestions (avg output tokens per turn).
+    public var avgOutputTokens: Int?
 
     public init(
         id: String,
@@ -41,7 +43,8 @@ public struct Suggestion: Identifiable, Codable, Equatable, Sendable {
         estimatedMonthlySavingsUSD: Double,
         estimatedHourlySavingsUSD: Double = 0,
         suggestedModel: String? = nil,
-        isQuickWin: Bool = false)
+        isQuickWin: Bool = false,
+        avgOutputTokens: Int? = nil)
     {
         self.id = id
         self.severity = severity
@@ -53,6 +56,7 @@ public struct Suggestion: Identifiable, Codable, Equatable, Sendable {
         self.estimatedHourlySavingsUSD = estimatedHourlySavingsUSD
         self.suggestedModel = suggestedModel
         self.isQuickWin = isQuickWin
+        self.avgOutputTokens = avgOutputTokens
     }
 }
 
@@ -265,7 +269,8 @@ public enum VeyrSuggestionEngine {
             detail: "Responses average \(stats.avgOutputPerTurn) tokens — over 3× the context. Adding " +
                 "output-length constraints to prompts saves 30–50% on output tokens.",
             actionLabel: "Copy prompt hint",
-            estimatedMonthlySavingsUSD: outputCost * 0.40)
+            estimatedMonthlySavingsUSD: outputCost * 0.40,
+            avgOutputTokens: stats.avgOutputPerTurn)
     }
 
     // MARK: - Rule 6: rapid short sessions / context file opportunity

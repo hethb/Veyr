@@ -18,6 +18,9 @@ public final class VeyrAgentStatusService {
 
     public static let autoUpdateClaudeMdDefaultsKey = "veyrAutoUpdateClaudeMd"
 
+    @ObservationIgnored
+    private let logger = CodexBarLog.logger(LogCategories.veyr)
+
     public private(set) var latestPayload: VeyrAgentStatusPayload?
     public private(set) var lastWroteAt: Date?
     public private(set) var dismissedRecommendationIDs: Set<String> = []
@@ -40,7 +43,8 @@ public final class VeyrAgentStatusService {
     public var autoUpdateClaudeMdEnabled: Bool {
         get {
             VeyrConfig.load().autoUpdateClaudeMd
-                ?? UserDefaults.standard.bool(forKey: Self.autoUpdateClaudeMdDefaultsKey)
+                ?? (UserDefaults.standard.object(forKey: Self.autoUpdateClaudeMdDefaultsKey) as? Bool)
+                ?? true // default ON — this is how Claude Code sees the feed
         }
         set {
             var config = VeyrConfig.load()
@@ -95,8 +99,16 @@ public final class VeyrAgentStatusService {
         do {
             try VeyrAgentStatusWriter.write(payload: payload)
             self.lastWroteAt = Date()
+            self.logger.info(
+                "[Veyr] Wrote VEYR_STATUS.json",
+                metadata: [
+                    "at": "\(Date())",
+                    "recommendations": "\(payload.recommendations.count)",
+                ])
         } catch {
-            // Non-fatal: feed consumers just see the previous file.
+            self.logger.error(
+                "[Veyr] Failed writing VEYR_STATUS.json",
+                metadata: ["error": String(describing: error)])
         }
 
         self.updateClaudeMdIfEnabled(payload: payload, sessions: store.sessions)
@@ -135,6 +147,14 @@ public final class VeyrAgentStatusService {
 
     // MARK: - CLAUDE.md injection
 
+    /// Manual trigger from the Agent tab: bypasses the 5-minute throttle.
+    public func updateClaudeMdNow() async {
+        if self.latestPayload == nil { await self.tick() }
+        guard let payload = self.latestPayload else { return }
+        self.lastClaudeMdUpdateAt = nil
+        self.injectClaudeMd(payload: payload, sessions: VeyrSpend.shared.sessions, force: true)
+    }
+
     private func updateClaudeMdIfEnabled(payload: VeyrAgentStatusPayload, sessions: [SessionEntry]) {
         guard self.autoUpdateClaudeMdEnabled else {
             // Toggle may have been flipped off externally (VS Code writes the same
@@ -146,19 +166,37 @@ public final class VeyrAgentStatusService {
             }
             return
         }
-        guard let projectPath = sessions.max(by: { $0.timestamp < $1.timestamp })?.projectPath else { return }
-        if let last = self.lastClaudeMdUpdateAt,
+        self.injectClaudeMd(payload: payload, sessions: sessions, force: false)
+    }
+
+    private func injectClaudeMd(
+        payload: VeyrAgentStatusPayload,
+        sessions: [SessionEntry],
+        force: Bool)
+    {
+        // The target is the active session's cwd; skip when unknown.
+        guard let projectPath = sessions.max(by: { $0.timestamp < $1.timestamp })?.projectPath,
+              !projectPath.isEmpty
+        else { return }
+        if !force,
+           let last = self.lastClaudeMdUpdateAt,
            Date().timeIntervalSince(last) < Self.claudeMdMinInterval,
            projectPath == self.lastClaudeMdProjectPath
         {
             return
         }
         do {
-            try VeyrAgentStatusWriter.updateClaudeMd(projectPath: projectPath, payload: payload)
+            try VeyrAgentStatusWriter.updateClaudeMd(
+                projectPath: projectPath, payload: payload, createIfMissing: true)
             self.lastClaudeMdUpdateAt = Date()
             self.lastClaudeMdProjectPath = projectPath
+            self.logger.info(
+                "[Veyr] Updated CLAUDE.md spend section",
+                metadata: ["project": projectPath])
         } catch {
-            // Project directory may be read-only or gone; retry next window.
+            self.logger.error(
+                "[Veyr] CLAUDE.md update failed",
+                metadata: ["project": projectPath, "error": String(describing: error)])
         }
     }
 }

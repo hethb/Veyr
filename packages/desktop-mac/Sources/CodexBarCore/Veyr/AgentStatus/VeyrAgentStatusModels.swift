@@ -44,6 +44,26 @@ public struct VeyrAgentStatusPayload: Codable, Equatable, Sendable {
         public var suggestedModel: String?
         public var reason: String
         public var estimatedSavingsPerHourUsd: Double
+        /// Populated for output-constraint recommendations (rules 5/11).
+        public var avgOutputTokens: Int?
+
+        public init(
+            id: String,
+            priority: String,
+            action: String,
+            suggestedModel: String? = nil,
+            reason: String,
+            estimatedSavingsPerHourUsd: Double,
+            avgOutputTokens: Int? = nil)
+        {
+            self.id = id
+            self.priority = priority
+            self.action = action
+            self.suggestedModel = suggestedModel
+            self.reason = reason
+            self.estimatedSavingsPerHourUsd = estimatedSavingsPerHourUsd
+            self.avgOutputTokens = avgOutputTokens
+        }
     }
 
     public var generatedAt: Date

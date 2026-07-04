@@ -7,6 +7,7 @@ public enum LogCategories {
     public static let amp = "amp"
     public static let antigravity = "antigravity"
     public static let app = "app"
+    public static let veyr = "veyr"
     public static let auggieCLI = "auggie-cli"
     public static let augment = "augment"
     public static let augmentKeepalive = "augment-keepalive"

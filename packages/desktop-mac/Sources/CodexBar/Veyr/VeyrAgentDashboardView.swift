@@ -15,6 +15,7 @@ struct VeyrAgentDashboardView: View {
     @State private var sessionCapText = ""
     @State private var compactThresholdText = ""
     @State private var copiedCommand: String?
+    @State private var claudeMdUpdatedFlash = false
 
     private static let modelChoices = [
         "claude-fable-5", "claude-opus-4-8", "claude-sonnet-5", "claude-haiku-4-5",
@@ -245,17 +246,29 @@ struct VeyrAgentDashboardView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Toggle(isOn: Binding(
-                get: { self.service.autoUpdateClaudeMdEnabled },
-                set: { self.service.autoUpdateClaudeMdEnabled = $0 }))
-            {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Auto-update CLAUDE.md with spend status")
-                    Text("Appends spend status and optimization tips to your project's CLAUDE.md " +
-                        "every 5 minutes, so Claude Code reads them automatically. Off by default.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+            HStack(alignment: .top) {
+                Toggle(isOn: Binding(
+                    get: { self.service.autoUpdateClaudeMdEnabled },
+                    set: { self.service.autoUpdateClaudeMdEnabled = $0 }))
+                {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Auto-update CLAUDE.md with spend status")
+                        Text("Appends spend status and optimization tips to your project's CLAUDE.md " +
+                            "every 5 minutes, so Claude Code reads them automatically.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
+                Spacer()
+                Button(self.claudeMdUpdatedFlash ? "Updated ✓" : "Update CLAUDE.md now") {
+                    Task {
+                        await self.service.updateClaudeMdNow()
+                        self.claudeMdUpdatedFlash = true
+                        try? await Task.sleep(for: .seconds(2))
+                        self.claudeMdUpdatedFlash = false
+                    }
+                }
+                .controlSize(.small)
             }
 
             Button("Apply overrides") {

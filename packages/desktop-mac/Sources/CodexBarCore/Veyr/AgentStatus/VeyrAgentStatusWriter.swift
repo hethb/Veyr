@@ -31,10 +31,18 @@ public enum VeyrAgentStatusWriter {
         encoder.keyEncodingStrategy = .convertToSnakeCase
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        try encoder.encode(payload).write(to: Self.statusFileURL(base: base), options: [.atomic])
+        let statusURL = Self.statusFileURL(base: base)
+        try encoder.encode(payload).write(to: statusURL, options: [.atomic])
 
         let markdown = VeyrAgentStatusBuilder.markdown(payload: payload)
-        try Data(markdown.utf8).write(to: Self.markdownFileURL(base: base), options: [.atomic])
+        let markdownURL = Self.markdownFileURL(base: base)
+        try Data(markdown.utf8).write(to: markdownURL, options: [.atomic])
+
+        // Any process (Claude Code, scripts, other agents) must be able to read these.
+        for url in [statusURL, markdownURL] {
+            try? FileManager.default.setAttributes(
+                [.posixPermissions: 0o644], ofItemAtPath: url.path)
+        }
     }
 
     // MARK: - CLAUDE.md injection (opt-in)
@@ -80,21 +88,44 @@ public enum VeyrAgentStatusWriter {
         return true
     }
 
-    static func claudeMdSection(payload: VeyrAgentStatusPayload) -> String {
+    static func claudeMdSection(payload: VeyrAgentStatusPayload, now: Date = Date()) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+
         var lines: [String] = []
         lines.append(Self.claudeMdSectionBegin)
         lines.append("## Veyr spend status")
-        lines.append("<!-- Auto-updated by Veyr. Do not edit; disable in Veyr settings. -->")
+        lines.append("> Auto-updated by Veyr · \(formatter.string(from: now)) · disable in Veyr settings")
+        lines.append("")
         if let session = payload.currentSession {
-            lines.append("- Burn rate: \(VeyrAgentStatusBuilder.usd(session.costPerMinute))/min on \(session.model) " +
-                "(session so far: \(VeyrAgentStatusBuilder.usd(session.sessionCostUsd)))")
+            lines.append("**Current session:** \(session.model) · " +
+                String(format: "$%.4f", session.sessionCostUsd) + "/session · " +
+                String(format: "$%.4f", session.costPerMinute) + "/min")
+            lines.append("**Cache hit rate:** \(Int((session.cacheHitRate * 100).rounded()))%")
+            if let pct = payload.budget.projectPctUsed,
+               let cap = payload.budget.projectMonthlyCapUsd
+            {
+                lines.append("**Budget:** \(session.project) at \(pct)% of " +
+                    String(format: "$%.0f", cap) + "/mo")
+            }
         }
-        if let pct = payload.budget.projectPctUsed {
-            lines.append("- Project budget: \(pct)% used" +
-                (payload.budget.projectRemainingUsd.map { " (\(VeyrAgentStatusBuilder.usd($0)) left this month)" } ?? ""))
+        let recommendations = payload.recommendations.prefix(3)
+        if !recommendations.isEmpty {
+            lines.append("")
+            lines.append("**Recommendations:**")
+            for rec in recommendations {
+                let title: String = switch rec.action {
+                case "switch_model": "Switch to \(rec.suggestedModel ?? "a smaller model")"
+                case "compact_context": "Run /compact"
+                case "enable_caching": "Stabilize system prompts for caching"
+                case "add_output_constraints": "Constrain response length"
+                default: rec.action.replacingOccurrences(of: "_", with: " ")
+                }
+                lines.append("- \(title) — \(rec.reason)")
+            }
         }
         lines.append("")
-        lines.append(payload.agentInstructions)
+        lines.append("**Agent instructions:** \(payload.agentInstructions)")
         lines.append(Self.claudeMdSectionEnd)
         return lines.joined(separator: "\n")
     }
