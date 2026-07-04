@@ -37,6 +37,15 @@ swift test
 
 ```bash
 ./Scripts/package_app.sh release   # adhoc-signed Veyr.app (unsigned distribution)
+
+# DMG with install instructions + Applications symlink:
+rm -rf .build/dmg-stage && mkdir -p .build/dmg-stage
+cp -R Veyr.app .build/dmg-stage/ && ln -s /Applications .build/dmg-stage/Applications
+hdiutil create -volname "Veyr $(grep MARKETING version.env | cut -d= -f2)" \
+  -srcfolder .build/dmg-stage -ov -format UDZO Veyr-0.1.0.dmg
+
+# Stage for the landing page download section:
+cp Veyr-0.1.0.dmg ../dashboard/public/downloads/
 ```
 
 Adhoc-signed builds require users to bypass Gatekeeper once:

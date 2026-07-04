@@ -27,6 +27,7 @@ const LANDING_NAV_ITEMS = [
   { name: "Features", url: "#features", icon: Layers },
   { name: "Demo", url: "#demo", icon: BarChart3 },
   { name: "Built for", url: "#built-for", icon: CheckCircle2 },
+  { name: "Download", url: "#download", icon: Monitor },
 ] as const;
 
 const ACCENTS = ["#076EFF", "#4FABFF", "#B1C5FF"] as const;
@@ -46,6 +47,7 @@ export function Landing() {
       <FeaturesSection />
       <DemoSection />
       <BuiltForSection />
+      <DownloadSection />
       <FinalCta />
       <Footer />
     </div>
@@ -67,9 +69,7 @@ function Header() {
 
         <div className="pointer-events-auto absolute right-6 top-6 flex items-center gap-2">
           <a
-            href={RELEASES_URL}
-            target="_blank"
-            rel="noreferrer"
+            href="#download"
             className="hidden border border-white/20 px-3 py-2 text-sm font-medium text-white transition-colors hover:border-white sm:inline-flex"
           >
             Download
@@ -557,6 +557,88 @@ function BuiltForSection() {
             </tbody>
           </table>
         </div>
+      </div>
+    </section>
+  );
+}
+
+const MAC_DMG_URL = "/downloads/Veyr-0.1.0.dmg";
+const VSIX_URL = "/downloads/veyr-vscode-0.1.0.vsix";
+
+function DownloadSection() {
+  return (
+    <section id="download" className="border-t border-white/10 bg-black">
+      <div className="mx-auto max-w-6xl px-6 py-24">
+        <SectionHeader
+          eyebrow="Download"
+          title="Veyr on your machine"
+          subtitle="A native menu bar app that reads your local Claude Code logs — live spend, budgets, and an agent-readable status feed. No proxy required."
+        />
+        <div className="mt-12 grid gap-6 sm:grid-cols-2">
+          <div className="flex flex-col border border-white/10 p-8">
+            <Monitor className="h-6 w-6 text-[#4FABFF]" />
+            <h3 className="mt-4 text-lg font-semibold text-white">Veyr for macOS</h3>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-neutral-400">
+              Menu bar spend with a live-session pulse, spend dashboard, budget
+              caps with notifications, optimization tips, and the{" "}
+              <code className="text-neutral-300">VEYR_STATUS.json</code> agent
+              feed your coding agents can read to self-optimize.
+            </p>
+            <a
+              href={MAC_DMG_URL}
+              download
+              className="mt-6 inline-flex w-fit items-center gap-2 border border-white bg-white px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
+            >
+              <Monitor className="h-4 w-4" />
+              Download for macOS (.dmg)
+            </a>
+            <p className="mt-4 text-xs leading-relaxed text-neutral-600">
+              macOS 14+ · Apple Silicon &amp; Intel · v0.1.0 · unsigned preview
+              build — after installing, run{" "}
+              <code className="text-neutral-400">xattr -cr /Applications/Veyr.app</code>{" "}
+              once to pass Gatekeeper.
+            </p>
+          </div>
+
+          <div className="flex flex-col border border-white/10 p-8">
+            <Code2 className="h-6 w-6 text-[#4FABFF]" />
+            <h3 className="mt-4 text-lg font-semibold text-white">
+              Veyr for VS Code
+            </h3>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-neutral-400">
+              Live session cost in your status bar and a panel with burn rate,
+              cache hit rate, and one-click optimization commands — fed by the
+              Mac app&apos;s local agent feed.
+            </p>
+            <a
+              href={VSIX_URL}
+              download
+              className="mt-6 inline-flex w-fit items-center gap-2 border border-white bg-white px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
+            >
+              <Code2 className="h-4 w-4" />
+              Download the extension (.vsix)
+            </a>
+            <p className="mt-4 text-xs leading-relaxed text-neutral-600">
+              Install from file: Extensions panel → ··· → Install from VSIX. Or
+              build from source in{" "}
+              <code className="text-neutral-400">packages/vscode-extension</code>.
+            </p>
+          </div>
+        </div>
+        <p className="mt-8 text-center text-xs text-neutral-600">
+          What Veyr reads: your local Claude Code logs
+          (~/.claude/projects). Nothing leaves your machine — no server, no
+          analytics. The Mac app is built on{" "}
+          <a
+            href="https://github.com/steipete/CodexBar"
+            target="_blank"
+            rel="noreferrer"
+            className="underline hover:text-neutral-400"
+          >
+            CodexBar
+          </a>{" "}
+          by Peter Steinberger (MIT).
+        </p>
       </div>
     </section>
   );
