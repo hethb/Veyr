@@ -19,6 +19,11 @@ export interface LogRequestInput {
   cachedTokens?: number;
   /** Subset of promptTokens that were written into the cache this turn. */
   cacheCreationTokens?: number;
+  complexity?: string | null;
+  optimizationStrategy?: string | null;
+  techniquesApplied?: string[] | null;
+  originalPromptTokens?: number;
+  optimizedPromptTokens?: number;
 }
 
 /**
@@ -56,6 +61,11 @@ export function logRequest(input: LogRequestInput): void {
       tokensSavedEstimate: input.tokensSavedEstimate ?? 0,
       cachedTokens: cached,
       cacheCreationTokens: cacheCreation,
+      complexity: input.complexity ?? null,
+      optimizationStrategy: input.optimizationStrategy ?? null,
+      techniquesApplied: input.techniquesApplied ?? null,
+      originalPromptTokens: input.originalPromptTokens ?? 0,
+      optimizedPromptTokens: input.optimizedPromptTokens ?? 0,
     });
   } catch (err) {
     console.error("[logRequest] insert failed:", err);

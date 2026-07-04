@@ -1,4 +1,6 @@
 import { compressPromptText } from "./compress.js";
+import { PromptOptimizer } from "./PromptOptimizer.js";
+import type { TaskComplexity } from "./complexity.js";
 
 function asObject(v: unknown): Record<string, unknown> | null {
   return v && typeof v === "object" && !Array.isArray(v)
@@ -39,6 +41,8 @@ function setMessageText(msg: Record<string, unknown>, text: string): void {
 
 export interface TransformOpenAIOptions {
   compress?: boolean;
+  /** Task complexity from the quick heuristic; selects the compression strategy. */
+  complexity?: TaskComplexity;
   maxCompletionTokens?: number | null;
 }
 
@@ -46,6 +50,10 @@ export interface TransformOpenAIResult {
   body: Record<string, unknown>;
   compressionApplied: boolean;
   tokensSavedEstimate: number;
+  optimizationStrategy: string | null;
+  techniquesApplied: string[];
+  originalPromptTokens: number;
+  optimizedPromptTokens: number;
 }
 
 /**
@@ -57,15 +65,28 @@ export function transformOpenAIBody(
 ): TransformOpenAIResult {
   const body = asObject(rawBody);
   if (!body) {
-    return { body: {}, compressionApplied: false, tokensSavedEstimate: 0 };
+    return {
+      body: {},
+      compressionApplied: false,
+      tokensSavedEstimate: 0,
+      optimizationStrategy: null,
+      techniquesApplied: [],
+      originalPromptTokens: 0,
+      optimizedPromptTokens: 0,
+    };
   }
 
   const out = structuredClone(body) as Record<string, unknown>;
   let tokensSavedEstimate = 0;
   let compressionApplied = false;
+  let optimizationStrategy: string | null = null;
+  let techniquesApplied: string[] = [];
+  let originalPromptTokens = 0;
+  let optimizedPromptTokens = 0;
 
   if (options.compress) {
     const messages = Array.isArray(out.messages) ? out.messages : [];
+    const optimizer = options.complexity ? new PromptOptimizer() : null;
     for (const m of messages) {
       const msg = asObject(m);
       if (!msg) continue;
@@ -75,11 +96,31 @@ export function transformOpenAIBody(
       const text = messageText(msg.content);
       if (!text.trim()) continue;
 
-      const result = compressPromptText(text);
-      if (result.changed) {
-        setMessageText(msg, result.optimized);
-        tokensSavedEstimate += result.tokensSavedEstimate;
-        compressionApplied = true;
+      if (optimizer && options.complexity) {
+        const result = optimizer.optimize(text, options.complexity, "openai");
+        if (role === "system") {
+          optimizationStrategy = result.strategy;
+          originalPromptTokens = result.originalTokenEstimate;
+          optimizedPromptTokens = result.optimizedTokenEstimate;
+        }
+        for (const technique of result.techniquesApplied) {
+          if (!techniquesApplied.includes(technique)) {
+            techniquesApplied.push(technique);
+          }
+        }
+        if (result.optimizedPrompt !== text && result.reductionPct > 0) {
+          setMessageText(msg, result.optimizedPrompt);
+          tokensSavedEstimate +=
+            result.originalTokenEstimate - result.optimizedTokenEstimate;
+          compressionApplied = true;
+        }
+      } else {
+        const result = compressPromptText(text);
+        if (result.changed) {
+          setMessageText(msg, result.optimized);
+          tokensSavedEstimate += result.tokensSavedEstimate;
+          compressionApplied = true;
+        }
       }
     }
   }
@@ -96,5 +137,13 @@ export function transformOpenAIBody(
         : options.maxCompletionTokens;
   }
 
-  return { body: out, compressionApplied, tokensSavedEstimate };
+  return {
+    body: out,
+    compressionApplied,
+    tokensSavedEstimate,
+    optimizationStrategy,
+    techniquesApplied,
+    originalPromptTokens,
+    optimizedPromptTokens,
+  };
 }

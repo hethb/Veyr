@@ -1,4 +1,6 @@
 import { compressPromptText } from "./compress.js";
+import { PromptOptimizer } from "./PromptOptimizer.js";
+import type { TaskComplexity } from "./complexity.js";
 
 function asObject(v: unknown): Record<string, unknown> | null {
   return v && typeof v === "object" && !Array.isArray(v)
@@ -8,6 +10,8 @@ function asObject(v: unknown): Record<string, unknown> | null {
 
 export interface TransformAnthropicOptions {
   compress?: boolean;
+  /** Task complexity from the quick heuristic; selects the compression strategy. */
+  complexity?: TaskComplexity;
   maxCompletionTokens?: number | null;
   /**
    * When true, wrap a long enough system prompt as a content block with
@@ -24,6 +28,10 @@ export interface TransformAnthropicResult {
   tokensSavedEstimate: number;
   /** True when we injected cache_control into the request. */
   cachingApplied: boolean;
+  optimizationStrategy: string | null;
+  techniquesApplied: string[];
+  originalPromptTokens: number;
+  optimizedPromptTokens: number;
 }
 
 /** ~4 chars per token; Anthropic's ephemeral cache minimum is 1024 tokens. */
@@ -89,6 +97,10 @@ export function transformAnthropicBody(
       compressionApplied: false,
       tokensSavedEstimate: 0,
       cachingApplied: false,
+      optimizationStrategy: null,
+      techniquesApplied: [],
+      originalPromptTokens: 0,
+      optimizedPromptTokens: 0,
     };
   }
 
@@ -96,15 +108,38 @@ export function transformAnthropicBody(
   let tokensSavedEstimate = 0;
   let compressionApplied = false;
   let cachingApplied = false;
+  let optimizationStrategy: string | null = null;
+  let techniquesApplied: string[] = [];
+  let originalPromptTokens = 0;
+  let optimizedPromptTokens = 0;
 
   if (options.compress) {
     const sys = out.system;
     if (typeof sys === "string" && sys.trim()) {
-      const result = compressPromptText(sys);
-      if (result.changed) {
-        out.system = result.optimized;
-        tokensSavedEstimate += result.tokensSavedEstimate;
-        compressionApplied = true;
+      if (options.complexity) {
+        // Complexity-aware path: strategy picked by task type.
+        const result = new PromptOptimizer().optimize(
+          sys,
+          options.complexity,
+          "anthropic"
+        );
+        optimizationStrategy = result.strategy;
+        techniquesApplied = result.techniquesApplied;
+        originalPromptTokens = result.originalTokenEstimate;
+        optimizedPromptTokens = result.optimizedTokenEstimate;
+        if (result.optimizedPrompt !== sys && result.reductionPct > 0) {
+          out.system = result.optimizedPrompt;
+          tokensSavedEstimate +=
+            result.originalTokenEstimate - result.optimizedTokenEstimate;
+          compressionApplied = true;
+        }
+      } else {
+        const result = compressPromptText(sys);
+        if (result.changed) {
+          out.system = result.optimized;
+          tokensSavedEstimate += result.tokensSavedEstimate;
+          compressionApplied = true;
+        }
       }
     }
   }
@@ -142,5 +177,14 @@ export function transformAnthropicBody(
         : options.maxCompletionTokens;
   }
 
-  return { body: out, compressionApplied, tokensSavedEstimate, cachingApplied };
+  return {
+    body: out,
+    compressionApplied,
+    tokensSavedEstimate,
+    cachingApplied,
+    optimizationStrategy,
+    techniquesApplied,
+    originalPromptTokens,
+    optimizedPromptTokens,
+  };
 }

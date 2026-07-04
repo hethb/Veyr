@@ -131,6 +131,28 @@ function runMigrations(db: Database.Database): void {
     );
   }
 
+  // Complexity-aware optimization telemetry (Part 4): strategy + technique
+  // breakdown per request, original vs optimized prompt token estimates.
+  if (!reqCols.some((c) => c.name === "complexity")) {
+    db.exec("ALTER TABLE requests ADD COLUMN complexity TEXT");
+  }
+  if (!reqCols.some((c) => c.name === "optimization_strategy")) {
+    db.exec("ALTER TABLE requests ADD COLUMN optimization_strategy TEXT");
+  }
+  if (!reqCols.some((c) => c.name === "techniques_applied")) {
+    db.exec("ALTER TABLE requests ADD COLUMN techniques_applied TEXT");
+  }
+  if (!reqCols.some((c) => c.name === "original_prompt_tokens")) {
+    db.exec(
+      "ALTER TABLE requests ADD COLUMN original_prompt_tokens INTEGER NOT NULL DEFAULT 0"
+    );
+  }
+  if (!reqCols.some((c) => c.name === "optimized_prompt_tokens")) {
+    db.exec(
+      "ALTER TABLE requests ADD COLUMN optimized_prompt_tokens INTEGER NOT NULL DEFAULT 0"
+    );
+  }
+
   // Per-feature policy flag for auto-injecting Anthropic cache_control.
   const policyCols = db.prepare("PRAGMA table_info(feature_policies)").all() as {
     name: string;

@@ -48,6 +48,11 @@ openaiRouter.post(
         errorMessage: result.ok ? null : usage.errorMessage ?? `HTTP ${result.status}`,
         compressionApplied: req.veyr?.compressionApplied,
         tokensSavedEstimate: req.veyr?.tokensSavedEstimate,
+        complexity: req.veyr?.complexity,
+        optimizationStrategy: req.veyr?.optimizationStrategy,
+        techniquesApplied: req.veyr?.techniquesApplied,
+        originalPromptTokens: req.veyr?.originalPromptTokens,
+        optimizedPromptTokens: req.veyr?.optimizedPromptTokens,
         cachedTokens: usage.cachedTokens,
         cacheCreationTokens: usage.cacheCreationTokens,
       });

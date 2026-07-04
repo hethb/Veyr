@@ -35,6 +35,12 @@ export interface RequestInsert {
   cacheCreationTokens?: number;
   /** Optional explicit timestamp (ISO). Defaults to now. Used by the seeder. */
   timestamp?: string;
+  complexity?: string | null;
+  optimizationStrategy?: string | null;
+  /** JSON array of technique names applied by the optimizer. */
+  techniquesApplied?: string[] | null;
+  originalPromptTokens?: number;
+  optimizedPromptTokens?: number;
 }
 
 export interface RequestRow {
@@ -178,13 +184,17 @@ export function insertRequest(input: RequestInsert): void {
          prompt_tokens, completion_tokens, total_tokens, cost_usd, latency_ms,
          status, finish_reason, prompt_hash, error_message,
          compression_applied, tokens_saved_estimate,
-         cached_tokens, cache_creation_tokens
+         cached_tokens, cache_creation_tokens,
+         complexity, optimization_strategy, techniques_applied,
+         original_prompt_tokens, optimized_prompt_tokens
        ) VALUES (
          @id, @api_key_id, @timestamp, @model, @provider, @feature_tag,
          @prompt_tokens, @completion_tokens, @total_tokens, @cost_usd, @latency_ms,
          @status, @finish_reason, @prompt_hash, @error_message,
          @compression_applied, @tokens_saved_estimate,
-         @cached_tokens, @cache_creation_tokens
+         @cached_tokens, @cache_creation_tokens,
+         @complexity, @optimization_strategy, @techniques_applied,
+         @original_prompt_tokens, @optimized_prompt_tokens
        )`
     )
     .run({
@@ -207,6 +217,13 @@ export function insertRequest(input: RequestInsert): void {
       tokens_saved_estimate: input.tokensSavedEstimate,
       cached_tokens: input.cachedTokens ?? 0,
       cache_creation_tokens: input.cacheCreationTokens ?? 0,
+      complexity: input.complexity ?? null,
+      optimization_strategy: input.optimizationStrategy ?? null,
+      techniques_applied: input.techniquesApplied?.length
+        ? JSON.stringify(input.techniquesApplied)
+        : null,
+      original_prompt_tokens: input.originalPromptTokens ?? 0,
+      optimized_prompt_tokens: input.optimizedPromptTokens ?? 0,
     });
 }
 

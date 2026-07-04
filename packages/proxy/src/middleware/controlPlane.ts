@@ -4,6 +4,14 @@ import { getMonthlyFeatureSpend } from "../governance/spend.js";
 import { transformAnthropicBody } from "../optimization/transformAnthropic.js";
 import { transformOpenAIBody } from "../optimization/transformOpenAI.js";
 import { isCompressionEnabledByDefault } from "../config.js";
+import {
+  extractPromptTexts,
+  quickComplexityEstimate,
+  type TaskComplexity,
+} from "../optimization/complexity.js";
+import { recordAndShouldAutoCache } from "../optimization/cacheHeuristics.js";
+import { estimateTokens } from "../optimization/compress.js";
+import { sha256 } from "../utils/hash.js";
 
 declare module "express-serve-static-core" {
   interface Request {
@@ -12,6 +20,11 @@ declare module "express-serve-static-core" {
       tokensSavedEstimate: number;
       /** True when we injected provider-side prompt caching into the request. */
       cachingApplied?: boolean;
+      complexity?: TaskComplexity;
+      optimizationStrategy?: string | null;
+      techniquesApplied?: string[];
+      originalPromptTokens?: number;
+      optimizedPromptTokens?: number;
     };
   }
 }
@@ -70,7 +83,31 @@ export async function controlPlane(
   }
 
   const compress = wantsCompression(req, policy?.compress_prompts ?? false);
-  const enablePromptCaching = wantsCaching(req, policy?.enable_prompt_caching ?? false);
+  let enablePromptCaching = wantsCaching(req, policy?.enable_prompt_caching ?? false);
+
+  const isAnthropicRoute = req.baseUrl.includes("/anthropic");
+  const provider = isAnthropicRoute ? ("anthropic" as const) : ("openai" as const);
+
+  // Quick local complexity estimate (no LLM call) drives the compression
+  // strategy: aggressive for simple, light for moderate, hands-off for complex.
+  const texts = extractPromptTexts(req.body, provider);
+  const complexity = quickComplexityEstimate(
+    texts.systemPrompt,
+    texts.firstUserMessage
+  );
+
+  // Auto-inject Anthropic caching when the same >500-token system prompt has
+  // been seen >3 times in the last hour — repeated prefixes are pure savings.
+  if (isAnthropicRoute && !enablePromptCaching && texts.systemPrompt) {
+    if (
+      recordAndShouldAutoCache(
+        sha256(texts.systemPrompt),
+        estimateTokens(texts.systemPrompt)
+      )
+    ) {
+      enablePromptCaching = true;
+    }
+  }
   const maxFromHeader = headerMaxTokens(req);
   const maxFromPolicy = policy?.max_completion_tokens ?? null;
   const maxCompletionTokens =
@@ -78,11 +115,12 @@ export async function controlPlane(
       ? Math.min(maxFromHeader, maxFromPolicy)
       : maxFromHeader ?? maxFromPolicy;
 
-  const isAnthropic = req.baseUrl.includes("/anthropic");
+  const isAnthropic = isAnthropicRoute;
 
   if (isAnthropic) {
     const result = transformAnthropicBody(req.body, {
       compress,
+      complexity,
       maxCompletionTokens,
       enablePromptCaching,
     });
@@ -91,6 +129,11 @@ export async function controlPlane(
       compressionApplied: result.compressionApplied,
       tokensSavedEstimate: result.tokensSavedEstimate,
       cachingApplied: result.cachingApplied,
+      complexity,
+      optimizationStrategy: result.optimizationStrategy,
+      techniquesApplied: result.techniquesApplied,
+      originalPromptTokens: result.originalPromptTokens,
+      optimizedPromptTokens: result.optimizedPromptTokens,
     };
   } else {
     // OpenAI's prompt cache is automatic above ~1024 tokens of stable prefix —
@@ -98,6 +141,7 @@ export async function controlPlane(
     // so observability is consistent across providers.
     const result = transformOpenAIBody(req.body, {
       compress,
+      complexity,
       maxCompletionTokens,
     });
     req.body = result.body;
@@ -105,6 +149,11 @@ export async function controlPlane(
       compressionApplied: result.compressionApplied,
       tokensSavedEstimate: result.tokensSavedEstimate,
       cachingApplied: enablePromptCaching,
+      complexity,
+      optimizationStrategy: result.optimizationStrategy,
+      techniquesApplied: result.techniquesApplied,
+      originalPromptTokens: result.originalPromptTokens,
+      optimizedPromptTokens: result.optimizedPromptTokens,
     };
   }
 
@@ -114,6 +163,10 @@ export async function controlPlane(
       "x-veyr-tokens-saved-estimate",
       String(req.veyr.tokensSavedEstimate)
     );
+  }
+  res.setHeader("x-veyr-complexity", complexity);
+  if (req.veyr.optimizationStrategy) {
+    res.setHeader("x-veyr-strategy", req.veyr.optimizationStrategy);
   }
   if (req.veyr.cachingApplied) {
     res.setHeader(
