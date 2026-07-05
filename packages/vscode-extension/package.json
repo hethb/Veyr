@@ -2,7 +2,7 @@
   "name": "veyr-vscode",
   "displayName": "Veyr",
   "description": "LLM cost attribution and optimization suggestions in your editor, plus one-click routing of Claude Code through the Veyr proxy.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "publisher": "veyr",
   "engines": {
@@ -97,6 +97,11 @@
           "type": "boolean",
           "default": true,
           "description": "Append Veyr spend status to your project's CLAUDE.md so Claude Code reads it automatically. Mirrors the Veyr menu bar app setting (shared via ~/.veyr/config.json); the menu bar app performs the updates."
+        },
+        "veyr.suppressModelSuggestions": {
+          "type": "boolean",
+          "default": false,
+          "description": "Never show the inline 'switch to a cheaper model' suggestion messages."
         }
       }
     }

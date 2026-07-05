@@ -3,16 +3,20 @@
 
 import * as vscode from "vscode";
 import {
+  fetchTodaySavingsPct,
   formatTokens,
   formatUsd,
   pollIntervalMs,
   readStatus,
   type VeyrStatusResult,
 } from "./agentStatus";
+import { maybeNotifyModelSuggestion } from "./modelSuggestionNotifier";
 
 export class VeyrStatusBar implements vscode.Disposable {
   private readonly item: vscode.StatusBarItem;
   private timer: ReturnType<typeof setInterval> | undefined;
+  private savingsTimer: ReturnType<typeof setInterval> | undefined;
+  private todaySavingsPct: number | null = null;
 
   constructor() {
     this.item = vscode.window.createStatusBarItem(
@@ -27,6 +31,12 @@ export class VeyrStatusBar implements vscode.Disposable {
   start(): void {
     this.applyConfig();
     this.restartTimer();
+    void this.refreshSavings();
+    this.savingsTimer = setInterval(() => void this.refreshSavings(), 60_000);
+  }
+
+  private async refreshSavings(): Promise<void> {
+    this.todaySavingsPct = await fetchTodaySavingsPct();
   }
 
   onConfigChanged(): void {
@@ -35,7 +45,9 @@ export class VeyrStatusBar implements vscode.Disposable {
   }
 
   refresh(): void {
-    this.render(readStatus());
+    const result = readStatus();
+    this.render(result);
+    maybeNotifyModelSuggestion(result);
   }
 
   private applyConfig(): void {
@@ -67,9 +79,11 @@ export class VeyrStatusBar implements vscode.Disposable {
 
     const session = result.status.current_session;
     const dot = session.is_active ? "$(circle-filled) " : "";
+    const savings =
+      this.todaySavingsPct !== null ? ` · ${this.todaySavingsPct}% saved ⚡` : "";
     this.item.text =
       `${dot}$(graph-line) ${formatUsd(session.session_cost_usd)} · ` +
-      `${formatTokens(session.input_tokens)}↓ ${formatTokens(session.output_tokens)}↑`;
+      `${formatTokens(session.input_tokens)}↓ ${formatTokens(session.output_tokens)}↑${savings}`;
 
     const tooltip = new vscode.MarkdownString();
     tooltip.appendMarkdown(`**Veyr — ${session.project}** (${session.model})\n\n`);
@@ -84,6 +98,7 @@ export class VeyrStatusBar implements vscode.Disposable {
 
   dispose(): void {
     if (this.timer !== undefined) clearInterval(this.timer);
+    if (this.savingsTimer !== undefined) clearInterval(this.savingsTimer);
     this.item.dispose();
   }
 }

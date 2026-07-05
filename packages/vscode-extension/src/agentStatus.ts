@@ -138,6 +138,32 @@ export function writeAutoInjectClaudeMd(enabled: boolean): void {
   fs.writeFileSync(file, `${JSON.stringify(config, null, 2)}\n`, "utf8");
 }
 
+// --- Proxy optimization stats (for the "N% saved" status-bar suffix) --------
+
+export function proxyBaseUrl(): string {
+  return vscode.workspace
+    .getConfiguration("veyr")
+    .get<string>("proxyUrl", "http://localhost:3001")
+    .replace(/\/$/, "");
+}
+
+/** Today's average compression ratio from the local proxy, or null when the
+ *  proxy is unreachable or nothing was optimized today. Never throws. */
+export async function fetchTodaySavingsPct(): Promise<number | null> {
+  try {
+    const res = await fetch(`${proxyBaseUrl()}/api/stats/optimization?period=1d`, {
+      headers: { accept: "application/json" },
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { compression_ratio_pct?: number };
+    const pct = data.compression_ratio_pct;
+    return typeof pct === "number" && pct > 0 ? pct : null;
+  } catch {
+    return null;
+  }
+}
+
 // --- Formatting helpers ------------------------------------------------------
 
 export function formatUsd(value: number): string {
