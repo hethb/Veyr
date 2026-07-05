@@ -12,6 +12,10 @@ import {
 import { recordAndShouldAutoCache } from "../optimization/cacheHeuristics.js";
 import { estimateTokens } from "../optimization/compress.js";
 import { sha256 } from "../utils/hash.js";
+import { ConversationTrimmer, type Message } from "../optimization/ConversationTrimmer.js";
+import { StructuredOutputEnforcer } from "../optimization/StructuredOutputEnforcer.js";
+import { BatchApiDetector } from "../optimization/BatchApiDetector.js";
+import { getSharedConfig } from "../optimization/sharedConfig.js";
 
 declare module "express-serve-static-core" {
   interface Request {
@@ -25,6 +29,10 @@ declare module "express-serve-static-core" {
       techniquesApplied?: string[];
       originalPromptTokens?: number;
       optimizedPromptTokens?: number;
+      messagesDropped?: number;
+      trimTokensSaved?: number;
+      structuredOutputCandidate?: boolean;
+      batchCandidate?: boolean;
     };
   }
 }
@@ -96,6 +104,55 @@ export async function controlPlane(
     texts.firstUserMessage
   );
 
+  // Part 7 pipeline: trim long conversations before compression/caching.
+  const shared = getSharedConfig();
+  let messagesDropped = 0;
+  let trimTokensSaved = 0;
+  const bodyObject =
+    req.body && typeof req.body === "object" && !Array.isArray(req.body)
+      ? (req.body as Record<string, unknown>)
+      : null;
+  if (
+    shared.trimStrategy !== "off" &&
+    bodyObject &&
+    Array.isArray(bodyObject.messages)
+  ) {
+    const trimmer = new ConversationTrimmer({
+      strategy: shared.trimStrategy,
+      lastN: 10,
+      anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? null,
+    });
+    const messages = bodyObject.messages as Message[];
+    if (trimmer.shouldTrim(messages, complexity)) {
+      const result = await trimmer.trim(messages, complexity);
+      bodyObject.messages = result.trimmed;
+      messagesDropped = result.messagesDropped;
+      trimTokensSaved = result.tokensSaved;
+    }
+  }
+
+  // Output-length constraints for simple/moderate tasks (never complex).
+  if (shared.outputConstraints && bodyObject && complexity !== "complex") {
+    const cap = complexity === "simple" ? 600 : 1500;
+    const current =
+      typeof bodyObject.max_tokens === "number" ? bodyObject.max_tokens : null;
+    if (current === null || current > cap) {
+      bodyObject.max_tokens = cap;
+    }
+  }
+
+  // Detection-only techniques (never modify the request).
+  const structuredOutputCandidate =
+    shared.structuredOutputDetection &&
+    new StructuredOutputEnforcer().detect(texts.systemPrompt);
+  const batchCandidate =
+    shared.batchApiDetection &&
+    new BatchApiDetector().isBatchCandidate(
+      req.body,
+      featureTag,
+      new Date().getHours()
+    );
+
   // Auto-inject Anthropic caching when the same >500-token system prompt has
   // been seen >3 times in the last hour — repeated prefixes are pure savings.
   if (isAnthropicRoute && !enablePromptCaching && texts.systemPrompt) {
@@ -164,6 +221,18 @@ export async function controlPlane(
       String(req.veyr.tokensSavedEstimate)
     );
   }
+  req.veyr.messagesDropped = messagesDropped;
+  req.veyr.trimTokensSaved = trimTokensSaved;
+  req.veyr.structuredOutputCandidate = structuredOutputCandidate;
+  req.veyr.batchCandidate = batchCandidate;
+  if (messagesDropped > 0) {
+    res.setHeader("x-veyr-trimmed", String(messagesDropped));
+  }
+  if (structuredOutputCandidate) {
+    res.setHeader("x-veyr-structured-output-candidate", "1");
+  }
+  if (batchCandidate) res.setHeader("x-veyr-batch-candidate", "1");
+
   res.setHeader("x-veyr-complexity", complexity);
   if (req.veyr.optimizationStrategy) {
     res.setHeader("x-veyr-strategy", req.veyr.optimizationStrategy);

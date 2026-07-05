@@ -15,6 +15,11 @@ public enum SuggestionAction: String, Codable, Sendable {
     case setBudgetCap = "set_budget_cap"
     case addOutputConstraints = "add_output_constraints"
     case useContextFile = "use_context_file"
+    case filterTools = "filter_tools"
+    case trimSystemPrompt = "trim_system_prompt"
+    case improveErrorHandling = "improve_error_handling"
+    case useStructuredOutputs = "use_structured_outputs"
+    case useBatchApi = "use_batch_api"
 }
 
 /// One optimization suggestion. `id` is a stable "rule:tag" string (not a UUID)
@@ -99,12 +104,25 @@ public enum VeyrSuggestionEngine {
         currentSession: SessionEntry? = nil,
         currentSessionIsActive: Bool = false,
         classifications: [VeyrClassificationRecord] = [],
+        signals: [VeyrSessionSignals] = [],
+        toolFilteringEnabled: Bool = true,
         now: Date = Date()) -> [Suggestion]
     {
         guard let windowStart = Calendar.current.date(byAdding: .day, value: -30, to: now) else { return [] }
         let recent = sessions.filter { $0.timestamp >= windowStart }
         let statsByTag = Self.tagStats(sessions: recent)
         let totalCost = recent.reduce(0.0) { $0 + $1.usage.costUSD }
+
+        // Signals grouped by tag (sessionId → tag from the scanned sessions).
+        let tagBySession = Dictionary(
+            sessions.map { ($0.sessionId, $0.featureTag) },
+            uniquingKeysWith: { first, _ in first })
+        let signalsByTag = Dictionary(grouping: signals.filter { $0.lastTimestamp >= windowStart }) {
+            tagBySession[$0.sessionId] ?? FeatureTagInferrer(overrides: [:]).inferTag(from: $0.cwd)
+        }
+        let classificationStore = VeyrClassificationStore(entries: classifications)
+        let complexityByTag = classificationStore.monthlyStatsByTag(
+            now: now, isFrontier: Self.isFrontier)
 
         var suggestions: [Suggestion] = []
         for stats in statsByTag.values {
@@ -114,6 +132,22 @@ public enum VeyrSuggestionEngine {
             if let contextFile = Self.ruleContextFileOpportunity(stats) { suggestions.append(contextFile) }
             if let dominance = Self.ruleBudgetDominance(stats, totalCost: totalCost) {
                 suggestions.append(dominance)
+            }
+            if toolFilteringEnabled,
+               let toolBloat = Self.ruleToolBloat(stats, signals: signalsByTag[stats.tag] ?? [])
+            {
+                suggestions.append(toolBloat)
+            }
+            if let bloatedSystem = Self.ruleBloatedSystemPrompt(stats) {
+                suggestions.append(bloatedSystem)
+            }
+            if let retries = Self.ruleRetryLoops(stats, signals: signalsByTag[stats.tag] ?? []) {
+                suggestions.append(retries)
+            }
+            if let outputWaste = Self.ruleOutputWaste(
+                stats, complexityStats: complexityByTag[stats.tag])
+            {
+                suggestions.append(outputWaste)
             }
         }
         if let runaway = Self.ruleRunawaySession(
@@ -306,6 +340,111 @@ public enum VeyrSuggestionEngine {
                 "output-length constraints to prompts saves 30–50% on output tokens.",
             actionLabel: "Copy prompt hint",
             estimatedMonthlySavingsUSD: outputCost * 0.40,
+            avgOutputTokens: stats.avgOutputPerTurn)
+    }
+
+    // MARK: - Rule 8: tool list bloat (approximation: distinct tools *called*
+    // across the tag stand in for "loaded"; definitions aren't in the logs)
+
+    static func ruleToolBloat(_ stats: TagStats, signals: [VeyrSessionSignals]) -> Suggestion? {
+        let withTools = signals.filter { $0.toolUseCount > 0 }
+        guard withTools.count > 15 else { return nil }
+        let distinct = Set(withTools.flatMap(\.toolNames))
+        let avgUnique = Double(withTools.reduce(0) { $0 + $1.toolNames.count })
+            / Double(withTools.count)
+        guard distinct.count > 8, avgUnique < 3 else { return nil }
+
+        let unused = Double(distinct.count) - avgUnique
+        let dominantModel = Dictionary(grouping: stats.sessions, by: \.modelId)
+            .max { $0.value.count < $1.value.count }?.key ?? "claude-sonnet-5"
+        // ~50 tokens per unused tool definition, billed on every session turn.
+        let savings = ModelPricing.cost(
+            for: dominantModel,
+            inputTokens: Int(unused * 50) * withTools.count,
+            outputTokens: 0)
+        return Suggestion(
+            id: "tool-bloat:\(stats.tag)",
+            severity: .medium,
+            action: .filterTools,
+            title: "Too many tools loaded for \(stats.tag) sessions",
+            detail: "Your \(stats.tag) sessions have used \(distinct.count) distinct tools overall " +
+                "but only ~\(Int(avgUnique.rounded())) per session. Each unused tool definition " +
+                "still costs tokens every turn — filter tools to those relevant to the task.",
+            actionLabel: "Copy tool-filtering hint",
+            estimatedMonthlySavingsUSD: savings)
+    }
+
+    // MARK: - Rule 9: bloated system prompt (large fresh prefix, poor caching)
+
+    static func ruleBloatedSystemPrompt(_ stats: TagStats) -> Suggestion? {
+        guard stats.sessions.count >= 5 else { return nil }
+        guard stats.avgFreshInputPerTurn > 800, stats.cacheHitRate < 0.30 else { return nil }
+        let dominantModel = Dictionary(grouping: stats.sessions, by: \.modelId)
+            .max { $0.value.count < $1.value.count }?.key ?? "claude-sonnet-5"
+        let conditionalTokens = (stats.avgFreshInputPerTurn - 400) * stats.entryCount
+        let savings = ModelPricing.cost(
+            for: dominantModel, inputTokens: max(0, conditionalTokens), outputTokens: 0)
+        return Suggestion(
+            id: "bloated-system:\(stats.tag)",
+            severity: .medium,
+            action: .trimSystemPrompt,
+            title: "System prompt may contain unused conditional sections for \(stats.tag)",
+            detail: "Turns average \(stats.avgFreshInputPerTurn) fresh input tokens with only " +
+                "\(Int((stats.cacheHitRate * 100).rounded()))% cache coverage — a large prompt " +
+                "prefix is being re-sent. Move tool-specific instructions into the tool " +
+                "definitions, or include conditional sections only when they apply.",
+            actionLabel: "Copy trimming hint",
+            estimatedMonthlySavingsUSD: savings)
+    }
+
+    // MARK: - Rule 10: retry loops
+
+    static func ruleRetryLoops(_ stats: TagStats, signals: [VeyrSessionSignals]) -> Suggestion? {
+        let clusters = signals.reduce(0) { $0 + $1.retryClusters }
+        guard clusters > 5 else { return nil }
+        let avgSessionCost = stats.sessions.isEmpty
+            ? 0 : stats.costUSD / Double(stats.sessions.count)
+        // Estimate: each cluster wastes roughly half a session's cost in re-billed turns.
+        let savings = Double(clusters) * avgSessionCost * 0.5
+        return Suggestion(
+            id: "retry-loops:\(stats.tag)",
+            severity: .high,
+            action: .improveErrorHandling,
+            title: "Retry loops detected in \(stats.tag) — each retry costs full tokens",
+            detail: "Your \(stats.tag) sessions show \(clusters) retry clusters where the agent " +
+                "repeated a request after an error. Structured error responses (what failed, " +
+                "what's needed, how to fix it) let the agent correct itself in one turn.",
+            actionLabel: "Copy error-handling hint",
+            estimatedMonthlySavingsUSD: savings)
+    }
+
+    // MARK: - Rule 11: absolute output waste on simple work (classifier-gated)
+
+    static func ruleOutputWaste(
+        _ stats: TagStats,
+        complexityStats: VeyrClassificationStore.TagComplexityStats?) -> Suggestion?
+    {
+        guard stats.sessions.count > 10, stats.avgOutputPerTurn > 1500 else { return nil }
+        guard let complexity = complexityStats,
+              complexity.classifiedTurns >= 5,
+              complexity.simpleOnFrontierPct > 0.5
+        else { return nil }
+
+        let outputCost = stats.sessions.reduce(0.0) { total, session in
+            total + ModelPricing.cost(
+                for: session.modelId, inputTokens: 0, outputTokens: session.usage.outputTokens)
+        }
+        let excessShare = Double(stats.avgOutputPerTurn - 500) / Double(stats.avgOutputPerTurn)
+        return Suggestion(
+            id: "output-waste:\(stats.tag)",
+            severity: .medium,
+            action: .addOutputConstraints,
+            title: "Long responses to simple tasks in \(stats.tag) — output costs ~4x input",
+            detail: "Your \(stats.tag) sessions average \(stats.avgOutputPerTurn) output tokens " +
+                "while most classified tasks are simple. Add 'be concise, respond in under 300 " +
+                "words unless the task requires more' to your prompts, or cap max_tokens.",
+            actionLabel: "Copy prompt hint",
+            estimatedMonthlySavingsUSD: outputCost * excessShare * 0.5,
             avgOutputTokens: stats.avgOutputPerTurn)
     }
 

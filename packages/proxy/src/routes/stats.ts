@@ -341,6 +341,10 @@ statsRouter.get("/optimization", (req: Request, res: Response): void => {
     let optimizedTokens = 0;
     let cacheHits = 0;
     let costAvoided = 0;
+    let turnsTrimmed = 0;
+    let trimTokensSaved = 0;
+    let batchEligible = 0;
+    let structuredOutputCandidates = 0;
     const byTag = new Map<string, OptimizationTagAgg>();
     const byDay = new Map<string, OptimizationTimePoint>();
     const byTechnique = new Map<string, number>();
@@ -358,6 +362,11 @@ statsRouter.get("/optimization", (req: Request, res: Response): void => {
       if ((r.cached_tokens ?? 0) > 0) cacheHits += 1;
       originalTokens += orig;
       optimizedTokens += opt;
+      turnsTrimmed += r.messages_dropped ?? 0;
+      trimTokensSaved += r.trim_tokens_saved ?? 0;
+      if ((r.trim_tokens_saved ?? 0) > 0) costAvoided += (r.trim_tokens_saved ?? 0) * perToken;
+      if ((r.batch_candidate ?? 0) > 0) batchEligible += 1;
+      if ((r.structured_output_candidate ?? 0) > 0) structuredOutputCandidates += 1;
 
       const day = bucketKey(r.timestamp, "day");
       const point = byDay.get(day) ?? {
@@ -408,6 +417,12 @@ statsRouter.get("/optimization", (req: Request, res: Response): void => {
           (byTechnique.get("cache_injection") ?? 0) + (r.cached_tokens ?? 0) * 0.9
         );
       }
+      if ((r.trim_tokens_saved ?? 0) > 0) {
+        byTechnique.set(
+          "conversation_trimming",
+          (byTechnique.get("conversation_trimming") ?? 0) + (r.trim_tokens_saved ?? 0)
+        );
+      }
     }
 
     const tags = [...byTag.values()]
@@ -436,6 +451,10 @@ statsRouter.get("/optimization", (req: Request, res: Response): void => {
           : 0,
       cache_hits: cacheHits,
       cost_avoided_usd: Math.round(costAvoided * 10000) / 10000,
+      turns_trimmed: turnsTrimmed,
+      trim_tokens_saved: trimTokensSaved,
+      batch_eligible_requests: batchEligible,
+      structured_output_candidates: structuredOutputCandidates,
       series: [...byDay.values()].sort((a, b) =>
         a.bucket.localeCompare(b.bucket)
       ),

@@ -366,6 +366,104 @@ check(reloaded.first { $0.sessionId == "sess-2" }?.userFeedbackComplexity == nil
     "other sessions untouched")
 check(VeyrTrainingDataStore.labeledCount(url: mlFile) == 1, "labeled count = 1")
 
+// MARK: - 8. Signals scanner + rules 8-11
+
+print("— session signals & part 7 rules —")
+let sigLog = tempRoot.appendingPathComponent("signals.jsonl")
+var sigLines: [String] = []
+// 3 tool calls (2 unique) + a retry cluster (same user msg 3x in 5min + apology)
+sigLines.append(#"{"type":"user","sessionId":"sig1","cwd":"/Users/x/veyr","timestamp":"2026-07-05T10:00:00Z","message":{"role":"user","content":"run the tests"}}"#)
+sigLines.append(#"{"type":"assistant","sessionId":"sig1","timestamp":"2026-07-05T10:00:05Z","message":{"model":"claude-opus-4-8","content":[{"type":"tool_use","name":"Bash","input":{}},{"type":"tool_use","name":"Read","input":{}}]}}"#)
+sigLines.append(#"{"type":"user","sessionId":"sig1","timestamp":"2026-07-05T10:01:00Z","message":{"role":"user","content":"fix the auth bug now"}}"#)
+sigLines.append(#"{"type":"assistant","sessionId":"sig1","timestamp":"2026-07-05T10:01:10Z","message":{"model":"claude-opus-4-8","content":[{"type":"text","text":"I apologize, that failed."},{"type":"tool_use","name":"Bash","input":{}}]}}"#)
+sigLines.append(#"{"type":"user","sessionId":"sig1","timestamp":"2026-07-05T10:02:00Z","message":{"role":"user","content":"fix the auth bug now"}}"#)
+sigLines.append(#"{"type":"user","sessionId":"sig1","timestamp":"2026-07-05T10:03:00Z","message":{"role":"user","content":"fix the auth bug now"}}"#)
+try! (sigLines.joined(separator: "\n") + "\n").write(to: sigLog, atomically: true, encoding: .utf8)
+
+var sigStore = VeyrSignalsStore()
+_ = VeyrSignalsScanner.parse(file: sigLog, offset: 0, into: &sigStore)
+let sig1 = sigStore.sessions["sig1"]!
+check(sig1.toolNames.sorted() == ["Bash", "Read"], "unique tool names collected")
+check(sig1.toolUseCount == 3, "tool use count = 3")
+check(sig1.retryClusters == 1, "retry cluster detected (3x same msg + apology)")
+check(sig1.cwd == "/Users/x/veyr", "cwd captured in signals")
+
+// Rule 8: 16 sessions using 2 of 10 distinct tools
+func toolSignals(_ n: Int, tools: [String]) -> [VeyrSessionSignals] {
+    (0..<n).map { i in
+        VeyrSessionSignals(
+            sessionId: "ts\(i)", cwd: "/Users/x/tools", lastTimestamp: Date(),
+            toolNames: [tools[i % tools.count], tools[(i + 1) % tools.count]],
+            toolUseCount: 4, messageCount: 10, retryClusters: 0)
+    }
+}
+let tenTools = (0..<10).map { "tool_\($0)" }
+let bloatSessions = (0..<16).map { i in
+    SessionEntry(
+        timestamp: Date().addingTimeInterval(Double(-i) * 3600),
+        startedAt: Date().addingTimeInterval(Double(-i) * 3600 - 300),
+        provider: "claude", modelId: "claude-opus-4-8", featureTag: "tools",
+        usage: TokenUsage(inputTokens: 5000, outputTokens: 500, costUSD: 1.0),
+        projectPath: "/Users/x/tools", sessionId: "ts\(i)", entryCount: 5)
+}
+engineOut = VeyrSuggestionEngine.analyze(
+    sessions: bloatSessions, signals: toolSignals(16, tools: tenTools))
+check(engineOut.contains { $0.action == .filterTools }, "rule 8 fires on tool bloat")
+engineOut = VeyrSuggestionEngine.analyze(
+    sessions: bloatSessions, signals: toolSignals(16, tools: tenTools), toolFilteringEnabled: false)
+check(!engineOut.contains { $0.action == .filterTools }, "rule 8 respects the settings toggle")
+
+// Rule 9: big fresh input, poor cache
+let bloatedSystem = (0..<6).map { i in
+    SessionEntry(
+        timestamp: Date().addingTimeInterval(Double(-i) * 3600),
+        startedAt: Date().addingTimeInterval(Double(-i) * 3600 - 300),
+        provider: "claude", modelId: "claude-sonnet-5", featureTag: "bigsys",
+        usage: TokenUsage(inputTokens: 10000, outputTokens: 800, cacheReadTokens: 1000, costUSD: 0.5),
+        projectPath: "/Users/x/bigsys", entryCount: 10)
+}
+engineOut = VeyrSuggestionEngine.analyze(sessions: bloatedSystem)
+check(engineOut.contains { $0.action == .trimSystemPrompt }, "rule 9 fires on bloated re-sent prefix")
+
+// Rule 10: >5 retry clusters
+let retrySignals = (0..<3).map { i in
+    VeyrSessionSignals(
+        sessionId: "rs\(i)", cwd: "/Users/x/retry", lastTimestamp: Date(),
+        toolNames: ["Bash"], toolUseCount: 2, messageCount: 12, retryClusters: 3)
+}
+let retrySessions = (0..<3).map { i in
+    SessionEntry(
+        timestamp: Date(), startedAt: Date().addingTimeInterval(-300),
+        provider: "claude", modelId: "claude-sonnet-5", featureTag: "retry",
+        usage: TokenUsage(inputTokens: 3000, outputTokens: 800, costUSD: 2.0),
+        projectPath: "/Users/x/retry", sessionId: "rs\(i)", entryCount: 5)
+}
+engineOut = VeyrSuggestionEngine.analyze(sessions: retrySessions, signals: retrySignals)
+check(engineOut.contains { $0.action == .improveErrorHandling }, "rule 10 fires on retry clusters")
+
+// Rule 11: long outputs + classifier says simple
+let wasteSessions = (0..<11).map { i in
+    SessionEntry(
+        timestamp: Date().addingTimeInterval(Double(-i) * 3600),
+        startedAt: Date().addingTimeInterval(Double(-i) * 3600 - 300),
+        provider: "claude", modelId: "claude-opus-4-8", featureTag: "waste",
+        usage: TokenUsage(inputTokens: 500, outputTokens: 2000, cacheReadTokens: 300000, costUSD: 1.0),
+        projectPath: "/Users/x/waste", entryCount: 1)
+}
+let wasteClassifications = (0..<6).map { _ in
+    classRecord(tag: "waste", complexity: "simple", wasted: 0.1)
+} + (0..<4).map { _ in classRecord(tag: "waste", complexity: "complex", wasted: 0) }
+engineOut = VeyrSuggestionEngine.analyze(
+    sessions: wasteSessions, classifications: wasteClassifications)
+check(engineOut.contains { $0.id == "output-waste:waste" }, "rule 11 fires (classifier-gated)")
+engineOut = VeyrSuggestionEngine.analyze(sessions: wasteSessions)
+check(!engineOut.contains { $0.id == "output-waste:waste" }, "rule 11 silent without classifier data")
+
+// Vague tool names
+let flagged = VeyrSignalsScanner.flagVagueTools(["do_thing", "process", "send_email", "run"])
+check(flagged.count == 3 && !flagged.contains { $0.name == "send_email" },
+    "vague tool names flagged, specific names pass")
+
 // MARK: - 4. Real logs
 
 print("— real ~/.claude/projects scan —")

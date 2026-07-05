@@ -153,6 +153,18 @@ function runMigrations(db: Database.Database): void {
     );
   }
 
+  // Part 7 telemetry: trimming + detection-only technique flags.
+  for (const [col, ddl] of [
+    ["messages_dropped", "INTEGER NOT NULL DEFAULT 0"],
+    ["trim_tokens_saved", "INTEGER NOT NULL DEFAULT 0"],
+    ["structured_output_candidate", "INTEGER NOT NULL DEFAULT 0"],
+    ["batch_candidate", "INTEGER NOT NULL DEFAULT 0"],
+  ] as const) {
+    if (!reqCols.some((c) => c.name === col)) {
+      db.exec(`ALTER TABLE requests ADD COLUMN ${col} ${ddl}`);
+    }
+  }
+
   // Per-feature policy flag for auto-injecting Anthropic cache_control.
   const policyCols = db.prepare("PRAGMA table_info(feature_policies)").all() as {
     name: string;

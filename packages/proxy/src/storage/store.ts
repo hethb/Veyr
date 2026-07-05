@@ -41,6 +41,10 @@ export interface RequestInsert {
   techniquesApplied?: string[] | null;
   originalPromptTokens?: number;
   optimizedPromptTokens?: number;
+  messagesDropped?: number;
+  trimTokensSaved?: number;
+  structuredOutputCandidate?: boolean;
+  batchCandidate?: boolean;
 }
 
 export interface RequestRow {
@@ -186,7 +190,9 @@ export function insertRequest(input: RequestInsert): void {
          compression_applied, tokens_saved_estimate,
          cached_tokens, cache_creation_tokens,
          complexity, optimization_strategy, techniques_applied,
-         original_prompt_tokens, optimized_prompt_tokens
+         original_prompt_tokens, optimized_prompt_tokens,
+         messages_dropped, trim_tokens_saved,
+         structured_output_candidate, batch_candidate
        ) VALUES (
          @id, @api_key_id, @timestamp, @model, @provider, @feature_tag,
          @prompt_tokens, @completion_tokens, @total_tokens, @cost_usd, @latency_ms,
@@ -194,7 +200,9 @@ export function insertRequest(input: RequestInsert): void {
          @compression_applied, @tokens_saved_estimate,
          @cached_tokens, @cache_creation_tokens,
          @complexity, @optimization_strategy, @techniques_applied,
-         @original_prompt_tokens, @optimized_prompt_tokens
+         @original_prompt_tokens, @optimized_prompt_tokens,
+         @messages_dropped, @trim_tokens_saved,
+         @structured_output_candidate, @batch_candidate
        )`
     )
     .run({
@@ -224,6 +232,10 @@ export function insertRequest(input: RequestInsert): void {
         : null,
       original_prompt_tokens: input.originalPromptTokens ?? 0,
       optimized_prompt_tokens: input.optimizedPromptTokens ?? 0,
+      messages_dropped: input.messagesDropped ?? 0,
+      trim_tokens_saved: input.trimTokensSaved ?? 0,
+      structured_output_candidate: input.structuredOutputCandidate ? 1 : 0,
+      batch_candidate: input.batchCandidate ? 1 : 0,
     });
 }
 
@@ -247,6 +259,10 @@ export interface AnalysisRow {
   techniques_applied: string | null;
   original_prompt_tokens: number;
   optimized_prompt_tokens: number;
+  messages_dropped: number;
+  trim_tokens_saved: number;
+  structured_output_candidate: number;
+  batch_candidate: number;
 }
 
 /**
@@ -266,7 +282,9 @@ export function getRequestsForAnalysis(
                 total_tokens, cost_usd, status, prompt_hash,
                 cached_tokens, cache_creation_tokens,
                 tokens_saved_estimate, complexity, optimization_strategy,
-                techniques_applied, original_prompt_tokens, optimized_prompt_tokens
+                techniques_applied, original_prompt_tokens, optimized_prompt_tokens,
+                messages_dropped, trim_tokens_saved,
+                structured_output_candidate, batch_candidate
          FROM requests
          WHERE timestamp >= ?
            AND api_key_id IN (SELECT id FROM api_keys WHERE user_id = ?)
@@ -281,7 +299,9 @@ export function getRequestsForAnalysis(
               total_tokens, cost_usd, status, prompt_hash,
               cached_tokens, cache_creation_tokens,
               tokens_saved_estimate, complexity, optimization_strategy,
-              techniques_applied, original_prompt_tokens, optimized_prompt_tokens
+              techniques_applied, original_prompt_tokens, optimized_prompt_tokens,
+              messages_dropped, trim_tokens_saved,
+              structured_output_candidate, batch_candidate
        FROM requests
        WHERE timestamp >= ?
        ORDER BY timestamp ASC

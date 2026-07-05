@@ -32,6 +32,7 @@ const TECHNIQUE_LABELS: Record<string, string> = {
   summary_header_removal: "Summary header removal",
   greeting_signoff_removal: "Greeting/signoff removal",
   cache_injection: "Cache injection",
+  conversation_trimming: "Conversation trimming",
 };
 
 export function OptimizationPanel() {
@@ -121,6 +122,37 @@ export function OptimizationPanel() {
               <p className="text-xs text-neutral-500">Cost avoided</p>
               <p className="mt-1 text-xl font-semibold text-emerald-400">
                 {formatUsd(data.cost_avoided_usd)}
+              </p>
+            </div>
+          </div>
+
+          {/* Part 7 technique cards */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className={panelClass}>
+              <p className="text-xs text-neutral-500">Conversation turns trimmed</p>
+              <p className="mt-1 text-xl font-semibold text-white">
+                {formatNumber(data.turns_trimmed)}
+              </p>
+              <p className="mt-0.5 text-[10px] text-neutral-600">
+                {formatNumber(data.trim_tokens_saved)} tokens saved
+              </p>
+            </div>
+            <div className={panelClass}>
+              <p className="text-xs text-neutral-500">Batch-eligible requests</p>
+              <p className="mt-1 text-xl font-semibold text-white">
+                {formatNumber(data.batch_eligible_requests)}
+              </p>
+              <p className="mt-0.5 text-[10px] text-neutral-600">
+                50% cheaper via OpenAI Batch API
+              </p>
+            </div>
+            <div className={panelClass}>
+              <p className="text-xs text-neutral-500">Verbose JSON examples flagged</p>
+              <p className="mt-1 text-xl font-semibold text-white">
+                {formatNumber(data.structured_output_candidates)}
+              </p>
+              <p className="mt-0.5 text-[10px] text-neutral-600">
+                switch to structured outputs (~30% less input)
               </p>
             </div>
           </div>

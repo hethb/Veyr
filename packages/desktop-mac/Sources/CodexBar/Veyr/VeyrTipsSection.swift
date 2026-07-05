@@ -146,6 +146,16 @@ struct VeyrTipsSection: View {
         }
     }
 
+    private static let toolFilterHint =
+        "Only load the tools relevant to the current task. Each tool definition costs input " +
+            "tokens on every turn — trim MCP servers/tools you aren't using in this project."
+    private static let trimSystemHint =
+        "Move tool-specific instructions out of the system prompt and into the tool " +
+            "definitions themselves; include conditional sections only when they apply."
+    private static let errorHandlingHint =
+        "When a tool call fails, return a structured error: what failed, what input was " +
+            "wrong, and the correct format. Avoid vague errors that cause blind retries."
+
     private func performAction(_ suggestion: Suggestion) {
         switch suggestion.action {
         case .switchModel:
@@ -162,6 +172,15 @@ struct VeyrTipsSection: View {
             if let url = URL(string: Self.cachingDocsURL) {
                 NSWorkspace.shared.open(url)
             }
+        case .filterTools:
+            self.copy(Self.toolFilterHint, id: suggestion.id)
+        case .trimSystemPrompt:
+            self.copy(Self.trimSystemHint, id: suggestion.id)
+        case .improveErrorHandling:
+            self.copy(Self.errorHandlingHint, id: suggestion.id)
+        case .useStructuredOutputs, .useBatchApi:
+            // Proxy-side techniques; the suggestion detail is the guidance.
+            self.copy(suggestion.detail, id: suggestion.id)
         }
     }
 

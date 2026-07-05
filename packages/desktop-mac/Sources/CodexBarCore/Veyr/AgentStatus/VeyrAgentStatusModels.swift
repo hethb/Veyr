@@ -85,6 +85,49 @@ public struct VeyrAgentStatusPayload: Codable, Equatable, Sendable {
         }
     }
 
+    public struct ToolAnalysis: Codable, Equatable, Sendable {
+        /// Approximation: distinct tools *called* across the tag (definitions
+        /// aren't logged), standing in for "loaded".
+        public var toolsLoaded: Int
+        public var toolsUsed: Int
+        public var unusedToolTokenEstimate: Int
+        public var unusedToolCostThisSession: Double
+
+        public init(
+            toolsLoaded: Int, toolsUsed: Int,
+            unusedToolTokenEstimate: Int, unusedToolCostThisSession: Double)
+        {
+            self.toolsLoaded = toolsLoaded
+            self.toolsUsed = toolsUsed
+            self.unusedToolTokenEstimate = unusedToolTokenEstimate
+            self.unusedToolCostThisSession = unusedToolCostThisSession
+        }
+    }
+
+    public struct FlaggedTool: Codable, Equatable, Sendable {
+        public var name: String
+        public var issue: String
+        public var suggestion: String
+
+        public init(name: String, issue: String, suggestion: String) {
+            self.name = name
+            self.issue = issue
+            self.suggestion = suggestion
+        }
+    }
+
+    public struct ToolQuality: Codable, Equatable, Sendable {
+        public var analyzed: Bool
+        public var totalTools: Int
+        public var flaggedTools: [FlaggedTool]
+
+        public init(analyzed: Bool, totalTools: Int, flaggedTools: [FlaggedTool]) {
+            self.analyzed = analyzed
+            self.totalTools = totalTools
+            self.flaggedTools = flaggedTools
+        }
+    }
+
     public var generatedAt: Date
     public var currentSession: CurrentSession?
     public var budget: Budget
@@ -92,6 +135,8 @@ public struct VeyrAgentStatusPayload: Codable, Equatable, Sendable {
     public var recommendations: [Recommendation]
     public var agentInstructions: String
     public var complexity: ComplexityAnalysis?
+    public var toolAnalysis: ToolAnalysis?
+    public var toolQuality: ToolQuality?
 }
 
 /// `~/.veyr/budget-controls.json` (camelCase keys, per the controls-file contract).

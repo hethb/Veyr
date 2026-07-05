@@ -86,19 +86,37 @@ public final class VeyrAgentStatusService {
             isSessionActive: store.isSessionActive)
         VeyrComplexityService.shared.refreshFeedbackCandidate(
             isSessionActive: store.isSessionActive)
+        let signalsStore = await Task.detached(priority: .utility) {
+            VeyrSignalsScanner.scan()
+        }.value
+        let allSignals = Array(signalsStore.sessions.values)
+        let config = VeyrConfig.load()
         let suggestions = VeyrSuggestionEngine.analyze(
             sessions: store.sessions,
             currentSession: currentSession,
             currentSessionIsActive: store.isSessionActive,
-            classifications: classifications)
+            classifications: classifications,
+            signals: allSignals,
+            toolFilteringEnabled: config.toolFilteringSuggestions ?? true)
         self.latestSuggestions = suggestions
+        let currentSignals = currentSession?.sessionId.flatMap { sessionId in
+            signalsStore.sessions[sessionId]
+        }
+        let tagSessionIds = Set(store.sessions
+            .filter { $0.featureTag == currentSession?.featureTag }
+            .compactMap(\.sessionId))
+        let tagDistinctTools = Set(allSignals
+            .filter { tagSessionIds.contains($0.sessionId) }
+            .flatMap(\.toolNames)).count
         let payload = VeyrAgentStatusBuilder.build(
             sessions: store.sessions,
             latestActivityAt: store.latestActivityAt,
             controls: controls,
             engineSuggestions: suggestions,
             complexity: VeyrComplexityService.shared.complexityAnalysis(
-                currentTag: currentSession?.featureTag))
+                currentTag: currentSession?.featureTag),
+            currentSignals: currentSignals,
+            tagDistinctTools: tagDistinctTools)
         self.latestPayload = payload
         VeyrBudgetNotifier.checkAndNotify(sessions: store.sessions, controls: controls)
         self.resetDismissalsIfSessionChanged(payload: payload)

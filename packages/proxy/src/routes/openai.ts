@@ -53,6 +53,10 @@ openaiRouter.post(
         techniquesApplied: req.veyr?.techniquesApplied,
         originalPromptTokens: req.veyr?.originalPromptTokens,
         optimizedPromptTokens: req.veyr?.optimizedPromptTokens,
+        messagesDropped: req.veyr?.messagesDropped,
+        trimTokensSaved: req.veyr?.trimTokensSaved,
+        structuredOutputCandidate: req.veyr?.structuredOutputCandidate,
+        batchCandidate: req.veyr?.batchCandidate,
         cachedTokens: usage.cachedTokens,
         cacheCreationTokens: usage.cacheCreationTokens,
       });

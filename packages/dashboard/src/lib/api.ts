@@ -227,6 +227,10 @@ export interface OptimizationStats {
   compression_ratio_pct: number;
   cache_hits: number;
   cost_avoided_usd: number;
+  turns_trimmed: number;
+  trim_tokens_saved: number;
+  batch_eligible_requests: number;
+  structured_output_candidates: number;
   series: { bucket: string; original_tokens: number; optimized_tokens: number }[];
   by_tag: OptimizationTagRow[];
   techniques: { name: string; tokens_saved: number }[];

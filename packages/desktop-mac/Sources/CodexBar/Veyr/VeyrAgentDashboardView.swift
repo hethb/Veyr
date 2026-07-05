@@ -39,6 +39,7 @@ struct VeyrAgentDashboardView: View {
                 self.currentSessionCard
                 self.feedbackSection
                 self.recommendationsSection
+                self.toolHealthSection
                 self.overridePanel
                 self.agentFeedFooter
             }
@@ -254,6 +255,46 @@ struct VeyrAgentDashboardView: View {
         case "high": .red
         case "medium": .orange
         default: .secondary
+        }
+    }
+
+    // MARK: - Tool health
+
+    @ViewBuilder
+    private var toolHealthSection: some View {
+        if let quality = self.service.latestPayload?.toolQuality, quality.analyzed {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Tool health")
+                    .font(.headline)
+                if let tools = self.service.latestPayload?.toolAnalysis {
+                    Text("\(tools.toolsUsed) of ~\(tools.toolsLoaded) known tools used this session" +
+                        (tools.unusedToolTokenEstimate > 0
+                            ? " · unused definitions ≈ \(tools.unusedToolTokenEstimate) tokens/turn"
+                            : ""))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                if quality.flaggedTools.isEmpty {
+                    Text("No vague tool names detected. (Descriptions aren't visible in local " +
+                        "logs, so only names are checked.)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(quality.flaggedTools, id: \.name) { tool in
+                        HStack(alignment: .top, spacing: 8) {
+                            Text(tool.name)
+                                .font(.caption.monospaced())
+                                .foregroundStyle(.orange)
+                            Text("\(tool.issue.replacingOccurrences(of: "_", with: " ")) — \(tool.suggestion)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
         }
     }
 

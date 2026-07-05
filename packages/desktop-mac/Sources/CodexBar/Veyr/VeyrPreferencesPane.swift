@@ -43,6 +43,8 @@ struct VeyrPreferencesPane: View {
                 Divider()
                 self.apiKeySection
                 Divider()
+                self.optimizationSection
+                Divider()
                 self.agentFeedSection
                 Divider()
                 self.clearHistorySection
@@ -159,6 +161,74 @@ struct VeyrPreferencesPane: View {
                     get: { VeyrAgentStatusService.shared.autoUpdateClaudeMdEnabled },
                     set: { VeyrAgentStatusService.shared.autoUpdateClaudeMdEnabled = $0 }))
         }
+    }
+
+    // MARK: - Optimization techniques (shared with the proxy via config.json)
+
+    @ViewBuilder
+    private var optimizationSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Optimization techniques")
+                .font(.body)
+            PreferenceControlRow(
+                title: "Conversation trimming",
+                subtitle: "How the proxy trims long conversations before forwarding. " +
+                    "Last-N is fastest; summarize uses a small Haiku call.")
+            {
+                Picker("", selection: Binding(
+                    get: { VeyrConfig.load().trimStrategy ?? "last_n" },
+                    set: { newValue in
+                        var config = VeyrConfig.load()
+                        config.trimStrategy = newValue
+                        try? config.save()
+                    }))
+                {
+                    Text("Off").tag("off")
+                    Text("Last 10 messages").tag("last_n")
+                    Text("Summarize old turns").tag("summarize")
+                    Text("Key points only").tag("key_points_only")
+                }
+                .labelsHidden()
+            }
+            self.configToggle(
+                title: "Output constraints",
+                subtitle: "Automatically suggest concise responses for simple tasks (saves ~40% on output tokens).",
+                get: { $0.outputConstraints ?? true },
+                set: { config, value in config.outputConstraints = value })
+            self.configToggle(
+                title: "Tool filtering suggestions",
+                subtitle: "Flag sessions that use few of many available tools (unused definitions cost tokens every turn).",
+                get: { $0.toolFilteringSuggestions ?? true },
+                set: { config, value in config.toolFilteringSuggestions = value })
+            self.configToggle(
+                title: "Batch API detection",
+                subtitle: "Alert when proxied requests look like background jobs — OpenAI's Batch API is 50% cheaper.",
+                get: { $0.batchApiDetection ?? true },
+                set: { config, value in config.batchApiDetection = value })
+            self.configToggle(
+                title: "Structured output detection",
+                subtitle: "Flag system prompts with verbose JSON examples — schemas achieve the same with ~30% fewer tokens.",
+                get: { $0.structuredOutputDetection ?? true },
+                set: { config, value in config.structuredOutputDetection = value })
+        }
+    }
+
+    private func configToggle(
+        title: String,
+        subtitle: String,
+        get: @escaping (VeyrConfig) -> Bool,
+        set: @escaping (inout VeyrConfig, Bool) -> Void) -> some View
+    {
+        PreferenceToggleRow(
+            title: title,
+            subtitle: subtitle,
+            binding: Binding(
+                get: { get(VeyrConfig.load()) },
+                set: { newValue in
+                    var config = VeyrConfig.load()
+                    set(&config, newValue)
+                    try? config.save()
+                }))
     }
 
     // MARK: - Anthropic API key (optimization features)

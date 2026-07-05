@@ -18,6 +18,8 @@ public enum VeyrAgentStatusBuilder {
         controls: VeyrBudgetControls,
         engineSuggestions: [Suggestion] = [],
         complexity: VeyrAgentStatusPayload.ComplexityAnalysis? = nil,
+        currentSignals: VeyrSessionSignals? = nil,
+        tagDistinctTools: Int = 0,
         now: Date = Date(),
         calendar: Calendar = .current) -> VeyrAgentStatusPayload
     {
@@ -63,10 +65,34 @@ public enum VeyrAgentStatusBuilder {
                 avgOutputTokens: suggestion.avgOutputTokens))
         }
         recommendations = Array(recommendations.prefix(6))
+        var toolAnalysis: VeyrAgentStatusPayload.ToolAnalysis?
+        var toolQuality: VeyrAgentStatusPayload.ToolQuality?
+        if let signals = currentSignals, tagDistinctTools > 0 {
+            let unusedTools = max(0, tagDistinctTools - signals.toolNames.count)
+            let unusedTokens = unusedTools * 50
+            let costPerToken = current.map {
+                ModelPricing.cost(for: $0.modelId, inputTokens: unusedTokens, outputTokens: 0)
+            } ?? 0
+            toolAnalysis = .init(
+                toolsLoaded: tagDistinctTools,
+                toolsUsed: signals.toolNames.count,
+                unusedToolTokenEstimate: unusedTokens,
+                unusedToolCostThisSession: Self.round2(costPerToken * 100) / 100)
+            let flagged = VeyrSignalsScanner.flagVagueTools(signals.toolNames)
+            toolQuality = .init(
+                analyzed: true,
+                totalTools: signals.toolNames.count,
+                flaggedTools: flagged.map {
+                    .init(name: $0.name, issue: $0.issue, suggestion: $0.suggestion)
+                })
+        }
+
         let instructions = Self.instructions(
             session: currentSession,
             budget: budget,
-            recommendations: recommendations)
+            recommendations: recommendations,
+            signals: currentSignals,
+            tagDistinctTools: tagDistinctTools)
 
         return VeyrAgentStatusPayload(
             generatedAt: now,
@@ -75,7 +101,9 @@ public enum VeyrAgentStatusBuilder {
             alerts: alerts,
             recommendations: recommendations,
             agentInstructions: instructions,
-            complexity: complexity)
+            complexity: complexity,
+            toolAnalysis: toolAnalysis,
+            toolQuality: toolQuality)
     }
 
     // MARK: - Budget
@@ -195,7 +223,9 @@ public enum VeyrAgentStatusBuilder {
     static func instructions(
         session: VeyrAgentStatusPayload.CurrentSession?,
         budget: VeyrAgentStatusPayload.Budget,
-        recommendations: [VeyrAgentStatusPayload.Recommendation]) -> String
+        recommendations: [VeyrAgentStatusPayload.Recommendation],
+        signals: VeyrSessionSignals? = nil,
+        tagDistinctTools: Int = 0) -> String
     {
         guard let session else {
             return "No recent coding-agent session detected. No spend guidance."
@@ -248,11 +278,36 @@ public enum VeyrAgentStatusBuilder {
                     lines.append("Your responses have been very long for this project. Unless the " +
                         "task requires it, aim for responses under 500 tokens.")
                 }
+            case "trim_system_prompt":
+                lines.append("Note: your system prompt is large. Consider moving tool-specific " +
+                    "instructions into the tool definitions themselves to reduce per-turn " +
+                    "input token overhead.")
+            case "filter_tools":
+                break // covered by the signals-driven tools line below
+            case "improve_error_handling":
+                break // covered by the signals-driven retry line below
             default:
                 break
             }
         }
 
+        // Behavioral signals from the session log (Part 7 techniques).
+        if let signals {
+            if tagDistinctTools > 8, signals.toolNames.count < 4 {
+                lines.append("You currently have \(tagDistinctTools) tools available in this " +
+                    "project but use ~\(signals.toolNames.count) on average. Request only the " +
+                    "tools relevant to the current subtask.")
+            }
+            if signals.messageCount > 20 {
+                lines.append("This is a long conversation. Before your next response, consider " +
+                    "running /compact to compress context and reduce per-turn cost.")
+            }
+            if signals.retryClusters > 0 {
+                lines.append("When a tool call fails, return a structured error: what failed, " +
+                    "what input was wrong, what the correct format is. Avoid vague errors that " +
+                    "cause blind retries.")
+            }
+        }
         if recommendations.isEmpty {
             lines.append("Spend profile looks healthy — no changes recommended right now.")
         }
@@ -319,6 +374,13 @@ public enum VeyrAgentStatusBuilder {
                 }
                 lines.append("\(index + 1). \(title) — \(rec.reason)")
             }
+            lines.append("")
+        }
+
+        if let tools = payload.toolAnalysis {
+            lines.append("## Tools")
+            lines.append("- \(tools.toolsUsed) of ~\(tools.toolsLoaded) known tools used this " +
+                "session (unused definitions ≈ \(tools.unusedToolTokenEstimate) tokens/turn)")
             lines.append("")
         }
 

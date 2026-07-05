@@ -9,6 +9,12 @@ import Foundation
 /// Unknown keys written by other tools are preserved on save.
 public struct VeyrConfig: Sendable {
     public var autoUpdateClaudeMd: Bool?
+    /// "off" | "last_n" | "summarize" | "key_points_only" (proxy trimming).
+    public var trimStrategy: String?
+    public var outputConstraints: Bool?
+    public var toolFilteringSuggestions: Bool?
+    public var batchApiDetection: Bool?
+    public var structuredOutputDetection: Bool?
 
     /// Raw file bytes, kept so keys written by other tools survive a save
     /// (`Data` keeps the struct Sendable; parsed lazily at save time).
@@ -32,6 +38,11 @@ public struct VeyrConfig: Sendable {
         else { return config }
         config.rawData = data
         config.autoUpdateClaudeMd = object["autoUpdateClaudeMd"] as? Bool
+        config.trimStrategy = object["trimStrategy"] as? String
+        config.outputConstraints = object["outputConstraints"] as? Bool
+        config.toolFilteringSuggestions = object["toolFilteringSuggestions"] as? Bool
+        config.batchApiDetection = object["batchApiDetection"] as? Bool
+        config.structuredOutputDetection = object["structuredOutputDetection"] as? Bool
         return config
     }
 
@@ -40,10 +51,20 @@ public struct VeyrConfig: Sendable {
         var object: [String: Any] = self.rawData.flatMap {
             (try? JSONSerialization.jsonObject(with: $0)) as? [String: Any]
         } ?? [:]
-        if let autoUpdateClaudeMd = self.autoUpdateClaudeMd {
-            object["autoUpdateClaudeMd"] = autoUpdateClaudeMd
-        } else {
-            object.removeValue(forKey: "autoUpdateClaudeMd")
+        let updates: [(String, Any?)] = [
+            ("autoUpdateClaudeMd", self.autoUpdateClaudeMd),
+            ("trimStrategy", self.trimStrategy),
+            ("outputConstraints", self.outputConstraints),
+            ("toolFilteringSuggestions", self.toolFilteringSuggestions),
+            ("batchApiDetection", self.batchApiDetection),
+            ("structuredOutputDetection", self.structuredOutputDetection),
+        ]
+        for (key, value) in updates {
+            if let value {
+                object[key] = value
+            } else {
+                object.removeValue(forKey: key)
+            }
         }
         let data = try JSONSerialization.data(
             withJSONObject: object,

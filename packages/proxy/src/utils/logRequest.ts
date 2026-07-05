@@ -24,6 +24,10 @@ export interface LogRequestInput {
   techniquesApplied?: string[] | null;
   originalPromptTokens?: number;
   optimizedPromptTokens?: number;
+  messagesDropped?: number;
+  trimTokensSaved?: number;
+  structuredOutputCandidate?: boolean;
+  batchCandidate?: boolean;
 }
 
 /**
@@ -66,6 +70,10 @@ export function logRequest(input: LogRequestInput): void {
       techniquesApplied: input.techniquesApplied ?? null,
       originalPromptTokens: input.originalPromptTokens ?? 0,
       optimizedPromptTokens: input.optimizedPromptTokens ?? 0,
+      messagesDropped: input.messagesDropped ?? 0,
+      trimTokensSaved: input.trimTokensSaved ?? 0,
+      structuredOutputCandidate: input.structuredOutputCandidate ?? false,
+      batchCandidate: input.batchCandidate ?? false,
     });
   } catch (err) {
     console.error("[logRequest] insert failed:", err);
