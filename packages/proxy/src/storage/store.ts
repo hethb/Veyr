@@ -240,6 +240,13 @@ export interface AnalysisRow {
   prompt_hash: string | null;
   cached_tokens: number;
   cache_creation_tokens: number;
+  tokens_saved_estimate: number;
+  complexity: string | null;
+  optimization_strategy: string | null;
+  /** JSON array string of technique names, or null. */
+  techniques_applied: string | null;
+  original_prompt_tokens: number;
+  optimized_prompt_tokens: number;
 }
 
 /**
@@ -257,7 +264,9 @@ export function getRequestsForAnalysis(
       .prepare(
         `SELECT timestamp, model, feature_tag, prompt_tokens, completion_tokens,
                 total_tokens, cost_usd, status, prompt_hash,
-                cached_tokens, cache_creation_tokens
+                cached_tokens, cache_creation_tokens,
+                tokens_saved_estimate, complexity, optimization_strategy,
+                techniques_applied, original_prompt_tokens, optimized_prompt_tokens
          FROM requests
          WHERE timestamp >= ?
            AND api_key_id IN (SELECT id FROM api_keys WHERE user_id = ?)
@@ -270,7 +279,9 @@ export function getRequestsForAnalysis(
     .prepare(
       `SELECT timestamp, model, feature_tag, prompt_tokens, completion_tokens,
               total_tokens, cost_usd, status, prompt_hash,
-              cached_tokens, cache_creation_tokens
+              cached_tokens, cache_creation_tokens,
+              tokens_saved_estimate, complexity, optimization_strategy,
+              techniques_applied, original_prompt_tokens, optimized_prompt_tokens
        FROM requests
        WHERE timestamp >= ?
        ORDER BY timestamp ASC

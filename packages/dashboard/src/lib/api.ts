@@ -212,6 +212,33 @@ export async function getTopTemplates(limit = 10): Promise<TopTemplateRow[]> {
   return (await res.json()) as TopTemplateRow[];
 }
 
+export interface OptimizationTagRow {
+  feature_tag: string;
+  requests: number;
+  original_tokens: number;
+  optimized_tokens: number;
+  avg_reduction_pct: number;
+  monthly_savings_usd: number;
+}
+
+export interface OptimizationStats {
+  period: Period;
+  tokens_saved: number;
+  compression_ratio_pct: number;
+  cache_hits: number;
+  cost_avoided_usd: number;
+  series: { bucket: string; original_tokens: number; optimized_tokens: number }[];
+  by_tag: OptimizationTagRow[];
+  techniques: { name: string; tokens_saved: number }[];
+}
+
+export async function getOptimizationStats(
+  period: Period = "30d"
+): Promise<OptimizationStats> {
+  const res = await authedFetch(`/api/stats/optimization?period=${period}`);
+  return (await res.json()) as OptimizationStats;
+}
+
 export async function getCacheStats(period: Period = "30d"): Promise<CacheStats> {
   const res = await authedFetch(`/api/stats/cache?period=${period}`);
   return (await res.json()) as CacheStats;

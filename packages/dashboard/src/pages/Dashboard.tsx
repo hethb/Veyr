@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { CachePanel } from "../components/CachePanel";
+import { OptimizationPanel } from "../components/OptimizationPanel";
 import { CostByTagChart } from "../components/CostByTagChart";
 import { CostTimeChart } from "../components/CostTimeChart";
 import { MetricCard } from "../components/MetricCard";
@@ -257,6 +258,8 @@ export function Dashboard() {
       </section>
 
       <CachePanel />
+
+      <OptimizationPanel />
 
       <section>
         <div className="mb-3 flex items-center justify-between">

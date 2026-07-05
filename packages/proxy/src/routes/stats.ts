@@ -311,6 +311,145 @@ interface CacheTimePoint {
   savings_usd: number;
 }
 
+// ---------------------------------------------------------------------------
+// GET /api/stats/optimization — complexity-aware optimizer metrics (Part 4c)
+// ---------------------------------------------------------------------------
+
+interface OptimizationTagAgg {
+  feature_tag: string;
+  requests: number;
+  original_tokens: number;
+  optimized_tokens: number;
+  avg_reduction_pct: number;
+  monthly_savings_usd: number;
+}
+
+interface OptimizationTimePoint {
+  bucket: string;
+  original_tokens: number;
+  optimized_tokens: number;
+}
+
+statsRouter.get("/optimization", (req: Request, res: Response): void => {
+  const period = parsePeriod(req.query.period, "30d");
+  try {
+    const since = new Date(Date.now() - periodMs(period)).toISOString();
+    const rows: AnalysisRow[] = getRequestsForAnalysis(since, req.userId);
+
+    let tokensSaved = 0;
+    let originalTokens = 0;
+    let optimizedTokens = 0;
+    let cacheHits = 0;
+    let costAvoided = 0;
+    const byTag = new Map<string, OptimizationTagAgg>();
+    const byDay = new Map<string, OptimizationTimePoint>();
+    const byTechnique = new Map<string, number>();
+
+    for (const r of rows) {
+      const saved = r.tokens_saved_estimate ?? 0;
+      const orig = r.original_prompt_tokens ?? 0;
+      const opt = r.optimized_prompt_tokens ?? 0;
+      const perToken = inputCostPerToken(r.model);
+
+      if (saved > 0) {
+        tokensSaved += saved;
+        costAvoided += saved * perToken;
+      }
+      if ((r.cached_tokens ?? 0) > 0) cacheHits += 1;
+      originalTokens += orig;
+      optimizedTokens += opt;
+
+      const day = bucketKey(r.timestamp, "day");
+      const point = byDay.get(day) ?? {
+        bucket: day,
+        original_tokens: 0,
+        optimized_tokens: 0,
+      };
+      point.original_tokens += orig > 0 ? orig : r.prompt_tokens;
+      point.optimized_tokens += orig > 0 ? opt : r.prompt_tokens;
+      byDay.set(day, point);
+
+      const tag = r.feature_tag ?? "untagged";
+      const agg = byTag.get(tag) ?? {
+        feature_tag: tag,
+        requests: 0,
+        original_tokens: 0,
+        optimized_tokens: 0,
+        avg_reduction_pct: 0,
+        monthly_savings_usd: 0,
+      };
+      agg.requests += 1;
+      agg.original_tokens += orig;
+      agg.optimized_tokens += opt;
+      agg.monthly_savings_usd += saved * perToken;
+      byTag.set(tag, agg);
+
+      // Technique attribution: split the row's savings evenly across the
+      // techniques that fired; cache reads count as "cache_injection".
+      if (r.techniques_applied) {
+        try {
+          const techniques = JSON.parse(r.techniques_applied) as string[];
+          if (Array.isArray(techniques) && techniques.length > 0 && saved > 0) {
+            const share = saved / techniques.length;
+            for (const technique of techniques) {
+              byTechnique.set(
+                technique,
+                (byTechnique.get(technique) ?? 0) + share
+              );
+            }
+          }
+        } catch {
+          // Malformed JSON — skip attribution for this row.
+        }
+      }
+      if ((r.cached_tokens ?? 0) > 0) {
+        byTechnique.set(
+          "cache_injection",
+          (byTechnique.get("cache_injection") ?? 0) + (r.cached_tokens ?? 0) * 0.9
+        );
+      }
+    }
+
+    const tags = [...byTag.values()]
+      .map((agg) => ({
+        ...agg,
+        avg_reduction_pct:
+          agg.original_tokens > 0
+            ? Math.round(
+                ((agg.original_tokens - agg.optimized_tokens) /
+                  agg.original_tokens) *
+                  100
+              )
+            : 0,
+        monthly_savings_usd: Math.round(agg.monthly_savings_usd * 10000) / 10000,
+      }))
+      .filter((agg) => agg.original_tokens > 0 || agg.monthly_savings_usd > 0)
+      .sort((a, b) => b.monthly_savings_usd - a.monthly_savings_usd)
+      .slice(0, 12);
+
+    res.json({
+      period,
+      tokens_saved: tokensSaved,
+      compression_ratio_pct:
+        originalTokens > 0
+          ? Math.round(((originalTokens - optimizedTokens) / originalTokens) * 100)
+          : 0,
+      cache_hits: cacheHits,
+      cost_avoided_usd: Math.round(costAvoided * 10000) / 10000,
+      series: [...byDay.values()].sort((a, b) =>
+        a.bucket.localeCompare(b.bucket)
+      ),
+      by_tag: tags,
+      techniques: [...byTechnique.entries()]
+        .map(([name, tokens]) => ({ name, tokens_saved: Math.round(tokens) }))
+        .sort((a, b) => b.tokens_saved - a.tokens_saved),
+    });
+  } catch (err) {
+    console.error("[stats/optimization]", err);
+    res.status(500).json({ error: "Failed to compute optimization stats" });
+  }
+});
+
 statsRouter.get("/cache", (req: Request, res: Response): void => {
   const period = parsePeriod(req.query.period, "30d");
   try {
