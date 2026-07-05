@@ -4,12 +4,34 @@
  * and offline analysis; the proxy hot path stays deterministic.
  */
 
+import { DEFAULT_HEURISTICS, loadHeuristics, type HeuristicConfig } from "./heuristicTuner.js";
+
 export type TaskComplexity = "simple" | "moderate" | "complex";
+
+// Tuned thresholds from ~/.veyr/config.json (written by the weekly tuner from
+// user-labeled samples); loaded once per process, defaults otherwise.
+let heuristics: HeuristicConfig | null = null;
+function thresholds(): HeuristicConfig {
+  if (!heuristics) {
+    try {
+      heuristics = loadHeuristics();
+    } catch {
+      heuristics = DEFAULT_HEURISTICS;
+    }
+  }
+  return heuristics;
+}
+
+/** Test hook: force a re-read of tuned thresholds. */
+export function resetHeuristicsCache(): void {
+  heuristics = null;
+}
 
 export function quickComplexityEstimate(
   systemPrompt: string,
   userMessage: string
 ): TaskComplexity {
+  const { simpleMaxChars, complexMinChars } = thresholds();
   const totalChars = (systemPrompt + userMessage).length;
   const hasCodeBlock = /```/.test(userMessage);
   const hasMultipleFiles =
@@ -20,8 +42,8 @@ export function quickComplexityEstimate(
       userMessage.trim()
     );
 
-  if (isSimpleCommand || (isQuestion && totalChars < 300)) return "simple";
-  if (hasMultipleFiles || totalChars > 3000) return "complex";
+  if (isSimpleCommand || (isQuestion && totalChars < simpleMaxChars)) return "simple";
+  if (hasMultipleFiles || totalChars > complexMinChars) return "complex";
   if (hasCodeBlock || totalChars > 1000) return "moderate";
   return "simple";
 }

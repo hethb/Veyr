@@ -27,6 +27,18 @@ public final class VeyrComplexityService {
     public private(set) var classifiedThisRun = 0
     public private(set) var lastError: String?
 
+    /// Completed session awaiting a user rating in the Agent tab, if any.
+    public struct FeedbackCandidate: Equatable {
+        public var sessionId: String
+        public var featureTag: String
+        public var model: String
+        public var dominantComplexity: String
+        public var turnCount: Int
+    }
+
+    public private(set) var feedbackCandidate: FeedbackCandidate?
+    public private(set) var labeledSampleCount = VeyrTrainingDataStore.labeledCount()
+
     private static let maxTurnsPerTick = 3
 
     private init() {
@@ -90,6 +102,15 @@ public final class VeyrComplexityService {
                     wastedCostUSD: wasted))
                 self.classifiedThisRun += 1
                 self.lastError = nil
+                // ML scaffold: collect a local training sample per classified turn.
+                try? VeyrTrainingDataStore.append(VeyrTrainingSample.from(
+                    sessionId: turn.sessionId,
+                    timestamp: turn.timestamp,
+                    userText: turn.userText,
+                    llmClassification: result.complexity.rawValue,
+                    modelUsed: turn.model,
+                    inputTokens: turn.inputTokens,
+                    outputTokens: turn.outputTokens))
             } catch {
                 self.lastError = String(describing: error)
                 self.logger.error(
@@ -102,6 +123,49 @@ public final class VeyrComplexityService {
         self.store.prune()
         try? self.store.save()
         return self.store.entries
+    }
+
+    // MARK: - Session feedback (ML ground truth)
+
+    /// Called each tick: when the latest classified session has gone idle and
+    /// none of its samples are labeled yet, offer the rating widget.
+    public func refreshFeedbackCandidate(isSessionActive: Bool) {
+        guard !isSessionActive else {
+            self.feedbackCandidate = nil
+            return
+        }
+        let samples = VeyrTrainingDataStore.loadAll()
+        self.labeledSampleCount = samples.count { $0.userFeedbackComplexity != nil }
+        guard let latest = samples.max(by: { $0.timestamp < $1.timestamp }) else {
+            self.feedbackCandidate = nil
+            return
+        }
+        let sessionSamples = samples.filter { $0.sessionId == latest.sessionId }
+        guard !sessionSamples.isEmpty,
+              sessionSamples.allSatisfy({ $0.userFeedbackComplexity == nil })
+        else {
+            self.feedbackCandidate = nil
+            return
+        }
+        var counts: [String: Int] = [:]
+        for sample in sessionSamples {
+            counts[sample.llmClassification, default: 0] += 1
+        }
+        let dominant = counts.max { $0.value < $1.value }?.key ?? "simple"
+        let tag = self.store.entries
+            .last { $0.sessionId == latest.sessionId }?.featureTag ?? "untagged"
+        self.feedbackCandidate = FeedbackCandidate(
+            sessionId: latest.sessionId,
+            featureTag: tag,
+            model: latest.modelUsed,
+            dominantComplexity: dominant,
+            turnCount: sessionSamples.count)
+    }
+
+    public func submitFeedback(sessionId: String, complexity: String) {
+        try? VeyrTrainingDataStore.recordFeedback(sessionId: sessionId, complexity: complexity)
+        self.labeledSampleCount = VeyrTrainingDataStore.labeledCount()
+        self.feedbackCandidate = nil
     }
 
     /// Feed block for VEYR_STATUS.json (current tag's month-to-date view).

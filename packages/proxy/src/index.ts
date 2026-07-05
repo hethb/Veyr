@@ -17,6 +17,7 @@ import { ingestRouter } from "./routes/ingest.js";
 import { keyStatsRouter } from "./routes/keyStats.js";
 import { dashboardAuth } from "./middleware/dashboardAuth.js";
 import { getOpenAIUpstreamUrl, isAuthEnabled } from "./config.js";
+import { startHeuristicTuner } from "./optimization/heuristicTuner.js";
 
 const app = express();
 
@@ -88,6 +89,8 @@ const errorHandler: ErrorRequestHandler = (
 app.use(errorHandler);
 
 const port = parseInt(process.env.PORT ?? "3001", 10);
+startHeuristicTuner();
+
 app.listen(port, () => {
   console.log(`Veyr proxy listening on :${port}`);
   console.log(`OpenAI-compatible upstream: ${getOpenAIUpstreamUrl()}`);

@@ -336,6 +336,36 @@ let lowWasteRecords = (0..<5).map { _ in classRecord(tag: "b", complexity: "simp
 engineOut = VeyrSuggestionEngine.analyze(sessions: [], classifications: lowWasteRecords)
 check(!engineOut.contains { $0.action == .switchModel }, "rule 7 silent under $2 wasted")
 
+// MARK: - 7. ML training data
+
+print("— ml training data —")
+let mlSample = VeyrTrainingSample.from(
+    sessionId: "sess-1", timestamp: Date(),
+    userText: "fix the bug in src/auth.ts and update tests/auth.test.ts please?",
+    llmClassification: "moderate", modelUsed: "claude-opus-4-8",
+    inputTokens: 500, outputTokens: 900)
+check(mlSample.fileExtensions.contains(".ts"), "file extensions extracted")
+check(mlSample.fileCount == 2, "file count = 2")
+check(mlSample.questionMark, "question mark detected")
+check(mlSample.verbPrefix == "fix", "verb prefix extracted")
+check(!mlSample.hasCodeBlock, "no code block detected")
+
+let mlFile = tempRoot.appendingPathComponent("ml/training-data.jsonl")
+try! VeyrTrainingDataStore.append(mlSample, to: mlFile)
+var second = mlSample
+second.sessionId = "sess-2"
+try! VeyrTrainingDataStore.append(second, to: mlFile)
+check(VeyrTrainingDataStore.loadAll(from: mlFile).count == 2, "jsonl append + load roundtrip")
+let updatedCount = try! VeyrTrainingDataStore.recordFeedback(
+    sessionId: "sess-1", complexity: "complex", url: mlFile)
+check(updatedCount == 1, "feedback updates only the matching session")
+let reloaded = VeyrTrainingDataStore.loadAll(from: mlFile)
+check(reloaded.first { $0.sessionId == "sess-1" }?.userFeedbackComplexity == "complex",
+    "feedback persisted as ground truth")
+check(reloaded.first { $0.sessionId == "sess-2" }?.userFeedbackComplexity == nil,
+    "other sessions untouched")
+check(VeyrTrainingDataStore.labeledCount(url: mlFile) == 1, "labeled count = 1")
+
 // MARK: - 4. Real logs
 
 print("— real ~/.claude/projects scan —")

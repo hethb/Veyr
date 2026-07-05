@@ -84,6 +84,8 @@ public final class VeyrAgentStatusService {
         let currentSession = store.sessions.max { $0.timestamp < $1.timestamp }
         let classifications = await VeyrComplexityService.shared.processNewTurns(
             isSessionActive: store.isSessionActive)
+        VeyrComplexityService.shared.refreshFeedbackCandidate(
+            isSessionActive: store.isSessionActive)
         let suggestions = VeyrSuggestionEngine.analyze(
             sessions: store.sessions,
             currentSession: currentSession,

@@ -37,6 +37,7 @@ struct VeyrAgentDashboardView: View {
                     .background(.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
                 }
                 self.currentSessionCard
+                self.feedbackSection
                 self.recommendationsSection
                 self.overridePanel
                 self.agentFeedFooter
@@ -111,6 +112,47 @@ struct VeyrAgentDashboardView: View {
             Text(value)
                 .font(large ? .title2.weight(.semibold) : .body)
                 .monospacedDigit()
+        }
+    }
+
+    // MARK: - Session feedback (trains the local model)
+
+    @ViewBuilder
+    private var feedbackSection: some View {
+        let complexityService = VeyrComplexityService.shared
+        if let candidate = complexityService.feedbackCandidate {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Last session (\(candidate.featureTag) · \(candidate.model))")
+                    .font(.callout.weight(.medium))
+                Text("We classified it as: mostly \(candidate.dominantComplexity) tasks " +
+                    "(\(candidate.turnCount) turns). Was that right?")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                HStack(spacing: 10) {
+                    Button("✓ Yes") {
+                        complexityService.submitFeedback(
+                            sessionId: candidate.sessionId,
+                            complexity: candidate.dominantComplexity)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    Button("✗ No — it was complex") {
+                        complexityService.submitFeedback(
+                            sessionId: candidate.sessionId,
+                            complexity: "complex")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.blue.opacity(0.07), in: RoundedRectangle(cornerRadius: 10))
+        } else if complexityService.labeledSampleCount >= 100 {
+            Text("Your optimization model is training on \(complexityService.labeledSampleCount) " +
+                "rated samples. Suggestions will improve over time.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 
