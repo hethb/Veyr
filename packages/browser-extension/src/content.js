@@ -128,6 +128,92 @@
   const CONSTRAINT_RE = /(\b\d+\s*(word|words|bullet|bullets|line|lines|sentence|sentences|paragraph|paragraphs|item|items|step|steps)\b|\bconcise\b|\bbrief(ly)?\b|\bshort\b|\btl;?dr\b|\bone[- ]?liner\b|\bin \d+\b|\bbullet points?\b|\bas a table\b|\bno (preamble|explanation|prose)\b)/i;
   const VAGUE_START_RE = /^\s*(fix|improve|optimi[sz]e|clean ?up|refactor|enhance|polish|tidy|make .* better|debug|sort out)\b/i;
 
+  // ---- task complexity (JS port of the proxy's quickComplexityEstimate) -----
+  function quickComplexityEstimate(systemPrompt, userMessage) {
+    const totalChars = (systemPrompt + userMessage).length;
+    const hasCodeBlock = /```/.test(userMessage);
+    const hasMultipleFiles = (userMessage.match(/\.(ts|js|py|swift|go|rs)\b/g) || []).length > 2;
+    const isQuestion = userMessage.trim().endsWith("?") && totalChars < 500;
+    const isSimpleCommand = /^(read|open|show|list|find|grep|cat|ls|pwd|cd|git status)/i.test(
+      userMessage.trim()
+    );
+    if (isSimpleCommand || (isQuestion && totalChars < 300)) return "simple";
+    if (hasMultipleFiles || totalChars > 3000) return "complex";
+    if (hasCodeBlock || totalChars > 1000) return "moderate";
+    return "simple";
+  }
+
+  // Session-scoped manual override: null = auto, else forced level.
+  let complexityOverride = null;
+  const COMPLEXITY_LEVELS = ["simple", "moderate", "complex"];
+  const COMPLEXITY_BADGE = {
+    simple: { label: "Simple ⚡", color: "#34d399" },
+    moderate: { label: "Moderate", color: "#f5a623" },
+    complex: { label: "Complex 🧠", color: "#4fabff" },
+  };
+
+  function currentComplexity(draft) {
+    return complexityOverride || quickComplexityEstimate("", draft);
+  }
+
+  // ---- complexity-tiered compression (port of PromptOptimizer strategies) ---
+  const COMPRESS_PASSES = {
+    comment_removal: (t) => t.replace(/<!--[\s\S]*?-->/g, ""),
+    role_boilerplate: (t) =>
+      t.replace(
+        /^\s*you are (an?\s+)?(very\s+)?(helpful|intelligent|advanced|expert)?\s*(ai\s+)?(assistant|language model|chatbot|model)(\s+(that|who|designed to))?\s*/i,
+        "You "
+      ),
+    filler_phrases: (t) =>
+      t
+        .replace(
+          /\b(please|kindly|feel free to|as an ai( language model)?,?|i'?d be happy to|certainly!?|of course!?|could you (please )?|would you (please )?|can you (please )?)\b/gi,
+          ""
+        )
+        .replace(/[ \t]{2,}/g, " "),
+    summary_headers: (t) =>
+      t.replace(/^[ \t]*(in conclusion|to summarize|in summary)[:,]?[ \t]*$/gim, ""),
+    greetings_signoffs: (t) =>
+      t
+        .replace(/^\s*(hi|hello|hey|greetings|good (morning|afternoon|evening))[\s,!.]+/i, "")
+        .replace(
+          /\s*(thanks( in advance)?|thank you( in advance)?|cheers|appreciate it)[!.,]?\s*$/gi,
+          ""
+        ),
+    blank_lines: (t) => t.replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n"),
+  };
+  const STRATEGY_PASSES = {
+    simple: [
+      "comment_removal", "role_boilerplate", "filler_phrases",
+      "summary_headers", "greetings_signoffs", "blank_lines",
+    ],
+    moderate: ["comment_removal", "filler_phrases", "blank_lines"],
+    complex: [],
+  };
+
+  // Returns null when compression is skipped (complex) or saves nothing.
+  function compressDraft(draft, complexity) {
+    const passNames = STRATEGY_PASSES[complexity] || [];
+    if (passNames.length === 0) return null;
+    let out = draft;
+    const applied = [];
+    for (const name of passNames) {
+      const before = out;
+      out = COMPRESS_PASSES[name](out);
+      if (out !== before) applied.push(name.replace(/_/g, " "));
+    }
+    out = out
+      .split("\n")
+      .map((l) => l.replace(/[ \t]{2,}/g, " ").replace(/[ \t]+$/g, ""))
+      .join("\n")
+      .trim();
+    const saved = estimateTokens(draft) - estimateTokens(out);
+    if (!out || saved <= 0 || out === draft) return null;
+    // Guard against degenerate rewrites of non-trivial prompts.
+    if (estimateTokens(draft) > 50 && saved / estimateTokens(draft) > 0.9) return null;
+    return { compressed: out, tokensSaved: saved, techniques: applied };
+  }
+
   // `convTokens` lets us flag a bloated chat (whole history is re-sent each turn).
   function buildTips(draft, convTokens) {
     const tips = [];
@@ -497,6 +583,7 @@
     canary.convKey = location.pathname;
     canary.confirmed = false;
     canary.missStreak = 0;
+    complexityOverride = null; // manual complexity override is per-conversation
     return true;
   }
 
@@ -589,6 +676,13 @@
   .pl-tips { margin-top: 4px; }
   .pl-tip { font-size: 11.5px; line-height: 1.45; color: #d1d5db; padding: 2px 0; }
   .pl-tip.pl-ok { color: #6b7280; }
+  .pl-cplx { all: unset; cursor: pointer; font-size: 10.5px; font-weight: 700; padding: 1px 8px; border-radius: 999px; border: 1px solid; }
+  .pl-cplx:hover { filter: brightness(1.25); }
+  .pl-cplx-note { margin-top: 4px; font-size: 11px; color: #4fabff; }
+  .pl-cmp { margin-top: 12px; }
+  .pl-cmp-head { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #34d399; display: flex; justify-content: space-between; align-items: center; }
+  .pl-cmp-body { margin-top: 6px; padding: 10px 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.5; white-space: pre-wrap; color: #cbd1da; background: rgba(52,211,153,0.06); border: 1px solid rgba(52,211,153,0.3); border-radius: 8px; max-height: 180px; overflow-y: auto; }
+  .pl-cmp-meta { margin-top: 4px; font-size: 11px; color: #6b7280; }
   .pl-proxy { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); }
   .pl-proxy-head { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #4fabff; margin-bottom: 4px; }
   .pl-muted { color: #6b7280; font-size: 11.5px; }
@@ -664,6 +758,9 @@
     <div class="pl-body">
       <div class="pl-row"><span>Conversation</span><b id="pl-conv">0</b></div>
       <div class="pl-row"><span>Your draft</span><b id="pl-draft">0</b></div>
+      <div class="pl-row"><span>Task</span>
+        <button class="pl-cplx" id="pl-cplx" title="Click to override the classification"></button>
+      </div>
       <div class="pl-row pl-total"><span>Est. input cost</span><b id="pl-cost">$0.00</b></div>
       <div class="pl-tips-head">Improve your prompt</div>
       <div class="pl-tips" id="pl-tips"></div>
@@ -729,6 +826,15 @@
     $("#pl-draft").textContent = `${draftTokens.toLocaleString()} tok`;
     $("#pl-cost").textContent = fmtUsd(((draftTokens + convTokens) / 1000) * PRICE_PER_1K);
 
+    const complexity = currentComplexity(draft);
+    const badge = COMPLEXITY_BADGE[complexity];
+    const badgeEl = $("#pl-cplx");
+    if (badgeEl) {
+      badgeEl.textContent = badge.label + (complexityOverride ? " ·manual" : "");
+      badgeEl.style.color = badge.color;
+      badgeEl.style.borderColor = badge.color;
+    }
+
     const tips = buildTips(draft, convTokens);
     const tipsEl = $("#pl-tips");
     if (!draft) {
@@ -738,7 +844,24 @@
     } else {
       tipsEl.innerHTML = tips.map((t) => `<div class="pl-tip">• ${escapeHtml(t)}</div>`).join("");
     }
+    if (draft && complexity === "complex") {
+      tipsEl.innerHTML +=
+        `<div class="pl-cplx-note">🧠 Complex task detected — sending full context.</div>`;
+    }
   }
+
+  // Badge click cycles: auto → simple → moderate → complex → auto.
+  shadow.getElementById("pl-cplx")?.addEventListener("click", () => {
+    if (complexityOverride === null) {
+      complexityOverride = COMPLEXITY_LEVELS[0];
+    } else {
+      const idx = COMPLEXITY_LEVELS.indexOf(complexityOverride);
+      complexityOverride = idx >= COMPLEXITY_LEVELS.length - 1
+        ? null
+        : COMPLEXITY_LEVELS[idx + 1];
+    }
+    updateLocal();
+  });
 
   async function refreshProxy() {
     const body = $("#pl-proxy-body");
@@ -795,16 +918,34 @@
   function showReview(draft, convTokens) {
     return new Promise((resolve) => {
       const tips = buildTips(draft, convTokens);
+      const complexity = currentComplexity(draft);
+      const badge = COMPLEXITY_BADGE[complexity];
+      const compression = compressDraft(draft, complexity);
+      const compressedBlock = compression
+        ? `<div class="pl-cmp">
+            <div class="pl-cmp-head">
+              <span>Compressed version — saves ~${compression.tokensSaved} tok</span>
+              <button class="pl-btn primary" id="pl-apply-cmp">Apply &amp; send</button>
+            </div>
+            <div class="pl-cmp-body">${escapeHtml(compression.compressed)}</div>
+            <div class="pl-cmp-meta">Removed: ${escapeHtml(compression.techniques.join(", "))}. Your original stays in the box unless you apply.</div>
+          </div>`
+        : complexity === "complex"
+          ? `<div class="pl-cplx-note">🧠 Complex task detected — sending full context (no compression).</div>`
+          : "";
       const overlay = document.createElement("div");
       overlay.className = "pl-modal";
       overlay.innerHTML = `
         <div class="pl-card">
           <div class="pl-card-head">
-            <div class="pl-card-title">Improve before you send</div>
+            <div class="pl-card-title">Improve before you send
+              <span class="pl-cplx" style="color:${badge.color};border-color:${badge.color};margin-left:8px">${badge.label}</span>
+            </div>
             <div class="pl-card-sub">A tighter prompt usually means fewer tokens and better answers.</div>
           </div>
           <div class="pl-card-body">
             ${tips.map((t) => `<div class="pl-msug">${escapeHtml(t)}</div>`).join("")}
+            ${compressedBlock}
             <div class="pl-tmpl-head">
               <span>Suggested structure</span>
               <button class="pl-btn copy" id="pl-copy">Copy</button>
@@ -824,6 +965,12 @@
       };
       overlay.querySelector("#pl-edit").addEventListener("click", () => close("edit"));
       overlay.querySelector("#pl-send").addEventListener("click", () => close("send"));
+      overlay.querySelector("#pl-apply-cmp")?.addEventListener("click", () => {
+        // The diff was shown above; only now do we touch the user's input.
+        const input = P.findInput();
+        if (input && compression) setComposerText(input, compression.compressed);
+        close("send");
+      });
       overlay.querySelector("#pl-copy").addEventListener("click", () => {
         const text = buildTemplate(draft);
         navigator.clipboard?.writeText(text).catch(() => {});
@@ -846,8 +993,9 @@
 
     const convTokens = estimateTokens(getConversationText());
     const tips = buildTips(draft, convTokens);
-    if (tips.length === 0) {
-      // Clean prompt — let it send natively, but still log it.
+    const compressible = compressDraft(draft, currentComplexity(draft)) !== null;
+    if (tips.length === 0 && !compressible) {
+      // Clean prompt, nothing to compress — let it send natively, but log it.
       logSend(draft);
       return;
     }
