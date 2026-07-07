@@ -427,6 +427,7 @@ export const ALL_LOCALE_KEYS = [
   "PanelShowAllProviders",
   "PanelShowFewerProviders",
   "PanelZoom",
+  "PanelMenu",
   "PanelCopied",
   "PanelToday",
   "PanelThirtyDayCost",

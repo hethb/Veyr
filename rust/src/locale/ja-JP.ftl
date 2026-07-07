@@ -420,6 +420,7 @@ PanelAllProvidersShort = すべて
 PanelShowAllProviders = すべてのプロバイダーを表示
 PanelShowFewerProviders = 表示を減らす
 PanelZoom = ズーム
+PanelMenu = メニュー
 PanelCopied = コピーしました
 PanelToday = 今日
 PanelThirtyDayCost = 30日間のコスト

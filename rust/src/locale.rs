@@ -671,6 +671,7 @@ locale_keys! {
     PanelShowAllProviders,
     PanelShowFewerProviders,
     PanelZoom,
+    PanelMenu,
     PanelCopied,
     PanelToday,
     PanelThirtyDayCost,
