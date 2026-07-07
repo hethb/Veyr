@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Built on CodexBar](https://img.shields.io/badge/Built%20on-CodexBar-orange)](https://github.com/steipete/CodexBar)
 
-**See exactly what your AI is spending. Cut what you don't need.**
+**Stop paying for wasted tokens. Analyze token usage across your AI workflows and discover actionable ways to reduce cost and improve efficiency.**
 
 Veyr is a native macOS menu bar app that reads your local Claude Code session
 logs — no proxy, no account, no traffic interception. It shows real-time spend
