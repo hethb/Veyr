@@ -41,12 +41,12 @@ const FEATURE_DETAILS = [
   {
     icon: Bot,
     title: "Optimization your agent reads and acts on",
-    body: "Veyr writes a spend status block into your CLAUDE.md (opt-in). When you open Claude Code, it already knows its burn rate, budget status, and what to do differently — no manual input from you.",
+    body: "Veyr writes a spend status block into your CLAUDE.md (on by default, one click to disable). When you open Claude Code, it already knows its burn rate, budget status, and what to do differently — no manual input from you.",
   },
   {
     icon: Route,
     title: "Right model for the right task",
-    body: "Veyr spots projects where light work is running on frontier models. Simple tasks shouldn't run on Opus — Veyr tells your agent when to switch and estimates how much that saves.",
+    body: "Veyr spots projects where light work runs on frontier models — and with your API key, an AI classifier rates every turn simple/moderate/complex and totals the cost wasted. Simple tasks shouldn't run on Opus; Veyr tells your agent when to switch.",
   },
   {
     icon: Database,

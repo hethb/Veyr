@@ -113,7 +113,7 @@ function HowItWorks() {
       icon: Zap,
       accent: ACCENTS[2],
       title: "Let Veyr optimize",
-      body: "Veyr analyzes your usage patterns and can inject recommendations directly into your Claude Code context. Your agent learns to switch models for simple tasks and compact context when sessions get long.",
+      body: "Veyr analyzes your usage patterns and injects recommendations directly into your Claude Code context (on by default, off in one click). Your agent learns to switch models for simple tasks and compact context when sessions get long.",
       code: "cat ~/.veyr/agent-status/VEYR_STATUS.json",
     },
   ];
@@ -204,9 +204,14 @@ function GetRunning() {
         "Veyr will automatically detect your Claude Code sessions and begin tracking cost. No configuration needed.",
     },
     {
-      title: "Optional — enable CLAUDE.md injection",
+      title: "CLAUDE.md spend status is on by default",
       detail:
-        "Open Veyr → Settings → Veyr → Auto-update CLAUDE.md. Veyr will inject spend status and optimization tips into your project's CLAUDE.md so Claude Code sees them automatically.",
+        "Veyr keeps a marker-delimited block in your active project's CLAUDE.md so Claude Code sees its burn rate, budget, and tips at session start. Disable in Veyr → Settings → Veyr if you prefer.",
+    },
+    {
+      title: "Optional — add your Anthropic API key",
+      detail:
+        "Settings → Veyr → Anthropic API key (stored in the macOS Keychain). Enables AI task-complexity analysis with Haiku (~$0.01/day typical) — Veyr then reports cost wasted running simple tasks on frontier models.",
     },
   ];
 
