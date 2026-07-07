@@ -25,7 +25,7 @@ export function HeroSection(_props: HeroSectionProps) {
     <div
       ref={ref}
       id="top"
-      className="relative h-[400vh] w-full overflow-clip bg-black pt-32"
+      className="font-hero relative h-[400vh] w-full overflow-clip bg-black pt-32"
     >
       <GoogleGeminiEffect
         title="See exactly what your AI is spending. Cut what you don't need."

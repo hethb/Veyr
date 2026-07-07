@@ -4,12 +4,11 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: [
+        sans: ['"Times New Roman"', "Times", "serif"],
+        hero: [
           '"Stack Sans Notch"',
           "ui-sans-serif",
           "system-ui",
-          "-apple-system",
-          '"Segoe UI"',
           "sans-serif",
         ],
       },

@@ -33,7 +33,7 @@ function NavLink({
 
   const content = (
     <>
-      <span className="hidden md:inline">{item.name}</span>
+      <span className="hidden whitespace-nowrap md:inline">{item.name}</span>
       <span className="md:hidden">
         <Icon size={18} strokeWidth={2.5} />
       </span>
