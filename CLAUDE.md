@@ -1,6 +1,6 @@
 <!-- veyr:spend-status:begin -->
 ## Veyr spend status
-> Auto-updated by Veyr · 2026-07-07 00:03 · disable in Veyr settings
+> Auto-updated by Veyr · 2026-07-07 00:08 · disable in Veyr settings
 
 **Current session:** claude-fable-5 · $235.8600/session · $0.0410/min
 **Cache hit rate:** 100%

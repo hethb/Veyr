@@ -20,6 +20,11 @@ html, body, #root {
 }
 
 body {
+  font-family: "Stack Sans Notch", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+}
+
+body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   /* Soft overhead wash for depth, instead of a flat pure-black field. */
