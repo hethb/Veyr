@@ -56,6 +56,7 @@ export default function MenuSurface({
   style,
   children,
 }: MenuSurfaceProps) {
+  const { t } = useLocale();
   return (
     <div className={`menu-surface menu-surface--${variant}`} style={style}>
       {titleBar}
@@ -63,7 +64,7 @@ export default function MenuSurface({
       {summary}
       <div className="menu-surface__body">{children}</div>
       {(footerLead || (footerRows && footerRows.length > 0)) && (
-        <nav className="menu-surface__footer" aria-label="Menu">
+        <nav className="menu-surface__footer" aria-label={t("PanelMenu")}>
           {footerLead}
           {footerRows?.map((row) => (
             <button

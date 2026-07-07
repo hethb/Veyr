@@ -82,6 +82,192 @@ fn test_japanese_menu_card_locale_values_are_translated() {
 }
 
 #[test]
+fn test_japanese_tray_panel_locale_values_are_translated() {
+    // CUA-verified English strings that must not appear in the Japanese tray panel.
+    let cases = [
+        (LocaleKey::ProviderWeekly, "週間"),
+        (LocaleKey::TrayWeeklyPercent, "週間 {}%"),
+        (
+            LocaleKey::TrayWeeklyExhausted,
+            "週間の割り当てを使い切りました",
+        ),
+        (LocaleKey::ProviderWeeklyLabel, "週間"),
+        (LocaleKey::MetricResetsIn, "リセットまで"),
+        (LocaleKey::ResetsInShort, "リセットまで"),
+        (LocaleKey::ResetsInDaysHours, "リセットまで {}日 {}時間"),
+        (LocaleKey::ResetsInHoursMinutes, "リセットまで {}時間 {}分"),
+        (LocaleKey::TrayResetsInLabel, "リセットまで {}"),
+        (LocaleKey::UpdatedJustNow, "たった今"),
+        (LocaleKey::UpdatedMinutesAgo, "{}分前"),
+        (LocaleKey::UpdatedHoursAgo, "{}時間前"),
+        (LocaleKey::UpdatedDaysAgo, "{}日前"),
+        (
+            LocaleKey::PanelEstimatedFromLocalLogs,
+            "ローカルログから推定したもので、請求書と異なる場合があります",
+        ),
+        (LocaleKey::TrayStatusError, " (エラー)"),
+        (LocaleKey::TrayStatusStale, " (古いデータ)"),
+        (LocaleKey::TrayStatusIncident, " (インシデント)"),
+        (LocaleKey::TrayStatusPartial, " (一部停止)"),
+        (LocaleKey::TrayLoading, "CodexBar - 読み込み中..."),
+        (LocaleKey::TrayStatusRowLoading, "読み込み中..."),
+        (LocaleKey::TrayStatusRowError, "エラー"),
+        (LocaleKey::TrayCreditsRemaining, "残りクレジット {}%"),
+        (LocaleKey::TrayCreditsRow, "クレジット {}%"),
+        (LocaleKey::ProviderStatusStale, "古い"),
+        (LocaleKey::ProviderStatusError, "エラー"),
+        (LocaleKey::ProviderStatusLoading, "読み込み中"),
+        (LocaleKey::TrayCardErrorBadge, "エラー"),
+        (LocaleKey::SummaryWithErrors, "エラーあり"),
+        (
+            LocaleKey::StateLoadingProviders,
+            "プロバイダーを読み込み中...",
+        ),
+        (LocaleKey::StateError, "エラー"),
+        (LocaleKey::PanelAllProviders, "すべてのプロバイダー"),
+        (LocaleKey::PanelAllProvidersShort, "すべて"),
+        (LocaleKey::PanelZoom, "ズーム"),
+        (LocaleKey::PanelMenu, "メニュー"),
+        (LocaleKey::PanelToday, "今日"),
+        (LocaleKey::PanelThirtyDayCost, "30日間のコスト"),
+        (LocaleKey::PanelThirtyDayTokens, "30日間のトークン"),
+        (LocaleKey::PanelLatestTokens, "最新トークン"),
+        (LocaleKey::PanelTopModelPrefix, "トップモデル"),
+        (LocaleKey::PanelUsedSuffix, "使用済み"),
+        (LocaleKey::PanelLeftSuffix, "残り"),
+        (LocaleKey::PanelOnPaceBudget, "ペース内の予算"),
+        (LocaleKey::PanelNow, "現在"),
+        (LocaleKey::PanelOneHour, "1時間"),
+        (LocaleKey::PanelFiveHours, "5時間"),
+        (LocaleKey::PanelTodayBudget, "今日"),
+        (LocaleKey::PanelReserveSuffix, "予備"),
+        (
+            LocaleKey::PanelReserveLastsUntilReset,
+            "リセットまで持ちます",
+        ),
+        (LocaleKey::PanelShowAllProviders, "すべてのプロバイダーを表示"),
+        (LocaleKey::PanelShowFewerProviders, "表示を減らす"),
+        (LocaleKey::PanelExpected, "予測"),
+        (LocaleKey::PanelActual, "実績"),
+    ];
+
+    for (key, expected) in cases {
+        assert_eq!(get_text(Language::Japanese, key), expected, "{key:?}");
+    }
+}
+
+#[test]
+fn test_chinese_tray_panel_locale_values_are_translated() {
+    let cases = [
+        (LocaleKey::PanelAllProviders, "所有提供者"),
+        (LocaleKey::PanelAllProvidersShort, "全部"),
+        (LocaleKey::PanelZoom, "缩放"),
+        (LocaleKey::PanelMenu, "菜单"),
+        (LocaleKey::PanelToday, "今日"),
+        (LocaleKey::PanelThirtyDayCost, "30天成本"),
+        (LocaleKey::PanelThirtyDayTokens, "30天令牌"),
+        (LocaleKey::PanelLatestTokens, "最新令牌"),
+        (LocaleKey::PanelTopModelPrefix, "热门模型"),
+        (LocaleKey::PanelUsedSuffix, "已使用"),
+        (LocaleKey::PanelLeftSuffix, "剩余"),
+        (LocaleKey::PanelOnPaceBudget, "按节奏预算"),
+        (LocaleKey::PanelNow, "现在"),
+        (LocaleKey::PanelOneHour, "1小时"),
+        (LocaleKey::PanelFiveHours, "5小时"),
+        (LocaleKey::PanelTodayBudget, "今日"),
+        (LocaleKey::PanelReserveSuffix, "储备"),
+        (LocaleKey::PanelReserveLastsUntilReset, "持续到重置"),
+        (
+            LocaleKey::PanelEstimatedFromLocalLogs,
+            "根据本地日志估算；可能与账单不同",
+        ),
+        (LocaleKey::PanelShowAllProviders, "显示所有提供者"),
+        (LocaleKey::PanelShowFewerProviders, "显示较少提供者"),
+        (LocaleKey::PanelExpected, "预期"),
+        (LocaleKey::PanelActual, "实际"),
+    ];
+
+    for (key, expected) in cases {
+        assert_eq!(get_text(Language::Chinese, key), expected, "{key:?}");
+    }
+}
+
+#[test]
+fn test_korean_tray_panel_locale_values_are_translated() {
+    let cases = [
+        (LocaleKey::PanelAllProviders, "모든 제공자"),
+        (LocaleKey::PanelAllProvidersShort, "전체"),
+        (LocaleKey::PanelZoom, "확대/축소"),
+        (LocaleKey::PanelMenu, "메뉴"),
+        (LocaleKey::PanelToday, "오늘"),
+        (LocaleKey::PanelThirtyDayCost, "30일 비용"),
+        (LocaleKey::PanelThirtyDayTokens, "30일 토큰"),
+        (LocaleKey::PanelLatestTokens, "최신 토큰"),
+        (LocaleKey::PanelTopModelPrefix, "상위 모델"),
+        (LocaleKey::PanelUsedSuffix, "사용됨"),
+        (LocaleKey::PanelLeftSuffix, "남음"),
+        (LocaleKey::PanelOnPaceBudget, "예산 내"),
+        (LocaleKey::PanelNow, "지금"),
+        (LocaleKey::PanelOneHour, "1시간"),
+        (LocaleKey::PanelFiveHours, "5시간"),
+        (LocaleKey::PanelTodayBudget, "오늘"),
+        (LocaleKey::PanelReserveSuffix, "예비"),
+        (LocaleKey::PanelReserveLastsUntilReset, "리셋까지 지속"),
+        (
+            LocaleKey::PanelEstimatedFromLocalLogs,
+            "로컬 로그에서 추정; 청구서와 다를 수 있음",
+        ),
+        (LocaleKey::PanelShowAllProviders, "모든 제공자 표시"),
+        (LocaleKey::PanelShowFewerProviders, "적은 제공자 표시"),
+        (LocaleKey::PanelExpected, "예상"),
+        (LocaleKey::PanelActual, "실제"),
+    ];
+
+    for (key, expected) in cases {
+        assert_eq!(get_text(Language::Korean, key), expected, "{key:?}");
+    }
+}
+
+#[test]
+fn test_spanish_tray_panel_locale_values_are_translated() {
+    let cases = [
+        (LocaleKey::PanelAllProviders, "Todos los proveedores"),
+        (LocaleKey::PanelAllProvidersShort, "Todos"),
+        (LocaleKey::PanelZoom, "Zoom"),
+        (LocaleKey::PanelMenu, "Menú"),
+        (LocaleKey::PanelToday, "Hoy"),
+        (LocaleKey::PanelThirtyDayCost, "Costo 30d"),
+        (LocaleKey::PanelThirtyDayTokens, "Tokens 30d"),
+        (LocaleKey::PanelLatestTokens, "Últimos tokens"),
+        (LocaleKey::PanelTopModelPrefix, "Modelo principal"),
+        (LocaleKey::PanelUsedSuffix, "usado"),
+        (LocaleKey::PanelLeftSuffix, "restante"),
+        (LocaleKey::PanelOnPaceBudget, "Presupuesto al ritmo"),
+        (LocaleKey::PanelNow, "ahora"),
+        (LocaleKey::PanelOneHour, "1h"),
+        (LocaleKey::PanelFiveHours, "5h"),
+        (LocaleKey::PanelTodayBudget, "hoy"),
+        (LocaleKey::PanelReserveSuffix, "en reserva"),
+        (
+            LocaleKey::PanelReserveLastsUntilReset,
+            "Dura hasta el reinicio",
+        ),
+        (
+            LocaleKey::PanelEstimatedFromLocalLogs,
+            "Estimado desde logs locales; puede diferir de tu factura",
+        ),
+        (LocaleKey::PanelShowAllProviders, "Mostrar todos los proveedores"),
+        (LocaleKey::PanelShowFewerProviders, "Mostrar menos proveedores"),
+        (LocaleKey::PanelExpected, "Esperado"),
+        (LocaleKey::PanelActual, "Real"),
+    ];
+
+    for (key, expected) in cases {
+        assert_eq!(get_text(Language::Spanish, key), expected, "{key:?}");
+    }
+}
+
+#[test]
 fn test_locale_key_spanish() {
     assert_eq!(
         get_text(Language::Spanish, LocaleKey::TabGeneral),

@@ -32,19 +32,34 @@ impl RateWindowSnapshot {
     /// Enrich with reserve info derived from pace analysis.
     /// delta_percent = actual - expected; negative means ahead (in reserve).
     /// Only meaningful for longer windows (weekly); skip if reserve rounds to 0.
-    fn with_pace_reserve(mut self, pace: &codexbar::core::UsagePace) -> Self {
+    fn with_pace_reserve(
+        mut self,
+        pace: &codexbar::core::UsagePace,
+        lang: codexbar::settings::Language,
+    ) -> Self {
         let reserve = pace.delta_percent.abs().round();
         if pace.delta_percent < 0.0 && reserve > 0.0 {
             self.reserve_percent = Some(reserve);
             self.reserve_description = if pace.will_last_to_reset {
-                Some("Lasts until reset".to_string())
+                Some(locale::get_text(
+                    lang,
+                    locale::LocaleKey::PanelReserveLastsUntilReset,
+                ))
             } else {
                 pace.eta_seconds.map(|s| {
                     let h = (s / 3600.0) as u64;
                     if h >= 24 {
-                        format!("Runs out in {}d {}h", h / 24, h % 24)
+                        locale::format_locale(
+                            lang,
+                            locale::LocaleKey::PanelReserveRunsOutInDaysHours,
+                            &[&(h / 24).to_string(), &(h % 24).to_string()],
+                        )
                     } else {
-                        format!("Runs out in {}h", h)
+                        locale::format_locale(
+                            lang,
+                            locale::LocaleKey::PanelReserveRunsOutInHours,
+                            &[&h.to_string()],
+                        )
                     }
                 })
             };
@@ -129,6 +144,7 @@ impl ProviderUsageSnapshot {
         id: ProviderId,
         metadata: &ProviderMetadata,
         result: &ProviderFetchResult,
+        lang: Language,
     ) -> Self {
         let usage = &result.usage;
 
@@ -154,7 +170,7 @@ impl ProviderUsageSnapshot {
         let secondary_snap = usage.secondary.as_ref().map(|sw| {
             let mut s = RateWindowSnapshot::from_rate_window(sw);
             if let Some(ref p) = secondary_pace {
-                s = s.with_pace_reserve(p);
+                s = s.with_pace_reserve(p, lang);
             }
             s
         });
@@ -162,6 +178,7 @@ impl ProviderUsageSnapshot {
         let tray_status_label = Some(compact_tray_status_label(
             &usage.primary,
             usage.primary.used_percent,
+            lang,
         ));
 
         Self {
@@ -173,7 +190,7 @@ impl ProviderUsageSnapshot {
             secondary_label: usage
                 .secondary
                 .as_ref()
-                .map(|_| metadata.weekly_label.to_string()),
+                .map(|_| localize_weekly_label(metadata.weekly_label, lang)),
             model_specific: usage
                 .model_specific
                 .as_ref()
@@ -248,31 +265,51 @@ impl ProviderUsageSnapshot {
     }
 }
 
-fn compact_tray_status_label(window: &RateWindow, used_percent: f64) -> String {
+/// Localize generic provider window labels that are static UI copy.
+/// Product-specific labels (e.g. "Cash", "DIEM") are passed through unchanged.
+fn localize_weekly_label(raw: &str, lang: codexbar::settings::Language) -> String {
+    if raw.eq_ignore_ascii_case("weekly") {
+        locale::get_text(lang, locale::LocaleKey::ProviderWeeklyLabel)
+    } else {
+        raw.to_string()
+    }
+}
+
+fn compact_tray_status_label(
+    window: &RateWindow,
+    used_percent: f64,
+    lang: codexbar::settings::Language,
+) -> String {
     let pct = format!("{used_percent:.0}%");
-    if let Some(reset) = compact_reset_description(window) {
+    if let Some(reset) = compact_reset_description(window, lang) {
         format!("{pct} • {reset}")
     } else {
         pct
     }
 }
 
-fn compact_reset_description(window: &RateWindow) -> Option<String> {
+fn compact_reset_description(
+    window: &RateWindow,
+    lang: codexbar::settings::Language,
+) -> Option<String> {
     if let Some(resets_at) = window.resets_at {
-        return Some(format_compact_reset_countdown(resets_at));
+        return Some(format_compact_reset_countdown(resets_at, lang));
     }
 
     window
         .reset_description
         .as_deref()
-        .map(normalize_reset_description)
+        .map(|desc| normalize_reset_description(desc, lang))
         .filter(|desc| !desc.is_empty())
 }
 
-fn format_compact_reset_countdown(resets_at: chrono::DateTime<chrono::Utc>) -> String {
+fn format_compact_reset_countdown(
+    resets_at: chrono::DateTime<chrono::Utc>,
+    lang: codexbar::settings::Language,
+) -> String {
     let now = chrono::Utc::now();
     if resets_at <= now {
-        return "resets now".to_string();
+        return locale::get_text(lang, locale::LocaleKey::ResetInProgress);
     }
 
     let total_minutes = (resets_at - now).num_minutes().max(0);
@@ -281,22 +318,33 @@ fn format_compact_reset_countdown(resets_at: chrono::DateTime<chrono::Utc>) -> S
     let minutes = total_minutes % 60;
 
     if days > 0 {
-        format!("resets in {days}d {hours}h")
+        locale::format_locale(
+            lang,
+            locale::LocaleKey::ResetsInDaysHours,
+            &[&days.to_string(), &hours.to_string()],
+        )
     } else {
-        format!("resets in {hours}h {minutes:02}m")
+        locale::format_locale(
+            lang,
+            locale::LocaleKey::ResetsInHoursMinutes,
+            &[&hours.to_string(), &format!("{minutes:02}")],
+        )
     }
 }
 
-fn normalize_reset_description(desc: &str) -> String {
+fn normalize_reset_description(desc: &str, lang: codexbar::settings::Language) -> String {
     let trimmed = desc.trim();
     let lower = trimmed.to_ascii_lowercase();
-    if lower.starts_with("resets in ") || lower.starts_with("reset in ") {
-        trimmed.to_string()
-    } else if lower.starts_with("in ") {
-        format!("resets {trimmed}")
-    } else {
-        format!("resets in {trimmed}")
-    }
+    let prefix_len = ["resets in ", "reset in ", "in "]
+        .iter()
+        .find(|&&p| lower.starts_with(p))
+        .map(|p| p.len())
+        .unwrap_or(0);
+    let body = trimmed[prefix_len..].trim_start();
+    format!(
+        "{} {body}",
+        locale::get_text(lang, locale::LocaleKey::ResetsInShort)
+    )
 }
 
 pub(crate) fn friendly_provider_error(id: ProviderId, error: &str) -> String {
@@ -584,9 +632,9 @@ mod tests {
             Some("Jun 10 at 3:00PM".to_string()),
         );
 
-        let label = compact_tray_status_label(&window, window.used_percent);
+        let label = compact_tray_status_label(&window, window.used_percent, Language::English);
 
-        assert!(label.starts_with("13% • resets in 2h "));
+        assert!(label.starts_with("13% • Resets in 2h "));
         assert!(label.ends_with('m'));
         assert!(!label.contains("Jun 10"));
     }
@@ -596,8 +644,40 @@ mod tests {
         let window = RateWindow::with_details(8.0, Some(300), None, Some("2h 05m".to_string()));
 
         assert_eq!(
-            compact_tray_status_label(&window, window.used_percent),
-            "8% • resets in 2h 05m"
+            compact_tray_status_label(&window, window.used_percent, Language::English),
+            "8% • Resets in 2h 05m"
         );
+    }
+
+    #[test]
+    fn japanese_tray_status_label_has_no_english_reset_text() {
+        use codexbar::settings::Language;
+
+        let window = RateWindow::with_details(
+            13.0,
+            Some(300),
+            Some(chrono::Utc::now() + chrono::Duration::minutes(125)),
+            None,
+        );
+
+        let label = compact_tray_status_label(&window, window.used_percent, Language::Japanese);
+
+        assert!(label.contains("リセットまで"), "{label}");
+        assert!(!label.to_ascii_lowercase().contains("resets in"), "{label}");
+        assert!(label.contains("13%"), "{label}");
+    }
+
+    #[test]
+    fn japanese_tray_status_strips_english_fallback_reset_prefix() {
+        use codexbar::settings::Language;
+
+        let window =
+            RateWindow::with_details(8.0, Some(300), None, Some("Resets in 2h 05m".to_string()));
+
+        let label = compact_tray_status_label(&window, window.used_percent, Language::Japanese);
+
+        assert!(label.contains("リセットまで"), "{label}");
+        assert!(!label.to_ascii_lowercase().contains("resets in"), "{label}");
+        assert!(label.contains("2h 05m"), "{label}");
     }
 }
