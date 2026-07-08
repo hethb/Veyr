@@ -218,7 +218,7 @@ function GetRunning() {
   const vscodeSteps: SetupStep[] = [
     {
       title: "Download the extension",
-      detail: "Grab veyr-vscode-0.2.0.vsix with the button below.",
+      detail: "Grab veyr-vscode-0.2.1.vsix with the button below.",
     },
     {
       title: "Install from VSIX",
@@ -297,12 +297,12 @@ function GetRunning() {
             </div>
             <StepList steps={vscodeSteps} />
             <a
-              href="/downloads/veyr-vscode-0.2.0.vsix"
+              href="/downloads/veyr-vscode-0.2.1.vsix"
               download
               className="mt-6 inline-flex w-fit items-center gap-2 border border-white bg-white px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
             >
               <Code2 className="h-4 w-4" />
-              Download veyr-vscode-0.2.0.vsix
+              Download veyr-vscode-0.2.1.vsix
             </a>
 
             {/* Option C — Homebrew (coming soon) */}
@@ -501,7 +501,7 @@ function BuiltForSection() {
 }
 
 const MAC_DMG_URL = "/downloads/Veyr-0.2.0.dmg";
-const VSIX_URL = "/downloads/veyr-vscode-0.2.0.vsix";
+const VSIX_URL = "/downloads/veyr-vscode-0.2.1.vsix";
 
 function DownloadSection() {
   return (

@@ -68,19 +68,31 @@ export class VeyrStatusBar implements vscode.Disposable {
   }
 
   private render(result: VeyrStatusResult): void {
-    if (result.kind === "missing" || result.kind === "stale" || !result.status.current_session) {
+    if (result.kind === "missing" || result.kind === "stale") {
       this.item.text = "$(graph-line) Veyr: inactive";
       this.item.tooltip =
         result.kind === "missing"
-          ? "No Veyr agent feed found. Launch the Veyr menu bar app to start tracking."
-          : "Veyr feed is stale — the menu bar app may not be running.";
+          ? "No Veyr agent feed found. Launch the Veyr menu bar app to start tracking " +
+            "(it writes ~/.veyr/agent-status/VEYR_STATUS.json)."
+          : "Veyr feed is stale — the menu bar app may not be running. Launch Veyr to resume tracking.";
       return;
     }
 
-    const session = result.status.current_session;
-    const dot = session.is_active ? "$(circle-filled) " : "";
     const savings =
       this.todaySavingsPct !== null ? ` · ${this.todaySavingsPct}% saved ⚡` : "";
+    const session = result.status.current_session;
+
+    // No live session: still show today's spend — the bar stays useful.
+    if (!session || !session.is_active) {
+      const today = result.status.today_spent_usd ?? session?.session_cost_usd ?? 0;
+      this.item.text = `$(graph-line) ${formatUsd(today)} today${savings}`;
+      this.item.tooltip =
+        "Veyr — no active session. Today's total spend across Claude Code sessions. " +
+        "Click to open the Veyr panel.";
+      return;
+    }
+
+    const dot = "$(circle-filled) ";
     this.item.text =
       `${dot}$(graph-line) ${formatUsd(session.session_cost_usd)} · ` +
       `${formatTokens(session.input_tokens)}↓ ${formatTokens(session.output_tokens)}↑${savings}`;

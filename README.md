@@ -61,7 +61,7 @@ cd packages/desktop-mac
 
 ### VS Code extension
 
-1. Download `veyr-vscode-0.2.0.vsix` from the landing page.
+1. Download `veyr-vscode-0.2.1.vsix` from the landing page.
 2. VS Code → Extensions panel (`Cmd+Shift+X`) → `···` → **Install from
    VSIX…** → pick the file.
 3. It activates automatically: live session cost in the status bar

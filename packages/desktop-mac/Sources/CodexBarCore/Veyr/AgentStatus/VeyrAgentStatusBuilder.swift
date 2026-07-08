@@ -94,8 +94,14 @@ public enum VeyrAgentStatusBuilder {
             signals: currentSignals,
             tagDistinctTools: tagDistinctTools)
 
+        let todayStart = calendar.startOfDay(for: now)
+        let todaySpent = sessions
+            .filter { $0.timestamp >= todayStart }
+            .reduce(0.0) { $0 + $1.usage.costUSD }
+
         return VeyrAgentStatusPayload(
             generatedAt: now,
+            todaySpentUsd: Self.round2(todaySpent),
             currentSession: currentSession,
             budget: budget,
             alerts: alerts,

@@ -129,6 +129,9 @@ public struct VeyrAgentStatusPayload: Codable, Equatable, Sendable {
     }
 
     public var generatedAt: Date
+    /// Today's total spend across all sessions — lets clients (VS Code status
+    /// bar) show something useful even when no session is active.
+    public var todaySpentUsd: Double
     public var currentSession: CurrentSession?
     public var budget: Budget
     public var alerts: [Alert]

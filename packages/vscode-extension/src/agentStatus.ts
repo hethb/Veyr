@@ -48,6 +48,7 @@ export interface VeyrAlert {
 
 export interface VeyrStatus {
   readonly generated_at: string;
+  readonly today_spent_usd?: number;
   readonly current_session?: VeyrCurrentSession;
   readonly budget: VeyrBudget;
   readonly alerts: readonly VeyrAlert[];
@@ -60,7 +61,10 @@ export type VeyrStatusResult =
   | { readonly kind: "stale"; readonly status: VeyrStatus; readonly generatedAt: Date }
   | { readonly kind: "missing" };
 
-const STALE_AFTER_MS = 2 * 60 * 1000;
+// The Mac app rewrites the feed every 30s while a session is active but only
+// every 5 minutes when idle — so "stale" must mean older than the idle
+// cadence, or the bar reads "inactive" most of the time between sessions.
+const STALE_AFTER_MS = 6 * 60 * 1000;
 
 export function expandTilde(p: string): string {
   if (p === "~") return os.homedir();
