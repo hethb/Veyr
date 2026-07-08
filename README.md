@@ -28,7 +28,7 @@ Built on [CodexBar](https://github.com/steipete/CodexBar) by Peter Steinberger
 
 ### macOS app (recommended)
 
-1. **Download** `Veyr-0.2.0.dmg` from the Veyr site's download section
+1. **Download** `Veyr-0.2.1.dmg` from the Veyr site's download section
    (the landing page in `packages/dashboard`), or build from source — see
    below.
 2. **Install** — open the DMG, drag Veyr to Applications, open it.

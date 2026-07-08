@@ -41,7 +41,13 @@ struct CodexBarApp: App {
                 "built": buildTimestamp,
             ])
 
-        KeychainAccessGate.isDisabled = UserDefaults.standard.bool(forKey: "debugDisableKeychainAccess")
+        // Veyr is local-first and ad-hoc signed: every rebuild changes the code
+        // signature, so Keychain ACL approvals never stick and cookie/token
+        // probes trigger password prompts every few minutes. Keychain access is
+        // therefore OFF unless the user opts in (Settings → Veyr).
+        KeychainAccessGate.isDisabled =
+            !UserDefaults.standard.bool(forKey: "veyrAllowKeychainAccess")
+                || UserDefaults.standard.bool(forKey: "debugDisableKeychainAccess")
         KeychainPromptCoordinator.install()
         if MainThreadHangWatchdog.isEnabledForCurrentProcess {
             MainThreadHangWatchdog.shared.start()

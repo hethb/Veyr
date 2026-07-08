@@ -41,12 +41,19 @@ public final class VeyrComplexityService {
 
     private static let maxTurnsPerTick = 3
 
+    /// Resolved once per app run (and on Settings changes) — resolving on
+    /// every 30s tick would re-prompt for the Keychain item after each
+    /// re-signed build.
+    @ObservationIgnored
+    private var cachedApiKey: String?
+
     private init() {
         self.refreshAvailability()
     }
 
     public func refreshAvailability() {
-        self.classifierEnabled = VeyrAnthropicKey.resolve() != nil
+        self.cachedApiKey = VeyrAnthropicKey.resolve()
+        self.classifierEnabled = self.cachedApiKey != nil
     }
 
     public var records: [VeyrClassificationRecord] {
@@ -56,7 +63,7 @@ public final class VeyrComplexityService {
     /// Called from the agent-status tick. Returns current records for the engine.
     public func processNewTurns(isSessionActive: Bool) async -> [VeyrClassificationRecord] {
         guard isSessionActive, !self.inFlight else { return self.store.entries }
-        guard let apiKey = VeyrAnthropicKey.resolve() else {
+        guard let apiKey = self.cachedApiKey else {
             self.classifierEnabled = false
             return self.store.entries
         }

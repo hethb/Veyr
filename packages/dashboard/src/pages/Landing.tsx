@@ -186,7 +186,7 @@ function GetRunning() {
   const macSteps: SetupStep[] = [
     {
       title: "Download Veyr",
-      detail: "Grab Veyr-0.2.0.dmg with the button below (or in the Download section).",
+      detail: "Grab Veyr-0.2.1.dmg with the button below (or in the Download section).",
     },
     {
       title: "Install",
@@ -264,12 +264,12 @@ function GetRunning() {
             </div>
             <StepList steps={macSteps} />
             <a
-              href="/downloads/Veyr-0.2.0.dmg"
+              href="/downloads/Veyr-0.2.1.dmg"
               download
               className="mt-6 inline-flex w-fit items-center gap-2 border border-white bg-white px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
             >
               <Monitor className="h-4 w-4" />
-              Download Veyr-0.2.0.dmg
+              Download Veyr-0.2.1.dmg
             </a>
           </div>
 
@@ -500,7 +500,7 @@ function BuiltForSection() {
   );
 }
 
-const MAC_DMG_URL = "/downloads/Veyr-0.2.0.dmg";
+const MAC_DMG_URL = "/downloads/Veyr-0.2.1.dmg";
 const VSIX_URL = "/downloads/veyr-vscode-0.2.1.vsix";
 
 function DownloadSection() {

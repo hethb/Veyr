@@ -144,6 +144,18 @@ struct VeyrPreferencesPane: View {
                         VeyrStatusItem.shared.applyEnabledPreference()
                     }))
             PreferenceToggleRow(
+                title: "Allow Keychain access (browser-cookie providers)",
+                subtitle: "Off by default: unsigned builds trigger repeated macOS password " +
+                    "prompts for Keychain items (browser cookies, provider tokens). Veyr's " +
+                    "core features read local logs and never need this. Enable only if you " +
+                    "want cookie-based provider quotas (claude.ai web, Cursor, …).",
+                binding: Binding(
+                    get: { UserDefaults.standard.bool(forKey: "veyrAllowKeychainAccess") },
+                    set: { newValue in
+                        UserDefaults.standard.set(newValue, forKey: "veyrAllowKeychainAccess")
+                        KeychainAccessGate.isDisabled = !newValue
+                    }))
+            PreferenceToggleRow(
                 title: "Budget notifications",
                 subtitle: "Notify at 80% and 100% of any budget cap (once per month per threshold).",
                 binding: Binding(
