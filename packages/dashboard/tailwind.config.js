@@ -4,7 +4,12 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Times New Roman"', "Times", "serif"],
+        sans: [
+          '"Bricolage Grotesque"',
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
         hero: [
           '"Stack Sans Notch"',
           "ui-sans-serif",
