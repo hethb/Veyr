@@ -33,6 +33,12 @@ public enum VeyrPaths {
         self.home(base: base).appendingPathComponent("agent-status", isDirectory: true)
     }
 
+    /// Private venv used only when the user's Python is externally managed (PEP 668)
+    /// and refuses `pip install --user`.
+    public static func graphifyVenvDirectory(base: URL = FileManager.default.homeDirectoryForCurrentUser) -> URL {
+        self.home(base: base).appendingPathComponent("graphify-venv", isDirectory: true)
+    }
+
     @discardableResult
     public static func ensureDirectoryExists(_ url: URL, fileManager: FileManager = .default) -> Bool {
         if fileManager.fileExists(atPath: url.path) { return true }
