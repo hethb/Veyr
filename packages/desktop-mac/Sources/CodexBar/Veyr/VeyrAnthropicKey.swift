@@ -33,13 +33,18 @@ enum VeyrAnthropicKey {
     // MARK: - Keychain (the Settings-entered key)
 
     static func loadFromKeychain() -> String? {
-        let query: [String: Any] = [
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: Self.keychainService,
             kSecAttrAccount as String: Self.keychainAccount,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne,
         ]
+        // Never show a password prompt for this read. Ad-hoc builds change code
+        // signature every rebuild, so the item's ACL stops matching and macOS
+        // would otherwise prompt on every launch; fall back to ~/.veyr/config.json
+        // (and re-saving via Settings) instead.
+        KeychainNoUIQuery.apply(to: &query)
         var item: CFTypeRef?
         guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
               let data = item as? Data,
