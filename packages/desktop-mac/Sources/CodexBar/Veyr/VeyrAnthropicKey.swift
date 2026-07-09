@@ -9,9 +9,8 @@ import Security
 /// Resolves the Anthropic API key for Veyr's optimization features.
 ///
 /// Order: macOS Keychain (set via Veyr Settings) → `~/.veyr/config.json`
-/// (`anthropicApiKey`) → `ANTHROPIC_API_KEY` env → Claude Code's credentials
-/// file. Only real API keys (`sk-ant-…`) are reused from Claude Code — OAuth
-/// subscription tokens are deliberately not borrowed for direct API calls.
+/// (`anthropicApiKey`) → `ANTHROPIC_API_KEY` env. Veyr never reads Claude
+/// Code's credentials (keychain item or file) — the user provides their own key.
 enum VeyrAnthropicKey {
     private static let keychainService = "com.veyr.mac.anthropic"
     private static let keychainAccount = "api-key"
@@ -22,7 +21,6 @@ enum VeyrAnthropicKey {
         if let key = Self.loadFromKeychain(), Self.looksValid(key) { return key }
         if let key = Self.loadFromVeyrConfig(), Self.looksValid(key) { return key }
         if let key = environment["ANTHROPIC_API_KEY"], Self.looksValid(key) { return key }
-        if let key = Self.loadFromClaudeCodeCredentials(), Self.looksValid(key) { return key }
         return nil
     }
 
@@ -62,6 +60,9 @@ enum VeyrAnthropicKey {
             kSecAttrService as String: Self.keychainService,
             kSecAttrAccount as String: Self.keychainAccount,
             kSecValueData as String: Data(key.utf8),
+            // Readable after first unlock without per-read password confirmation —
+            // required for a background menu bar app.
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
         ]
         return SecItemAdd(attributes as CFDictionary, nil) == errSecSuccess
     }
@@ -89,19 +90,5 @@ enum VeyrAnthropicKey {
               let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
         else { return nil }
         return object["anthropicApiKey"] as? String
-    }
-
-    private static func loadFromClaudeCodeCredentials() -> String? {
-        let home = FileManager.default.homeDirectoryForCurrentUser
-        for path in [".claude/.credentials.json", ".claude/credentials.json"] {
-            let url = home.appendingPathComponent(path)
-            guard let data = try? Data(contentsOf: url),
-                  let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
-            else { continue }
-            // Only a real API key is usable; OAuth tokens are skipped on purpose.
-            if let key = object["primaryApiKey"] as? String { return key }
-            if let key = object["apiKey"] as? String { return key }
-        }
-        return nil
     }
 }

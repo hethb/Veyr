@@ -49,6 +49,9 @@ extension ClaudeOAuthCredentialsStore {
         readStrategy: ClaudeOAuthKeychainReadStrategy = ClaudeOAuthKeychainReadStrategyPreference.current())
         -> Data?
     {
+        // Same hard block as the Security.framework readers: `security find-generic-password`
+        // against Claude Code's item shows its own password prompt.
+        guard self.keychainAccessAllowed else { return nil }
         guard self.shouldPreferSecurityCLIKeychainRead(readStrategy: readStrategy) else { return nil }
         let interactionMetadata = interaction == .userInitiated ? "user" : "background"
 

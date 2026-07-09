@@ -171,6 +171,27 @@ public enum KeychainCacheStore {
         self.clearResult(key: key) == .removed
     }
 
+    /// Deletes an item this store created even while `KeychainAccessGate` is off.
+    /// Deleting our own item never shows the macOS password prompt, and the gate
+    /// must not block cleanup of credential copies left behind by older builds.
+    @discardableResult
+    public static func purgeLeftoverItem(key: Key) -> Bool {
+        if let removed = self.clearTestStore(key: key) {
+            return removed
+        }
+        #if os(macOS)
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: self.serviceName,
+            kSecAttrAccount as String: key.account,
+        ]
+        let status = SecItemDelete(query as CFDictionary)
+        return status == errSecSuccess
+        #else
+        return false
+        #endif
+    }
+
     public static func clearResult(key: Key) -> ClearResult {
         #if DEBUG && os(macOS)
         if let status = self.clearFailureStatusOverride {

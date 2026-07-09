@@ -2082,13 +2082,26 @@ public enum ClaudeOAuthCredentialsStore {
         KeychainCacheStore.clear(key: self.cacheKey)
     }
 
-    private static var keychainAccessAllowed: Bool {
+    /// Removes the cached copy of Claude Code's OAuth credentials that older Veyr
+    /// builds stored under Veyr's own keychain service ("com.veyr.mac.cache",
+    /// account "oauth.claude"). Veyr no longer reads or caches Claude Code's
+    /// credentials, so any leftover copy should be deleted at launch.
+    public static func purgeCachedClaudeCredentials() {
+        KeychainCacheStore.purgeLeftoverItem(key: self.cacheKey)
+    }
+
+    static var keychainAccessAllowed: Bool {
         #if DEBUG
         if let override = self.taskKeychainAccessOverride { return !override }
         if KeychainAccessGate.currentOverrideForTesting == true { return false }
         if self.hasTaskKeychainTestingOverride { return true }
         #endif
-        return !KeychainAccessGate.isDisabled
+        // Veyr never opens Claude Code's keychain item ("Claude Code-credentials").
+        // It is another app's item, so every read forces a macOS password prompt —
+        // and ad-hoc builds re-sign on each rebuild, so approvals never stick.
+        // Veyr's usage data comes from ~/.claude logs; this is independent of the
+        // user-facing KeychainAccessGate toggle and is not configurable.
+        return false
     }
 
     #if DEBUG

@@ -49,6 +49,10 @@ struct CodexBarApp: App {
             !UserDefaults.standard.bool(forKey: "veyrAllowKeychainAccess")
                 || UserDefaults.standard.bool(forKey: "debugDisableKeychainAccess")
         KeychainPromptCoordinator.install()
+        // Older builds cached a copy of Claude Code's OAuth token under Veyr's own
+        // keychain service; Veyr no longer reads Claude Code's credentials at all,
+        // so delete any leftover copy (deleting our own item never prompts).
+        ClaudeOAuthCredentialsStore.purgeCachedClaudeCredentials()
         if MainThreadHangWatchdog.isEnabledForCurrentProcess {
             MainThreadHangWatchdog.shared.start()
         }
