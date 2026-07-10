@@ -192,3 +192,17 @@ struct VeyrGraphifyGraphTests {
         #expect(refresh?.inDegree == 4)
     }
 }
+
+struct VeyrGraphWatcherTests {
+    @Test func firstRefreshIsAlwaysAllowed() {
+        #expect(GraphWatcher.shouldRefresh(lastRefreshAt: nil, now: Date()))
+    }
+
+    @Test func refreshIsRateLimited() {
+        let now = Date()
+        let justRefreshed = now.addingTimeInterval(-GraphWatcher.minRefreshInterval + 1)
+        #expect(!GraphWatcher.shouldRefresh(lastRefreshAt: justRefreshed, now: now))
+        let longAgo = now.addingTimeInterval(-GraphWatcher.minRefreshInterval - 1)
+        #expect(GraphWatcher.shouldRefresh(lastRefreshAt: longAgo, now: now))
+    }
+}
