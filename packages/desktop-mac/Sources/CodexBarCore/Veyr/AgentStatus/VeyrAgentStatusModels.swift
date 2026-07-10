@@ -128,6 +128,113 @@ public struct VeyrAgentStatusPayload: Codable, Equatable, Sendable {
         }
     }
 
+    /// Compressed Graphify summary (Part 3a). Only derived fields — the raw
+    /// graph lives in ~/.veyr/cache/graph.json, never here.
+    public struct GraphContext: Codable, Equatable, Sendable {
+        public struct NodeRef: Codable, Equatable, Sendable {
+            public var name: String
+            public var file: String
+            public var line: Int?
+            public var connections: Int
+
+            public init(name: String, file: String, line: Int?, connections: Int) {
+                self.name = name
+                self.file = file
+                self.line = line
+                self.connections = connections
+            }
+        }
+
+        public struct ActiveFileSummary: Codable, Equatable, Sendable {
+            public var name: String
+            public var file: String
+            public var line: Int?
+            public var kind: String
+            public var connections: Int
+            public var callers: [String]
+            public var callees: [String]
+            public var imports: [String]
+            public var importedBy: [String]
+            public var tests: [String]
+
+            public init(
+                name: String, file: String, line: Int?, kind: String, connections: Int,
+                callers: [String], callees: [String], imports: [String],
+                importedBy: [String], tests: [String])
+            {
+                self.name = name
+                self.file = file
+                self.line = line
+                self.kind = kind
+                self.connections = connections
+                self.callers = callers
+                self.callees = callees
+                self.imports = imports
+                self.importedBy = importedBy
+                self.tests = tests
+            }
+        }
+
+        public struct TokenSavingsEstimate: Codable, Equatable, Sendable {
+            public var withoutGraph: Int
+            public var withGraph: Int
+            public var savingsThisSession: Int
+            public var savingsThisMonth: Int
+
+            public init(withoutGraph: Int, withGraph: Int, savingsThisSession: Int, savingsThisMonth: Int) {
+                self.withoutGraph = withoutGraph
+                self.withGraph = withGraph
+                self.savingsThisSession = savingsThisSession
+                self.savingsThisMonth = savingsThisMonth
+            }
+        }
+
+        public var available: Bool
+        public var isPartial: Bool
+        /// Present only when isPartial — explains the reduced scope.
+        public var partialNote: String?
+        public var graphifyVersion: String
+        public var fileCount: Int
+        public var nodeCount: Int
+        public var edgeCount: Int
+        public var lastBuiltAt: Date
+        public var primaryLanguages: [String]
+        public var architecturalOverview: String
+        public var activeFileSummary: ActiveFileSummary?
+        public var criticalPath: [NodeRef]
+        public var tokenSavingsEstimate: TokenSavingsEstimate
+
+        public init(
+            available: Bool,
+            isPartial: Bool,
+            partialNote: String? = nil,
+            graphifyVersion: String,
+            fileCount: Int,
+            nodeCount: Int,
+            edgeCount: Int,
+            lastBuiltAt: Date,
+            primaryLanguages: [String],
+            architecturalOverview: String,
+            activeFileSummary: ActiveFileSummary? = nil,
+            criticalPath: [NodeRef],
+            tokenSavingsEstimate: TokenSavingsEstimate)
+        {
+            self.available = available
+            self.isPartial = isPartial
+            self.partialNote = partialNote
+            self.graphifyVersion = graphifyVersion
+            self.fileCount = fileCount
+            self.nodeCount = nodeCount
+            self.edgeCount = edgeCount
+            self.lastBuiltAt = lastBuiltAt
+            self.primaryLanguages = primaryLanguages
+            self.architecturalOverview = architecturalOverview
+            self.activeFileSummary = activeFileSummary
+            self.criticalPath = criticalPath
+            self.tokenSavingsEstimate = tokenSavingsEstimate
+        }
+    }
+
     public var generatedAt: Date
     /// Today's total spend across all sessions — lets clients (VS Code status
     /// bar) show something useful even when no session is active.
@@ -140,6 +247,7 @@ public struct VeyrAgentStatusPayload: Codable, Equatable, Sendable {
     public var complexity: ComplexityAnalysis?
     public var toolAnalysis: ToolAnalysis?
     public var toolQuality: ToolQuality?
+    public var graphContext: GraphContext?
 }
 
 /// `~/.veyr/budget-controls.json` (camelCase keys, per the controls-file contract).

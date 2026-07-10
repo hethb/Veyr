@@ -20,6 +20,7 @@ public enum VeyrAgentStatusBuilder {
         complexity: VeyrAgentStatusPayload.ComplexityAnalysis? = nil,
         currentSignals: VeyrSessionSignals? = nil,
         tagDistinctTools: Int = 0,
+        graphContext: VeyrAgentStatusPayload.GraphContext? = nil,
         now: Date = Date(),
         calendar: Calendar = .current) -> VeyrAgentStatusPayload
     {
@@ -109,7 +110,8 @@ public enum VeyrAgentStatusBuilder {
             agentInstructions: instructions,
             complexity: complexity,
             toolAnalysis: toolAnalysis,
-            toolQuality: toolQuality)
+            toolQuality: toolQuality,
+            graphContext: graphContext)
     }
 
     // MARK: - Budget

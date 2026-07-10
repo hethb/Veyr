@@ -49,6 +49,8 @@ public enum VeyrAgentStatusWriter {
 
     static let claudeMdSectionBegin = "<!-- veyr:spend-status:begin -->"
     static let claudeMdSectionEnd = "<!-- veyr:spend-status:end -->"
+    public static let claudeMdGraphSectionBegin = "<!-- veyr:graph-context:begin -->"
+    public static let claudeMdGraphSectionEnd = "<!-- veyr:graph-context:end -->"
 
     /// Replaces (or appends) the managed `## Veyr spend status` section in the
     /// CLAUDE.md at `projectPath`. Creates CLAUDE.md only if `createIfMissing`.
@@ -84,6 +86,48 @@ public enum VeyrAgentStatusWriter {
               existing.contains(Self.claudeMdSectionBegin)
         else { return false }
         let cleaned = Self.replacingManagedSection(in: existing, with: nil)
+        try Data(cleaned.utf8).write(to: claudeMdURL, options: [.atomic])
+        return true
+    }
+
+    // MARK: - CLAUDE.md graph section (Part 3b — same mechanics, separate markers)
+
+    /// Replaces (or appends) the managed `## Veyr codebase graph` section. The
+    /// section string must already carry the graph markers (see
+    /// VeyrGraphContextBuilder.claudeMdGraphSection). Returns true if written.
+    @discardableResult
+    public static func updateClaudeMdGraphSection(
+        projectPath: String,
+        section: String,
+        createIfMissing: Bool = false,
+        fileManager: FileManager = .default) throws -> Bool
+    {
+        let claudeMdURL = URL(fileURLWithPath: projectPath).appendingPathComponent("CLAUDE.md")
+        let exists = fileManager.fileExists(atPath: claudeMdURL.path)
+        guard exists || createIfMissing else { return false }
+
+        let existing = exists ? (try? String(contentsOf: claudeMdURL, encoding: .utf8)) ?? "" : ""
+        let updated = Self.replacingManagedSection(
+            in: existing, with: section,
+            begin: Self.claudeMdGraphSectionBegin, end: Self.claudeMdGraphSectionEnd)
+        guard updated != existing else { return false }
+        try Data(updated.utf8).write(to: claudeMdURL, options: [.atomic])
+        return true
+    }
+
+    @discardableResult
+    public static func removeClaudeMdGraphSection(
+        projectPath: String,
+        fileManager: FileManager = .default) throws -> Bool
+    {
+        let claudeMdURL = URL(fileURLWithPath: projectPath).appendingPathComponent("CLAUDE.md")
+        guard fileManager.fileExists(atPath: claudeMdURL.path),
+              let existing = try? String(contentsOf: claudeMdURL, encoding: .utf8),
+              existing.contains(Self.claudeMdGraphSectionBegin)
+        else { return false }
+        let cleaned = Self.replacingManagedSection(
+            in: existing, with: nil,
+            begin: Self.claudeMdGraphSectionBegin, end: Self.claudeMdGraphSectionEnd)
         try Data(cleaned.utf8).write(to: claudeMdURL, options: [.atomic])
         return true
     }
@@ -131,10 +175,16 @@ public enum VeyrAgentStatusWriter {
     }
 
     /// Replaces the marker-delimited section, or appends it at the bottom.
-    /// Passing nil removes the section.
-    static func replacingManagedSection(in content: String, with section: String?) -> String {
-        if let beginRange = content.range(of: Self.claudeMdSectionBegin),
-           let endRange = content.range(of: Self.claudeMdSectionEnd, range: beginRange.upperBound..<content.endIndex)
+    /// Passing nil removes the section. Marker pair defaults to the spend
+    /// section; the graph section passes its own markers.
+    static func replacingManagedSection(
+        in content: String,
+        with section: String?,
+        begin: String = Self.claudeMdSectionBegin,
+        end: String = Self.claudeMdSectionEnd) -> String
+    {
+        if let beginRange = content.range(of: begin),
+           let endRange = content.range(of: end, range: beginRange.upperBound..<content.endIndex)
         {
             var replaced = content
             let fullRange = beginRange.lowerBound..<endRange.upperBound

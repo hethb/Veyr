@@ -15,6 +15,9 @@ public struct VeyrConfig: Sendable {
     public var toolFilteringSuggestions: Bool?
     public var batchApiDetection: Bool?
     public var structuredOutputDetection: Bool?
+    /// Graphify-backed codebase graph (nil = enabled). Kill switch for the
+    /// silent-install + background-build pipeline.
+    public var codebaseGraph: Bool?
 
     /// Raw file bytes, kept so keys written by other tools survive a save
     /// (`Data` keeps the struct Sendable; parsed lazily at save time).
@@ -43,6 +46,7 @@ public struct VeyrConfig: Sendable {
         config.toolFilteringSuggestions = object["toolFilteringSuggestions"] as? Bool
         config.batchApiDetection = object["batchApiDetection"] as? Bool
         config.structuredOutputDetection = object["structuredOutputDetection"] as? Bool
+        config.codebaseGraph = object["codebaseGraph"] as? Bool
         return config
     }
 
@@ -58,6 +62,7 @@ public struct VeyrConfig: Sendable {
             ("toolFilteringSuggestions", self.toolFilteringSuggestions),
             ("batchApiDetection", self.batchApiDetection),
             ("structuredOutputDetection", self.structuredOutputDetection),
+            ("codebaseGraph", self.codebaseGraph),
         ]
         for (key, value) in updates {
             if let value {

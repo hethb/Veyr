@@ -31,6 +31,9 @@ public final class VeyrAgentStatusService {
     private var dismissalSessionKey: String?
     private var lastClaudeMdUpdateAt: Date?
     private var lastClaudeMdProjectPath: String?
+    /// Rendered graph section for CLAUDE.md, refreshed each tick alongside the
+    /// payload; nil while no graph is available.
+    private var latestGraphSection: String?
 
     private static let activeInterval: Duration = .seconds(30)
     private static let idleInterval: Duration = .seconds(300)
@@ -55,6 +58,7 @@ public final class VeyrAgentStatusService {
                 self.lastClaudeMdUpdateAt = nil // inject on next tick
             } else if let path = self.lastClaudeMdProjectPath {
                 try? VeyrAgentStatusWriter.removeClaudeMdSection(projectPath: path)
+                try? VeyrAgentStatusWriter.removeClaudeMdGraphSection(projectPath: path)
                 self.lastClaudeMdProjectPath = nil
             }
         }
@@ -62,6 +66,11 @@ public final class VeyrAgentStatusService {
 
     public func start() {
         guard self.loopTask == nil else { return }
+        // A finished graph build re-injects CLAUDE.md immediately (spec 3b
+        // trigger: "when the full graph is first built") instead of waiting a tick.
+        VeyrGraphService.shared.onGraphUpdated = { [weak self] in
+            Task { await self?.graphDidUpdate() }
+        }
         self.loopTask = Task { [weak self] in
             while !Task.isCancelled {
                 await self?.tick()
@@ -69,6 +78,11 @@ public final class VeyrAgentStatusService {
                 try? await Task.sleep(for: active ? Self.activeInterval : Self.idleInterval)
             }
         }
+    }
+
+    private func graphDidUpdate() async {
+        self.lastClaudeMdUpdateAt = nil
+        await self.tick()
     }
 
     public func stop() {
@@ -91,16 +105,52 @@ public final class VeyrAgentStatusService {
         }.value
         let allSignals = Array(signalsStore.sessions.values)
         let config = VeyrConfig.load()
-        let suggestions = VeyrSuggestionEngine.analyze(
+        let engineSuggestions = VeyrSuggestionEngine.analyze(
             sessions: store.sessions,
             currentSession: currentSession,
             currentSessionIsActive: store.isSessionActive,
             classifications: classifications,
             signals: allSignals,
             toolFilteringEnabled: config.toolFilteringSuggestions ?? true)
-        self.latestSuggestions = suggestions
         let currentSignals = currentSession?.sessionId.flatMap { sessionId in
             signalsStore.sessions[sessionId]
+        }
+
+        // Graph pipeline: (re)target the active workspace, then derive focus
+        // from the most recently read file — the closest signal the logs give
+        // to "where the agent is working".
+        let graphService = VeyrGraphService.shared
+        graphService.ensureWorkspace(currentSession?.projectPath)
+        let graph = graphService.currentGraph
+        let focused = graphService.focusedContext(
+            activeFile: currentSignals?.readFiles?.last, cursorLine: 0)
+        let graphSuggestions = VeyrGraphSuggestionEngine.analyze(.init(
+            graph: graph,
+            focused: focused,
+            currentSession: currentSession,
+            currentSessionIsActive: store.isSessionActive,
+            sessions: store.sessions,
+            signals: allSignals,
+            recentlyChangedFiles: graphService.recentlyChangedFiles))
+        // Graph rules come pre-sorted by their G1/G4/G3/G2/G5 priority; they
+        // lead the list, aggregate rules follow.
+        let suggestions = graphSuggestions + engineSuggestions
+        self.latestSuggestions = suggestions
+
+        let monthStart = Calendar.current.dateInterval(of: .month, for: Date())?.start
+        let monthlySessionCount = store.sessions.count { session in
+            session.featureTag == currentSession?.featureTag
+                && session.timestamp >= (monthStart ?? .distantPast)
+        }
+        let graphContext = graph.map {
+            VeyrGraphContextBuilder.build(
+                graph: $0, focused: focused, monthlySessionCount: monthlySessionCount)
+        }
+        self.latestGraphSection = graph.flatMap { graph in
+            graphContext.map { context in
+                VeyrGraphContextBuilder.claudeMdGraphSection(
+                    graph: graph, focused: focused, context: context)
+            }
         }
         let tagSessionIds = Set(store.sessions
             .filter { $0.featureTag == currentSession?.featureTag }
@@ -116,7 +166,8 @@ public final class VeyrAgentStatusService {
             complexity: VeyrComplexityService.shared.complexityAnalysis(
                 currentTag: currentSession?.featureTag),
             currentSignals: currentSignals,
-            tagDistinctTools: tagDistinctTools)
+            tagDistinctTools: tagDistinctTools,
+            graphContext: graphContext)
         self.latestPayload = payload
         VeyrBudgetNotifier.checkAndNotify(sessions: store.sessions, controls: controls)
         self.resetDismissalsIfSessionChanged(payload: payload)
@@ -186,6 +237,7 @@ public final class VeyrAgentStatusService {
             // shared config file) — clean up the injected section once.
             if let path = self.lastClaudeMdProjectPath {
                 try? VeyrAgentStatusWriter.removeClaudeMdSection(projectPath: path)
+                try? VeyrAgentStatusWriter.removeClaudeMdGraphSection(projectPath: path)
                 self.lastClaudeMdProjectPath = nil
                 self.lastClaudeMdUpdateAt = nil
             }
@@ -213,11 +265,15 @@ public final class VeyrAgentStatusService {
         do {
             try VeyrAgentStatusWriter.updateClaudeMd(
                 projectPath: projectPath, payload: payload, createIfMissing: true)
+            if let graphSection = self.latestGraphSection {
+                try VeyrAgentStatusWriter.updateClaudeMdGraphSection(
+                    projectPath: projectPath, section: graphSection, createIfMissing: true)
+            }
             self.lastClaudeMdUpdateAt = Date()
             self.lastClaudeMdProjectPath = projectPath
             self.logger.info(
-                "[Veyr] Updated CLAUDE.md spend section",
-                metadata: ["project": projectPath])
+                "[Veyr] Updated CLAUDE.md sections",
+                metadata: ["project": projectPath, "graph": "\(self.latestGraphSection != nil)"])
         } catch {
             self.logger.error(
                 "[Veyr] CLAUDE.md update failed",
