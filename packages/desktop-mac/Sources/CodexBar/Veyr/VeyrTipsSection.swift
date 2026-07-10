@@ -155,6 +155,13 @@ struct VeyrTipsSection: View {
     private static let errorHandlingHint =
         "When a tool call fails, return a structured error: what failed, what input was " +
             "wrong, and the correct format. Avoid vague errors that cause blind retries."
+    private static let graphContextHint =
+        "Before exploring files, read the 'Veyr codebase graph' section in CLAUDE.md (or " +
+            "graphContext in VEYR_STATUS.json). It summarizes the architecture, the active " +
+            "file's callers/callees, and the critical path — skip re-reading stable files."
+    private static let writeTestFirstHint =
+        "This code is highly connected — changes ripple widely. Write or run a test that " +
+            "covers the current behavior before editing, and check callers after."
 
     private func performAction(_ suggestion: Suggestion) {
         switch suggestion.action {
@@ -181,6 +188,10 @@ struct VeyrTipsSection: View {
         case .useStructuredOutputs, .useBatchApi:
             // Proxy-side techniques; the suggestion detail is the guidance.
             self.copy(suggestion.detail, id: suggestion.id)
+        case .useGraphContext:
+            self.copy(Self.graphContextHint, id: suggestion.id)
+        case .writeTestFirst:
+            self.copy(Self.writeTestFirstHint, id: suggestion.id)
         }
     }
 

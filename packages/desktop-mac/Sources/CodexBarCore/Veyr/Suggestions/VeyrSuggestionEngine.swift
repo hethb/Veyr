@@ -20,6 +20,11 @@ public enum SuggestionAction: String, Codable, Sendable {
     case improveErrorHandling = "improve_error_handling"
     case useStructuredOutputs = "use_structured_outputs"
     case useBatchApi = "use_batch_api"
+    /// Graph rules G1/G3/G4: point the agent at the Graphify summary in
+    /// VEYR_STATUS.json / CLAUDE.md instead of re-exploring files.
+    case useGraphContext = "use_graph_context"
+    /// Graph rules G2/G5: risk alerts on high-connectivity nodes.
+    case writeTestFirst = "write_test_first"
 }
 
 /// One optimization suggestion. `id` is a stable "rule:tag" string (not a UUID)

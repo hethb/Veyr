@@ -20,6 +20,9 @@ public struct VeyrSessionSignals: Codable, Equatable, Sendable {
     public var toolUseCount: Int
     public var messageCount: Int
     public var retryClusters: Int
+    /// Distinct file paths passed to Read tool calls (graph rule G4). Optional so
+    /// stores persisted before this field decode unchanged; capped per session.
+    public var readFiles: [String]?
 
     public init(
         sessionId: String,
@@ -28,7 +31,8 @@ public struct VeyrSessionSignals: Codable, Equatable, Sendable {
         toolNames: [String] = [],
         toolUseCount: Int = 0,
         messageCount: Int = 0,
-        retryClusters: Int = 0)
+        retryClusters: Int = 0,
+        readFiles: [String]? = nil)
     {
         self.sessionId = sessionId
         self.cwd = cwd
@@ -37,6 +41,7 @@ public struct VeyrSessionSignals: Codable, Equatable, Sendable {
         self.toolUseCount = toolUseCount
         self.messageCount = messageCount
         self.retryClusters = retryClusters
+        self.readFiles = readFiles
     }
 }
 
@@ -79,6 +84,9 @@ public struct VeyrSignalsStore: Codable, Sendable {
 public enum VeyrSignalsScanner {
     static let retryWindowSeconds: TimeInterval = 300
     static let apologyMarkers = ["i apologize", "i'm sorry", "sorry,"]
+    /// Claude Code's file-read tools across log format versions.
+    static let readToolNames: Set<String> = ["Read", "read_file", "NotebookRead"]
+    static let maxReadFilesPerSession = 300
 
     /// Scans changed files under the Claude roots and returns updated signals.
     public static func scan(
@@ -150,6 +158,16 @@ public enum VeyrSignalsScanner {
                         {
                             signals.toolUseCount += 1
                             if !signals.toolNames.contains(name) { signals.toolNames.append(name) }
+                            if Self.readToolNames.contains(name),
+                               let input = block["input"] as? [String: Any],
+                               let path = input["file_path"] as? String, !path.isEmpty
+                            {
+                                var reads = signals.readFiles ?? []
+                                if reads.count < Self.maxReadFilesPerSession, !reads.contains(path) {
+                                    reads.append(path)
+                                    signals.readFiles = reads
+                                }
+                            }
                         }
                         if block["type"] as? String == "text",
                            let text = (block["text"] as? String)?.lowercased(),
