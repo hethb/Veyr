@@ -39,6 +39,41 @@ public enum VeyrPaths {
         self.home(base: base).appendingPathComponent("graphify-venv", isDirectory: true)
     }
 
+    /// Per-project GRAPHIFY_OUT roots. Graphify writes graphify-out/ into the scanned
+    /// directory by default — pointing it here keeps user projects clean. Full and
+    /// partial builds get separate dirs so Graphify's node-shrink guard never sees a
+    /// small partial graph trying to overwrite a full one.
+    public static func graphifyBuildDirectory(
+        workspaceRoot: String,
+        partial: Bool,
+        base: URL = FileManager.default.homeDirectoryForCurrentUser) -> URL
+    {
+        self.cacheDirectory(base: base)
+            .appendingPathComponent("graphify", isDirectory: true)
+            .appendingPathComponent(StableHash.hex(workspaceRoot), isDirectory: true)
+            .appendingPathComponent(partial ? "partial" : "full", isDirectory: true)
+    }
+
+    /// Trimmed graph for the dashboard/proxy (`GET /api/graph/current`). The raw
+    /// Graphify graph.json can be tens of MB; only the derived subset lives here.
+    public static func graphCacheFile(base: URL = FileManager.default.homeDirectoryForCurrentUser) -> URL {
+        self.cacheDirectory(base: base).appendingPathComponent("graph.json")
+    }
+
+    /// Deterministic, dependency-free path hash (FNV-1a 64) for cache directory names.
+    /// Not cryptographic — only needs to be stable and collision-unlikely across the
+    /// handful of workspaces one user opens.
+    public enum StableHash {
+        public static func hex(_ string: String) -> String {
+            var hash: UInt64 = 0xcbf2_9ce4_8422_2325
+            for byte in string.utf8 {
+                hash ^= UInt64(byte)
+                hash = hash &* 0x0000_0100_0000_01B3
+            }
+            return String(format: "%016llx", hash)
+        }
+    }
+
     @discardableResult
     public static func ensureDirectoryExists(_ url: URL, fileManager: FileManager = .default) -> Bool {
         if fileManager.fileExists(atPath: url.path) { return true }
