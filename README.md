@@ -596,7 +596,7 @@ Distributed under the MIT License. See [`LICENSE`](./LICENSE) for more informati
 <!-- CONTACT -->
 ## Contact
 
-Heth Bhatt — hjbhatt@andrew.cmu.edu
+Heth Bhatt — xlnc.hethbhatt@gmail.com
 
 Project Link: [https://github.com/hethb/Veyr](https://github.com/hethb/Veyr)
 
