@@ -53,6 +53,10 @@
         "title": "Veyr: Open dashboard"
       },
       {
+        "command": "veyr.openGraph",
+        "title": "Veyr: Open graph visualization"
+      },
+      {
         "command": "veyr.showPanel",
         "title": "Veyr: Show panel"
       }

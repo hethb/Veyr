@@ -78,8 +78,17 @@ export class VeyrStatusBar implements vscode.Disposable {
       return;
     }
 
-    const savings =
-      this.todaySavingsPct !== null ? ` · ${this.todaySavingsPct}% saved ⚡` : "";
+    // Graph savings take the suffix slot when available (spec 5b); the proxy
+    // compression percentage is the fallback. Never both — one suffix.
+    const graph = result.status.graph_context;
+    const graphTokens = graph?.available
+      ? graph.token_savings_estimate.savings_this_session
+      : 0;
+    const savings = graphTokens > 0
+      ? ` · saved ${formatTokens(graphTokens)} tokens ⚡`
+      : this.todaySavingsPct !== null
+        ? ` · ${this.todaySavingsPct}% saved ⚡`
+        : "";
     const session = result.status.current_session;
 
     // No live session: still show today's spend — the bar stays useful.
@@ -104,6 +113,12 @@ export class VeyrStatusBar implements vscode.Disposable {
     tooltip.appendMarkdown(
       `- Cache hit rate: ${Math.round(session.cache_hit_rate * 100)}%\n`,
     );
+    if (graphTokens > 0) {
+      tooltip.appendMarkdown(
+        `- Graph savings: ~${formatTokens(graphTokens)} tokens this session` +
+          `${graph?.is_partial ? " (partial graph)" : ""}\n`,
+      );
+    }
     tooltip.appendMarkdown(`\n_Click to open the Veyr panel._`);
     this.item.tooltip = tooltip;
   }

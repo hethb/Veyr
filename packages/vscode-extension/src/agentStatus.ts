@@ -46,6 +46,44 @@ export interface VeyrAlert {
   readonly message: string;
 }
 
+export interface VeyrGraphActiveFile {
+  readonly name: string;
+  readonly file: string;
+  readonly line?: number;
+  readonly kind: string;
+  readonly connections: number;
+  readonly callers: readonly string[];
+  readonly callees: readonly string[];
+  readonly imports: readonly string[];
+  readonly imported_by: readonly string[];
+  readonly tests: readonly string[];
+}
+
+export interface VeyrGraphContext {
+  readonly available: boolean;
+  readonly is_partial: boolean;
+  readonly partial_note?: string;
+  readonly graphify_version: string;
+  readonly file_count: number;
+  readonly node_count: number;
+  readonly edge_count: number;
+  readonly last_built_at: string;
+  readonly primary_languages: readonly string[];
+  readonly architectural_overview: string;
+  readonly active_file_summary?: VeyrGraphActiveFile;
+  readonly critical_path: ReadonlyArray<{
+    readonly name: string;
+    readonly file: string;
+    readonly connections: number;
+  }>;
+  readonly token_savings_estimate: {
+    readonly without_graph: number;
+    readonly with_graph: number;
+    readonly savings_this_session: number;
+    readonly savings_this_month: number;
+  };
+}
+
 export interface VeyrStatus {
   readonly generated_at: string;
   readonly today_spent_usd?: number;
@@ -54,6 +92,7 @@ export interface VeyrStatus {
   readonly alerts: readonly VeyrAlert[];
   readonly recommendations: readonly VeyrRecommendation[];
   readonly agent_instructions: string;
+  readonly graph_context?: VeyrGraphContext;
 }
 
 export type VeyrStatusResult =

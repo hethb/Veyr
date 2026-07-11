@@ -30,6 +30,18 @@ function dashboardUrl(): string {
   return cfg().get<string>("dashboardUrl", "http://localhost:5173/dashboard");
 }
 
+function graphPageUrl(): string {
+  // Same origin as the dashboard, /graph route.
+  const url = dashboardUrl();
+  try {
+    const parsed = new URL(url);
+    parsed.pathname = "/graph";
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
 async function fetchJson(path: string): Promise<unknown> {
   const res = await fetch(`${proxyUrl()}${path}`, {
     headers: { accept: "application/json" },
@@ -99,6 +111,8 @@ class VeyrViewProvider implements vscode.WebviewViewProvider {
       const message = msg as Record<string, unknown>;
       if (message["type"] === "openDashboard") {
         void vscode.env.openExternal(vscode.Uri.parse(dashboardUrl()));
+      } else if (message["type"] === "openGraph") {
+        void vscode.env.openExternal(vscode.Uri.parse(graphPageUrl()));
       } else if (message["type"] === "copyCommand" && typeof message["command"] === "string") {
         void vscode.env.clipboard.writeText(message["command"]).then(() => {
           void vscode.window.showInformationMessage(
@@ -203,6 +217,62 @@ function renderLiveSession(agent: VeyrStatusResult): string {
     ${recommendation}`;
 }
 
+function relativeTime(iso: string): string {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "";
+  const minutes = Math.max(0, Math.round((Date.now() - then) / 60_000));
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  return hours < 24 ? `${hours}h ago` : `${Math.round(hours / 24)}d ago`;
+}
+
+function renderGraphSection(agent: VeyrStatusResult): string {
+  if (agent.kind === "missing") return "";
+  const graph = agent.status.graph_context;
+  if (!graph || !graph.available) {
+    // The Mac app omits graph_context when Python/Graphify are unavailable
+    // or the first build hasn't finished — one muted line, no section chrome.
+    return `
+      <h3>Codebase graph</h3>
+      <p class="muted">No graph yet — the Veyr menu bar app builds it automatically
+      (needs Python 3.10+).</p>`;
+  }
+
+  const savings = graph.token_savings_estimate;
+  const active = graph.active_file_summary;
+  const activeHtml = active
+    ? `
+      <table class="kv">
+        <tr><td>Active</td><td><b>${escapeHtml(active.name)}</b></td></tr>
+        ${active.callers.length ? `<tr><td>Called by</td><td>${escapeHtml(active.callers.join(", "))}</td></tr>` : ""}
+        ${active.callees.length ? `<tr><td>Calls</td><td>${escapeHtml(active.callees.join(", "))}</td></tr>` : ""}
+        ${active.tests.length ? `<tr><td>Tests</td><td>${escapeHtml(active.tests.join(", "))}</td></tr>` : ""}
+      </table>`
+    : "";
+
+  if (graph.is_partial) {
+    return `
+      <h3>Codebase graph <span class="badge">⚡ Graphify</span> <span class="badge" style="color:#f5a623;border-color:#f5a623">partial</span></h3>
+      <p class="muted">Building full graph… showing recently modified files only.</p>
+      ${activeHtml}
+      <div class="row"><span class="muted">Saved this session</span>
+        <b>~${formatTokens(savings.savings_this_session)} tokens (partial)</b></div>
+      <button onclick="openGraph()">Open graph visualization ↗</button>`;
+  }
+
+  return `
+    <h3>Codebase graph <span class="badge">⚡ Graphify</span></h3>
+    <div class="row"><span class="muted">${graph.file_count} files · ${formatTokens(graph.node_count)} nodes · full graph</span></div>
+    <div class="row"><span class="muted">Last built</span><span>${escapeHtml(relativeTime(graph.last_built_at))}</span></div>
+    ${activeHtml}
+    <div class="row"><span class="muted">Saved this session</span>
+      <b class="save">~${formatTokens(savings.savings_this_session)} tokens</b></div>
+    <div class="row"><span class="muted">Saved this month</span>
+      <b class="save">~${formatTokens(savings.savings_this_month)} tokens</b></div>
+    <button onclick="openGraph()">Open graph visualization ↗</button>`;
+}
+
 function rectitle(action: string, suggestedModel: string | undefined): string {
   switch (action) {
     case "switch_model":
@@ -286,14 +356,18 @@ function render(state: PanelState): string {
       ${suggestionsHtml}`;
   }
 
+  const graphSection = renderGraphSection(state.agent);
+
   return `<!DOCTYPE html><html><head><meta charset="utf-8"/><style>${styles}</style></head>
   <body>
     ${liveSection}
+    ${graphSection}
     ${proxySection}
     <button onclick="openDash()">Open full dashboard</button>
   <script>
     const vscodeApi = acquireVsCodeApi();
     function openDash(){ vscodeApi.postMessage({ type: 'openDashboard' }); }
+    function openGraph(){ vscodeApi.postMessage({ type: 'openGraph' }); }
     function copyCommand(cmd){ vscodeApi.postMessage({ type: 'copyCommand', command: cmd }); }
   </script>
   </body></html>`;
@@ -371,6 +445,9 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("veyr.unrouteClaudeCode", () => void unrouteClaudeCode()),
     vscode.commands.registerCommand("veyr.openDashboard", () =>
       vscode.env.openExternal(vscode.Uri.parse(dashboardUrl())),
+    ),
+    vscode.commands.registerCommand("veyr.openGraph", () =>
+      vscode.env.openExternal(vscode.Uri.parse(graphPageUrl())),
     ),
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration("veyr.autoInjectClaudeMd")) {
