@@ -238,12 +238,19 @@ public actor GraphifyRunner {
     }
 
     package static func partialBuildTarget(changedFiles: [String]) -> String? {
+        // Two path components, not one: in a monorepo every change lives under
+        // "packages/", and a "partial" build of that is the whole repo — the
+        // E2E test hit exactly this (partial timed out at 124 s). Files directly
+        // inside a top-level dir fall back to that dir.
         var counts: [String: Int] = [:]
         for file in changedFiles {
             let components = file.split(separator: "/")
             // Root-level files have no subdirectory to scope a partial build to.
             guard components.count > 1 else { continue }
-            counts[String(components[0]), default: 0] += 1
+            let prefix = components.count > 2
+                ? "\(components[0])/\(components[1])"
+                : String(components[0])
+            counts[prefix, default: 0] += 1
         }
         return counts.max { ($0.value, $1.key) < ($1.value, $0.key) }?.key
     }

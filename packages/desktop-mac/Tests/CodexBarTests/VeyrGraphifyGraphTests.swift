@@ -156,14 +156,19 @@ struct VeyrGraphifyGraphTests {
         #expect(small < GraphifyRunner.largeBuildThresholdSeconds)
     }
 
-    @Test func partialTargetPicksBusiestTopLevelDirectory() {
+    @Test func partialTargetPicksBusiestSubdirectory() {
+        // Monorepo: two components, or a top-level "packages" partial is the
+        // whole repo (found by the E2E test — the partial build timed out).
         let target = GraphifyRunner.partialBuildTarget(changedFiles: [
             "packages/proxy/src/a.ts",
             "packages/proxy/src/b.ts",
+            "packages/dashboard/src/c.tsx",
             "docs/readme.md",
             "Makefile",
         ])
-        #expect(target == "packages")
+        #expect(target == "packages/proxy")
+        // Files directly inside a top-level dir fall back to that dir.
+        #expect(GraphifyRunner.partialBuildTarget(changedFiles: ["docs/a.md", "docs/b.md"]) == "docs")
         #expect(GraphifyRunner.partialBuildTarget(changedFiles: ["Makefile"]) == nil)
         #expect(GraphifyRunner.partialBuildTarget(changedFiles: []) == nil)
     }
