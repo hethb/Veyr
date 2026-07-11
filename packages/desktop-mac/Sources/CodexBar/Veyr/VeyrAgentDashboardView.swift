@@ -38,6 +38,7 @@ struct VeyrAgentDashboardView: View {
                 }
                 self.currentSessionCard
                 self.feedbackSection
+                self.graphSection
                 self.recommendationsSection
                 self.toolHealthSection
                 self.overridePanel
@@ -113,6 +114,85 @@ struct VeyrAgentDashboardView: View {
             Text(value)
                 .font(large ? .title2.weight(.semibold) : .body)
                 .monospacedDigit()
+        }
+    }
+
+    // MARK: - Codebase graph (Graphify)
+
+    private var graphStateBadge: (text: String, color: Color) {
+        switch VeyrGraphService.shared.buildState {
+        case .notStarted: ("idle", .secondary)
+        case .buildingPartial: ("analyzing…", .orange)
+        case .partialReady, .buildingFull: ("partial", .orange)
+        case .fullReady: ("full graph", .green)
+        case .failed: ("failed", .red)
+        }
+    }
+
+    @ViewBuilder
+    private var graphSection: some View {
+        let graphService = VeyrGraphService.shared
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Text("Codebase graph")
+                    .font(.headline)
+                let badge = self.graphStateBadge
+                Text(badge.text)
+                    .font(.caption)
+                    .foregroundStyle(badge.color)
+                Spacer()
+                Button("Open graph view ↗") {
+                    if let url = URL(string: VeyrConfig.load().graphPageUrl) {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+                .controlSize(.small)
+            }
+            if let graph = graphService.currentGraph {
+                Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 6) {
+                    GridRow {
+                        self.metric("Files", "\(graph.fileCount)")
+                        self.metric("Symbols", VeyrFormat.tokens(graph.nodes.count))
+                        self.metric("Connections", VeyrFormat.tokens(graph.links.count))
+                    }
+                }
+                if let savings = self.service.latestPayload?.graphContext?.tokenSavingsEstimate {
+                    Text("Saves your agent ~\(VeyrFormat.tokens(savings.savingsThisSession)) tokens " +
+                        "of exploration per session (~\(VeyrFormat.tokens(savings.savingsThisMonth))/mo).")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                let hubs = graph.criticalPath(limit: 3)
+                if !hubs.isEmpty {
+                    Text("Highest impact: " + hubs.map(\.label).joined(separator: ", "))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                if graph.isPartial {
+                    Text("⚠️ Partial graph — full build in progress.")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+            } else {
+                Text(self.graphPlaceholderText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    private var graphPlaceholderText: String {
+        switch VeyrGraphService.shared.buildState {
+        case .buildingPartial, .buildingFull:
+            "Analyzing your codebase — the graph appears here when the first build finishes."
+        case .failed:
+            "Graph build failed — see the veyr-graphify log category for details."
+        default:
+            "Builds automatically when a coding session is active (needs Python 3.10+)."
         }
     }
 

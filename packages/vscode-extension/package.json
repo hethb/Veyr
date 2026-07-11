@@ -80,7 +80,7 @@
         },
         "veyr.dashboardUrl": {
           "type": "string",
-          "default": "http://localhost:5173/dashboard",
+          "default": "https://veyr-app.vercel.app/dashboard",
           "description": "URL of the Veyr dashboard."
         },
         "veyr.agentStatusPath": {

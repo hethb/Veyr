@@ -8,6 +8,14 @@ import Foundation
 /// VS Code extension read/write (each surface can flip the same toggles).
 /// Unknown keys written by other tools are preserved on save.
 public struct VeyrConfig: Sendable {
+    public static let productionDashboardUrl = "https://veyr-app.vercel.app"
+
+    /// Absolute URL of the dashboard's graph page, honoring the dev override.
+    public var graphPageUrl: String {
+        let base = (self.dashboardUrl ?? Self.productionDashboardUrl)
+        return base.hasSuffix("/") ? base + "graph" : base + "/graph"
+    }
+
     public var autoUpdateClaudeMd: Bool?
     /// "off" | "last_n" | "summarize" | "key_points_only" (proxy trimming).
     public var trimStrategy: String?
@@ -18,6 +26,9 @@ public struct VeyrConfig: Sendable {
     /// Graphify-backed codebase graph (nil = enabled). Kill switch for the
     /// silent-install + background-build pipeline.
     public var codebaseGraph: Bool?
+    /// Web dashboard origin for outbound links (nil = production). Dev builds
+    /// set "http://localhost:5173" here.
+    public var dashboardUrl: String?
 
     /// Raw file bytes, kept so keys written by other tools survive a save
     /// (`Data` keeps the struct Sendable; parsed lazily at save time).
@@ -47,6 +58,7 @@ public struct VeyrConfig: Sendable {
         config.batchApiDetection = object["batchApiDetection"] as? Bool
         config.structuredOutputDetection = object["structuredOutputDetection"] as? Bool
         config.codebaseGraph = object["codebaseGraph"] as? Bool
+        config.dashboardUrl = object["dashboardUrl"] as? String
         return config
     }
 
@@ -63,6 +75,7 @@ public struct VeyrConfig: Sendable {
             ("batchApiDetection", self.batchApiDetection),
             ("structuredOutputDetection", self.structuredOutputDetection),
             ("codebaseGraph", self.codebaseGraph),
+            ("dashboardUrl", self.dashboardUrl),
         ]
         for (key, value) in updates {
             if let value {

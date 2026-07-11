@@ -27,7 +27,7 @@ function proxyUrl(): string {
 }
 
 function dashboardUrl(): string {
-  return cfg().get<string>("dashboardUrl", "http://localhost:5173/dashboard");
+  return cfg().get<string>("dashboardUrl", "https://veyr-app.vercel.app/dashboard");
 }
 
 function graphPageUrl(): string {

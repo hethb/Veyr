@@ -5,6 +5,7 @@ import {
   Database,
   DollarSign,
   Route,
+  Waypoints,
 } from "lucide-react";
 import DisplayCards from "@/components/ui/display-cards";
 
@@ -57,6 +58,11 @@ const FEATURE_DETAILS = [
     icon: Bell,
     title: "Per-project budget caps",
     body: "Set a monthly cap for each project. Veyr alerts you at 80% and 100% via macOS notifications. Your agent sees the budget status and adjusts its behavior accordingly.",
+  },
+  {
+    icon: Waypoints,
+    title: "A codebase graph your agent navigates",
+    body: "Veyr builds a Graphify-powered knowledge graph of your repo — locally, pure AST, no LLM calls. Your agent reads a 400-token structural summary instead of exploring 40 files, and Veyr's suggestions become structurally aware: leaf functions get cheap models, god nodes get a warning.",
   },
   {
     icon: Code2,

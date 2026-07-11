@@ -9,6 +9,7 @@ import {
   Layers,
   Monitor,
   Terminal,
+  Waypoints,
   Zap,
 } from "lucide-react";
 import { CopyCodeBlock } from "../components/CopyCodeBlock";
@@ -24,6 +25,7 @@ const LANDING_NAV_ITEMS = [
   { name: "How it works", url: "#how", icon: Zap },
   { name: "Setup", url: "#setup", icon: Terminal },
   { name: "Features", url: "#features", icon: Layers },
+  { name: "Graph", url: "#graph", icon: Waypoints },
   { name: "Demo", url: "#demo", icon: BarChart3 },
   { name: "Built for", url: "#built-for", icon: CheckCircle2 },
   { name: "Download", url: "#download", icon: Monitor },
@@ -41,6 +43,7 @@ export function Landing() {
       <PrivacySection />
       <ProductLayers />
       <FeaturesSection />
+      <GraphSection />
       <DemoSection />
       <BuiltForSection />
       <DownloadSection />
@@ -423,6 +426,97 @@ function ProductLayers() {
               <CopyCodeBlock code={l.code} />
             </div>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+function GraphSection() {
+  // Node/edge colors are the validated graph-page palette (see Graph.tsx).
+  const nodes: Array<[number, number, number, string, boolean]> = [
+    // [x, y, r, color, criticalRing]
+    [200, 130, 16, "#16A34A", true],   // hub function
+    [110, 70, 11, "#2563EB", false],   // file
+    [300, 75, 12, "#7C3AED", true],    // class
+    [70, 170, 9, "#16A34A", false],
+    [150, 225, 10, "#2563EB", false],
+    [265, 210, 9, "#16A34A", false],
+    [340, 160, 10, "#2563EB", false],
+    [235, 30, 8, "#16A34A", false],
+    [45, 110, 7, "#7C3AED", false],
+  ];
+  const edges: Array<[number, number, string]> = [
+    [1, 0, "#3B82F6"], [2, 0, "#DB2777"], [3, 0, "#EA580C"], [4, 0, "#EA580C"],
+    [5, 0, "#EA580C"], [6, 0, "#3B82F6"], [7, 2, "#EA580C"], [8, 1, "#3B82F6"],
+    [4, 5, "#0D9488"],
+  ];
+  return (
+    <section id="graph" className="border-t border-white/10 bg-black">
+      <div className="mx-auto max-w-6xl px-6 py-24">
+        <SectionHeader
+          eyebrow="Codebase graph"
+          title="Your agent stops exploring and starts knowing"
+          subtitle="Veyr builds a knowledge graph of your codebase locally — powered by Graphify — and hands your agent a 400-token map instead of a 40-file reading list."
+        />
+        <div className="mt-14 grid items-center gap-12 lg:grid-cols-2">
+          <svg
+            viewBox="0 0 400 260"
+            role="img"
+            aria-label="Illustration of a codebase graph: files, functions and classes connected by call and import edges"
+            className="mx-auto w-full max-w-md"
+          >
+            {edges.map(([from, to, color], i) => (
+              <line
+                key={i}
+                x1={nodes[from][0]}
+                y1={nodes[from][1]}
+                x2={nodes[to][0]}
+                y2={nodes[to][1]}
+                stroke={color}
+                strokeOpacity={0.45}
+                strokeWidth={1.5}
+              />
+            ))}
+            {nodes.map(([x, y, r, color, ring], i) => (
+              <g key={i}>
+                <circle cx={x} cy={y} r={r + 3} fill="#000" />
+                {ring && <circle cx={x} cy={y} r={r + 2.5} fill="#EAB308" />}
+                <circle cx={x} cy={y} r={r} fill={color} />
+              </g>
+            ))}
+            <text x="200" y="162" textAnchor="middle" fill="#c7ccd6" fontSize="11">
+              refreshToken()
+            </text>
+            <text x="300" y="103" textAnchor="middle" fill="#8a8f99" fontSize="10">
+              TokenStore
+            </text>
+          </svg>
+          <div>
+            <ul className="space-y-5">
+              {[
+                ["Built on your machine", "Pure AST parsing via Graphify — pinned install, zero LLM calls, no code leaves your device."],
+                ["Injected where agents look", "The graph summary lands in CLAUDE.md and VEYR_STATUS.json: architecture, the active file's callers and callees, the critical path."],
+                ["Structurally aware suggestions", "Leaf function on Opus? God node with no tests? Veyr's graph rules catch what spend data alone can't see."],
+                ["Interactive visualization", "Click through 37,000 nodes in the dashboard — filter by kind, isolate neighborhoods, set your agent's focus."],
+              ].map(([title, body]) => (
+                <li key={title} className="flex gap-4">
+                  <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#4FABFF]" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-white">{title}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-neutral-500">{body}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <Link
+              to="/graph"
+              className="mt-8 inline-flex border border-white/20 px-4 py-2 text-sm font-medium text-white transition-colors hover:border-white"
+            >
+              Open the graph view →
+            </Link>
+          </div>
         </div>
       </div>
     </section>
