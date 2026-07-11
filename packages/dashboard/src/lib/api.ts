@@ -379,3 +379,74 @@ export async function convertDocument(file: File): Promise<ConvertResult> {
   });
   return (await res.json()) as ConvertResult;
 }
+
+// ---------------------------------------------------------------------------
+// Codebase graph (Graphify integration — served from ~/.veyr by the Mac app)
+// ---------------------------------------------------------------------------
+
+export interface GraphNode {
+  id: string;
+  label: string;
+  kind: "file" | "function" | "class" | "symbol";
+  file: string;
+  line: number | null;
+  community: number | null;
+  inDegree: number;
+  outDegree: number;
+}
+
+export interface GraphLink {
+  source: string;
+  target: string;
+  relation: string;
+}
+
+export interface GraphRecommendation {
+  id: string;
+  priority: string;
+  action: string;
+  suggested_model: string | null;
+  reason: string;
+  estimated_savings_per_hour_usd: number;
+}
+
+export interface GraphSummary {
+  architectural_overview?: string;
+  token_savings_estimate?: {
+    without_graph: number;
+    with_graph: number;
+    savings_this_session: number;
+    savings_this_month: number;
+  };
+}
+
+export interface GraphCurrent {
+  available: boolean;
+  reason?: string;
+  isPartial?: boolean;
+  partialSubdirectory?: string | null;
+  workspaceRoot?: string;
+  generatedAt?: string;
+  graphifyVersion?: string;
+  builtAtCommit?: string | null;
+  fileCount?: number;
+  totalNodeCount?: number;
+  totalLinkCount?: number;
+  primaryLanguages?: string[];
+  nodes?: GraphNode[];
+  links?: GraphLink[];
+  summary?: GraphSummary | null;
+  recommendations?: GraphRecommendation[];
+}
+
+export async function getGraphCurrent(): Promise<GraphCurrent> {
+  const res = await authedFetch("/api/graph/current");
+  return (await res.json()) as GraphCurrent;
+}
+
+export async function setGraphFocus(file: string, line: number | null): Promise<void> {
+  await authedFetch("/api/graph/focus", {
+    method: "POST",
+    body: JSON.stringify({ file, line }),
+  });
+}

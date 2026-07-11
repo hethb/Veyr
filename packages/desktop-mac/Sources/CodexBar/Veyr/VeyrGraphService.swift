@@ -132,6 +132,39 @@ public final class VeyrGraphService {
         }
     }
 
+    // MARK: - Dashboard focus override
+
+    /// Written by the proxy when the user clicks "Set as focus" on a graph node.
+    struct FocusOverride: Codable {
+        let file: String
+        let line: Int?
+        let setAt: Date
+    }
+
+    /// A dashboard-selected focus wins over the read-file heuristic while fresh.
+    static let focusOverrideMaxAge: TimeInterval = 1800
+
+    public func focusOverride(now: Date = Date()) -> (file: String, line: Int)? {
+        guard let data = try? Data(contentsOf: VeyrPaths.graphFocusFile()) else { return nil }
+        let decoder = JSONDecoder()
+        // Tolerate fractional seconds — plain .iso8601 rejects "…T07:53:01.629Z"
+        // and JS toISOString() emits milliseconds by default.
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let raw = try decoder.singleValueContainer().decode(String.self)
+            let fractional = ISO8601DateFormatter()
+            fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = fractional.date(from: raw) { return date }
+            let plain = ISO8601DateFormatter()
+            if let date = plain.date(from: raw) { return date }
+            throw DecodingError.dataCorrupted(.init(
+                codingPath: decoder.codingPath, debugDescription: "Unparseable date: \(raw)"))
+        }
+        guard let override = try? decoder.decode(FocusOverride.self, from: data),
+              now.timeIntervalSince(override.setAt) < Self.focusOverrideMaxAge
+        else { return nil }
+        return (override.file, override.line ?? 0)
+    }
+
     /// Committed-recently + working-tree changes, repo-relative — G4's
     /// definition of "not stable".
     static func gitChangedFiles(root: String) async -> Set<String> {

@@ -9,6 +9,7 @@ import cors from "cors";
 import { openaiRouter } from "./routes/openai.js";
 import { anthropicRouter } from "./routes/anthropic.js";
 import { statsRouter } from "./routes/stats.js";
+import { graphRouter } from "./routes/graph.js";
 import { keysRouter } from "./routes/keys.js";
 import { policiesRouter } from "./routes/policies.js";
 import { analysisRouter } from "./routes/analysis.js";
@@ -68,6 +69,7 @@ app.use("/api/keys", dashboardAuth, keysRouter);
 app.use("/api/policies", dashboardAuth, policiesRouter);
 app.use("/api/analysis", dashboardAuth, analysisRouter);
 app.use("/api/convert", dashboardAuth, convertRouter);
+app.use("/api/graph", dashboardAuth, graphRouter);
 
 // 404
 app.use((_req: Request, res: Response) => {

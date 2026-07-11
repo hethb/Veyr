@@ -122,8 +122,10 @@ public final class VeyrAgentStatusService {
         let graphService = VeyrGraphService.shared
         graphService.ensureWorkspace(currentSession?.projectPath)
         let graph = graphService.currentGraph
+        let focusOverride = graphService.focusOverride()
         let focused = graphService.focusedContext(
-            activeFile: currentSignals?.readFiles?.last, cursorLine: 0)
+            activeFile: focusOverride?.file ?? currentSignals?.readFiles?.last,
+            cursorLine: focusOverride?.line ?? 0)
         let graphSuggestions = VeyrGraphSuggestionEngine.analyze(.init(
             graph: graph,
             focused: focused,

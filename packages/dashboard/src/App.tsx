@@ -3,6 +3,7 @@ import { AuthGate } from "./components/AuthGate";
 import { Layout } from "./components/Layout";
 import { Dashboard } from "./pages/Dashboard";
 import { Documents } from "./pages/Documents";
+import { Graph } from "./pages/Graph";
 import { Keys } from "./pages/Keys";
 import { Landing } from "./pages/Landing";
 import { PromptHelper } from "./pages/PromptHelper";
@@ -22,6 +23,16 @@ export function App() {
             <AuthGate>
               <Layout>
                 <Dashboard />
+              </Layout>
+            </AuthGate>
+          }
+        />
+        <Route
+          path="/graph"
+          element={
+            <AuthGate>
+              <Layout>
+                <Graph />
               </Layout>
             </AuthGate>
           }

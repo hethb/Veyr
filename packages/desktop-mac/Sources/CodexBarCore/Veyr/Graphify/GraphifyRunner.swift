@@ -258,7 +258,11 @@ public actor GraphifyRunner {
         let cacheURL = VeyrPaths.graphCacheFile(base: self.homeDirectory)
         VeyrPaths.ensureDirectoryExists(cacheURL.deletingLastPathComponent())
         do {
-            let data = try JSONEncoder().encode(payload)
+            let encoder = JSONEncoder()
+            // The proxy and dashboard read this file — dates must be ISO-8601,
+            // not Swift's reference-date seconds.
+            encoder.dateEncodingStrategy = .iso8601
+            let data = try encoder.encode(payload)
             try data.write(to: cacheURL, options: .atomic)
             Self.log.debug("Graph cache written: \(payload.nodes.count) nodes → \(cacheURL.path)")
         } catch {

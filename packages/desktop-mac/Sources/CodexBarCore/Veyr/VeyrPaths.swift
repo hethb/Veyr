@@ -60,6 +60,12 @@ public enum VeyrPaths {
         self.cacheDirectory(base: base).appendingPathComponent("graph.json")
     }
 
+    /// Focus override written by the dashboard's "Set as focus" (proxy POST
+    /// /api/graph/focus); the Mac app reads it on each status tick.
+    public static func graphFocusFile(base: URL = FileManager.default.homeDirectoryForCurrentUser) -> URL {
+        self.cacheDirectory(base: base).appendingPathComponent("graph-focus.json")
+    }
+
     /// Deterministic, dependency-free path hash (FNV-1a 64) for cache directory names.
     /// Not cryptographic — only needs to be stable and collision-unlikely across the
     /// handful of workspaces one user opens.
