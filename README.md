@@ -498,19 +498,27 @@ For a full step-by-step guide, see [**DEPLOY.md**](./DEPLOY.md).
 <!-- AUTOMATIC DEPENDENCY INSTALLATION -->
 ## Automatic Dependency Installation
 
-Veyr automatically installs [Graphify](https://github.com/Graphify-Labs/graphify) (a Python package by Graphify Labs, YC S26) on first launch if Python 3.8+ is available on your system. This is done silently using:
+Veyr automatically installs [Graphify](https://github.com/Graphify-Labs/graphify) (a Python package by Graphify Labs, YC S26) on first launch if Python 3.10+ is available on your system. The install is silent and **pinned to an exact, Veyr-audited commit** — never "latest", and never by bare package name:
 
 ```bash
-pip install graphify --quiet --user
+python3 -m pip install --quiet --user \
+  "https://github.com/Graphify-Labs/graphify/archive/<pinned-commit>.tar.gz"
 ```
 
-No elevated permissions (no `sudo`) are required. Graphify analyzes your codebase structure **locally** — no code is sent externally.
+Why pinned? The `graphify` name on PyPI is currently unclaimed (upstream temporarily publishes as `graphifyy`), and a silent installer must not resolve mutable names. Each Veyr release bumps the pin deliberately — the current commit is defined in [`GraphifyPin`](packages/desktop-mac/Sources/CodexBarCore/Veyr/Graphify/PythonEnv.swift).
+
+No elevated permissions (no `sudo`) are required. If your Python is externally managed (Homebrew/PEP 668) and refuses `--user` installs, Veyr falls back to a private venv at `~/.veyr/graphify-venv` — your own Python environments are never touched. If you already have Graphify installed, Veyr uses your copy and installs nothing.
+
+Veyr only ever runs Graphify's pure-AST mode (`graphify update`) — tree-sitter parsing on your machine, zero LLM calls, no code sent externally.
 
 To manage it yourself:
 ```bash
-pip3 install graphify     # install manually
-pip3 uninstall graphify   # remove if you prefer
+pip3 install graphifyy      # install manually (upstream's current PyPI name)
+pip3 uninstall graphifyy    # remove it
+rm -rf ~/.veyr/graphify-venv  # remove Veyr's fallback venv, if created
 ```
+
+Disable the feature entirely with `"codebaseGraph": false` in `~/.veyr/config.json`.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -524,7 +532,7 @@ pip3 uninstall graphify   # remove if you prefer
 - The proxy stores only structured metadata (token counts, cost, feature tag, prompt SHA-256 hash) in local SQLite. Full prompt content is never logged.
 - The optional AI classifier calls Anthropic's API using **your** key, only when you add one in Settings.
 - All ML training data stays in `~/.veyr/ml/` — never uploaded.
-- Graphify analyzes your codebase on-device — no source code leaves your machine.
+- Graphify analyzes your codebase on-device (pure AST parsing, no LLM calls) — no source code leaves your machine. Veyr installs it automatically on first launch, pinned to an audited commit; see [Automatic Dependency Installation](#automatic-dependency-installation).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -545,8 +553,8 @@ pip3 uninstall graphify   # remove if you prefer
 - [x] Prompt caching detection and injection
 - [x] Document → Markdown converter
 - [x] AI task complexity classifier
-- [ ] Graphify codebase graph integration
-- [ ] Interactive graph visualization in dashboard
+- [x] Graphify codebase graph integration (graph-aware suggestions, CLAUDE.md + VEYR_STATUS.json context)
+- [x] Interactive graph visualization in dashboard
 - [ ] Homebrew cask distribution
 - [ ] Apple notarization (Gatekeeper-clean DMG)
 - [ ] JetBrains IDE extension

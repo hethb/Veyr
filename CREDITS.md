@@ -13,6 +13,22 @@ Thank you, Peter, for building and open-sourcing CodexBar.
 
 ---
 
+## Graphify
+
+Veyr's codebase graph analysis is powered by **Graphify** by Graphify Labs.
+
+- GitHub: https://github.com/Graphify-Labs/graphify
+- License: MIT
+- YC S26
+
+Graphify parses codebases into knowledge graphs using tree-sitter AST analysis
+across 40+ languages. Veyr uses Graphify's pure-AST mode (no LLM calls) to
+pre-summarize codebase structure for AI agents, reducing the tokens agents spend
+on codebase exploration by 60–90%. Veyr installs Graphify pinned to an exact
+commit and vendors nothing — all analysis runs on-device.
+
+---
+
 ## Open source dependencies
 
 Veyr is MIT licensed. See [LICENSE](./LICENSE) for details.

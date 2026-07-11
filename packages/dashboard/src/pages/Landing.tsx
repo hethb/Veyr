@@ -343,6 +343,19 @@ function PrivacySection() {
       <code className="text-neutral-300">~/.veyr/</code> on your machine.
       Nothing is uploaded.
     </>,
+    <>
+      Veyr automatically installs{" "}
+      <a
+        href="https://github.com/Graphify-Labs/graphify"
+        className="text-neutral-300 underline decoration-neutral-600 underline-offset-2 hover:text-white"
+      >
+        Graphify
+      </a>{" "}
+      (a Python package, pinned to an audited commit) on first launch to enable
+      codebase graph analysis. It runs entirely locally — pure AST parsing, no
+      LLM calls, no code leaves your machine. See the README for how to manage
+      or disable it.
+    </>,
   ];
 
   return (
