@@ -49,6 +49,7 @@ interface MenuCardProps {
   provider: ProviderUsageSnapshot;
   hideEmail: boolean;
   resetTimeRelative: boolean;
+  showResetWhenExhausted?: boolean;
   showAsUsed?: boolean;
   compactMetrics?: boolean;
   onLayoutChange?: () => void;
@@ -301,6 +302,7 @@ function MetricRow({
   snap,
   exhaustedLabel,
   resetTimeRelative,
+  showResetWhenExhausted,
   showAsUsed,
   expanded,
   onToggleExpanded,
@@ -309,6 +311,7 @@ function MetricRow({
   snap: RateWindowSnapshot;
   exhaustedLabel: string;
   resetTimeRelative: boolean;
+  showResetWhenExhausted: boolean;
   showAsUsed: boolean;
   expanded: boolean;
   onToggleExpanded: () => void;
@@ -326,6 +329,13 @@ function MetricRow({
     snap.resetDescription,
     resetTimeRelative,
   );
+  const resetTarget = snap.resetsAt ? Date.parse(snap.resetsAt) : Number.NaN;
+  const replacesPercent =
+    showResetWhenExhausted &&
+    snap.isExhausted &&
+    Number.isFinite(resetTarget) &&
+    resetTarget > Date.now() &&
+    resetText !== null;
   const paceView = getMetricPaceView(snap);
   const reserveDescription = formatReserveDescription(snap, t);
   const formatBudget = (value: number) =>
@@ -337,8 +347,10 @@ function MetricRow({
         <div className="menu-metric__bar-fill" data-level={level} style={{ width: `${barDisplayPct}%` }} />
       </div>
       <div className="menu-metric__row">
-        <span className="menu-metric__pct">{Math.round(displayPct)}% {displayLabel}</span>
-        {resetText && (
+        <span className="menu-metric__pct">
+          {replacesPercent ? resetText : `${Math.round(displayPct)}% ${displayLabel}`}
+        </span>
+        {resetText && !replacesPercent && (
           <span className="menu-metric__reset">{resetText}</span>
         )}
       </div>
@@ -404,6 +416,7 @@ export default function MenuCard({
   provider,
   hideEmail,
   resetTimeRelative,
+  showResetWhenExhausted = false,
   showAsUsed = false,
   compactMetrics = false,
   onLayoutChange,
@@ -553,6 +566,7 @@ export default function MenuCard({
                   snap={m.snap}
                   exhaustedLabel={t("DetailWindowExhausted")}
                   resetTimeRelative={resetTimeRelative}
+                  showResetWhenExhausted={showResetWhenExhausted}
                   showAsUsed={showAsUsed}
                   expanded={expandedPaceWindow === m.id}
                   onToggleExpanded={() => {
