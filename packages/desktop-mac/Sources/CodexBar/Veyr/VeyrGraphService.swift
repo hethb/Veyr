@@ -49,6 +49,12 @@ public final class VeyrGraphService {
         }
         guard let root, !root.isEmpty else { return }
         guard root != self.workspaceRoot else { return }
+        // Sessions in a monorepo hop between the repo root and package dirs.
+        // A parent graph already covers its subdirectories — keep it instead of
+        // tearing down and rebuilding a smaller one (found live: a cd into
+        // packages/vscode-extension replaced the 37k-node repo graph with an
+        // 8-file one).
+        if let current = self.workspaceRoot, root.hasPrefix(current + "/") { return }
 
         self.teardown()
         self.workspaceRoot = root

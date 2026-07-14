@@ -1,26 +1,22 @@
 <!-- veyr:spend-status:begin -->
 ## Veyr spend status
-> Auto-updated by Veyr · 2026-07-11 12:24 · disable in Veyr settings
+> Auto-updated by Veyr · 2026-07-13 20:39 · disable in Veyr settings
 
-**Current session:** claude-fable-5 · $81.0600/session · $0.0290/min
+**Current session:** claude-fable-5 · $100.9400/session · $0.0160/min
 **Cache hit rate:** 100%
 
 **Recommendations:**
-- Run /compact — Session has cost $81.06 so far. Running /compact trims accumulated context before it grows further.
+- Run /compact — Session has cost $100.94 so far. Running /compact trims accumulated context before it grows further.
 
-**Agent instructions:** You are currently in a Veyr-monitored session. Session cost so far: $81.06 at $0.029/min on claude-fable-5. Cache hit rate is 100% — good. Keep system prompts stable. This session is long and expensive. Run /compact now to compress context and reduce per-turn cost by ~60%. This is a long conversation. Before your next response, consider running /compact to compress context and reduce per-turn cost.
+**Agent instructions:** You are currently in a Veyr-monitored session. Session cost so far: $100.94 at $0.016/min on claude-fable-5. Cache hit rate is 100% — good. Keep system prompts stable. This session is long and expensive. Run /compact now to compress context and reduce per-turn cost by ~60%. This is a long conversation. Before your next response, consider running /compact to compress context and reduce per-turn cost.
 <!-- veyr:spend-status:end -->
 
 <!-- veyr:graph-context:begin -->
 ## Veyr codebase graph
-> Powered by Graphify · Full graph · 2026-07-10 21:52
+> Powered by Graphify · Full graph · 2026-07-13 20:39
 
 ### Architecture
-2957 files, 37712 symbols in 1246 communities. Primary languages: Swift, TypeScript, JavaScript. Highest-impact code: .logger(), L(), UsageFetcher.
-
-### Active context: .updateClaudeMd() (packages/desktop-mac/Sources/CodexBarCore/Veyr/AgentStatus/VeyrAgentStatusWriter.swift:58)
-**Called by:** .injectClaudeMd()
-**Calls:** Data, .write(), .claudeMdSection(), .replacingManagedSection()
+2957 files, 37722 symbols in 1185 communities. Primary languages: Swift, TypeScript, JavaScript. Highest-impact code: .logger(), L(), UsageFetcher.
 
 ### Critical path (highest-impact files)
 - **.logger()** (packages/desktop-mac/Sources/CodexBarCore/Logging/CodexBarLog.swift) — 251 connections

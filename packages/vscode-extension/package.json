@@ -2,7 +2,7 @@
   "name": "veyr-vscode",
   "displayName": "Veyr",
   "description": "LLM cost attribution and optimization suggestions in your editor, plus one-click routing of Claude Code through the Veyr proxy.",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": true,
   "publisher": "veyr",
   "engines": {
