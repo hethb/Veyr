@@ -33,9 +33,51 @@ export function severityBadge(severity: "high" | "medium" | "low"): string {
   }
 }
 
+/** Alert levels are a separate vocabulary from recommendation severity
+ * ("warning"/"critical" vs "high"/"medium"/"low") — distinct badge. */
+export function alertBadge(level: string): string {
+  switch (level) {
+    case "critical":
+      return `🔴 ${chalk.red.bold("CRITICAL")}`;
+    case "warning":
+      return `🟡 ${chalk.yellow.bold("WARNING")}`;
+    default:
+      return chalk.dim(level.toUpperCase());
+  }
+}
+
 /** HH:MM:SS in local time for log rows. */
 export function fmtTime(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toTimeString().slice(0, 8);
+}
+
+/** "12s ago", "8m ago", "3h ago" — for freshness lines. */
+export function fmtAge(date: Date, now: Date = new Date()): string {
+  const seconds = Math.max(0, Math.round((now.getTime() - date.getTime()) / 1000));
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.round(hours / 24)}d ago`;
+}
+
+/** The shared freshness line every daemon-backed command opens with. */
+export function freshnessLine(
+  kind: "ok" | "stale" | "missing",
+  generatedAt?: Date,
+  now: Date = new Date()
+): string {
+  if (kind === "missing") {
+    return chalk.dim("○ no data yet — run the Veyr menu bar app once");
+  }
+  if (kind === "stale") {
+    return (
+      chalk.yellow("● stale") +
+      chalk.dim(` · updated ${fmtAge(generatedAt!, now)} — is the Veyr menu bar app running?`)
+    );
+  }
+  return chalk.green("● live") + chalk.dim(` · updated ${fmtAge(generatedAt!, now)}`);
 }

@@ -18,6 +18,7 @@ public final class VeyrAgentStatusService {
     public static let shared = VeyrAgentStatusService()
 
     public static let autoUpdateClaudeMdDefaultsKey = "veyrAutoUpdateClaudeMd"
+    public static let autoUpdateGuidanceDefaultsKey = "veyrAutoUpdateGuidance"
 
     @ObservationIgnored
     private let logger = CodexBarLog.logger(LogCategories.veyr)
@@ -35,6 +36,8 @@ public final class VeyrAgentStatusService {
     /// Rendered graph section for CLAUDE.md, refreshed each tick alongside the
     /// payload; nil while no graph is available.
     private var latestGraphSection: String?
+    /// Rendered agent-guidance section for CLAUDE.md, refreshed each tick.
+    private var latestGuidanceSection: String?
 
     private static let activeInterval: Duration = .seconds(30)
     private static let idleInterval: Duration = .seconds(300)
@@ -60,7 +63,31 @@ public final class VeyrAgentStatusService {
             } else if let path = self.lastClaudeMdProjectPath {
                 try? VeyrAgentStatusWriter.removeClaudeMdSection(projectPath: path)
                 try? VeyrAgentStatusWriter.removeClaudeMdGraphSection(projectPath: path)
+                try? VeyrAgentStatusWriter.removeClaudeMdGuidanceSection(projectPath: path)
                 self.lastClaudeMdProjectPath = nil
+            }
+        }
+    }
+
+    /// Injects the `## Veyr agent guidance` section — reduced-hallucination /
+    /// reduced-verbosity rules, read from `~/.veyr/guidance-rules.json`.
+    /// Separate opt-in from `autoUpdateClaudeMdEnabled`, defaults OFF: this is
+    /// a newer section layered on the same mechanism, off until reviewed.
+    public var autoUpdateGuidanceEnabled: Bool {
+        get {
+            VeyrConfig.load().autoUpdateGuidance
+                ?? (UserDefaults.standard.object(forKey: Self.autoUpdateGuidanceDefaultsKey) as? Bool)
+                ?? false
+        }
+        set {
+            var config = VeyrConfig.load()
+            config.autoUpdateGuidance = newValue
+            try? config.save()
+            UserDefaults.standard.set(newValue, forKey: Self.autoUpdateGuidanceDefaultsKey)
+            if newValue {
+                self.lastClaudeMdUpdateAt = nil // inject on next tick
+            } else if let path = self.lastClaudeMdProjectPath {
+                try? VeyrAgentStatusWriter.removeClaudeMdGuidanceSection(projectPath: path)
             }
         }
     }
@@ -155,6 +182,7 @@ public final class VeyrAgentStatusService {
                     graph: graph, focused: focused, context: context)
             }
         }
+        self.latestGuidanceSection = VeyrGuidanceRules.claudeMdSection(VeyrGuidanceRules.load())
         let tagSessionIds = Set(store.sessions
             .filter { $0.featureTag == currentSession?.featureTag }
             .compactMap(\.sessionId))
@@ -241,6 +269,7 @@ public final class VeyrAgentStatusService {
             if let path = self.lastClaudeMdProjectPath {
                 try? VeyrAgentStatusWriter.removeClaudeMdSection(projectPath: path)
                 try? VeyrAgentStatusWriter.removeClaudeMdGraphSection(projectPath: path)
+                try? VeyrAgentStatusWriter.removeClaudeMdGuidanceSection(projectPath: path)
                 self.lastClaudeMdProjectPath = nil
                 self.lastClaudeMdUpdateAt = nil
             }
@@ -272,11 +301,21 @@ public final class VeyrAgentStatusService {
                 try VeyrAgentStatusWriter.updateClaudeMdGraphSection(
                     projectPath: projectPath, section: graphSection, createIfMissing: true)
             }
+            if self.autoUpdateGuidanceEnabled, let guidanceSection = self.latestGuidanceSection {
+                try VeyrAgentStatusWriter.updateClaudeMdGuidanceSection(
+                    projectPath: projectPath, section: guidanceSection, createIfMissing: true)
+            } else {
+                try? VeyrAgentStatusWriter.removeClaudeMdGuidanceSection(projectPath: projectPath)
+            }
             self.lastClaudeMdUpdateAt = Date()
             self.lastClaudeMdProjectPath = projectPath
             self.logger.info(
                 "[Veyr] Updated CLAUDE.md sections",
-                metadata: ["project": projectPath, "graph": "\(self.latestGraphSection != nil)"])
+                metadata: [
+                    "project": projectPath,
+                    "graph": "\(self.latestGraphSection != nil)",
+                    "guidance": "\(self.autoUpdateGuidanceEnabled)",
+                ])
         } catch {
             self.logger.error(
                 "[Veyr] CLAUDE.md update failed",

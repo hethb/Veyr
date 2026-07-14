@@ -189,6 +189,52 @@ claudeMd = try! String(contentsOf: projDir.appendingPathComponent("CLAUDE.md"), 
 check(!claudeMd.contains("Veyr spend status"), "section removable")
 check(claudeMd.contains("Existing notes."), "content survives removal")
 
+// MARK: - 4b. Agent guidance rules (editable rules file → CLAUDE.md section)
+
+print("— guidance —")
+let guidanceFile = tempRoot.appendingPathComponent("guidance-rules.json")
+check(!FileManager.default.fileExists(atPath: guidanceFile.path), "guidance file absent before first load")
+let seeded = VeyrGuidanceRules.load(from: guidanceFile)
+check(FileManager.default.fileExists(atPath: guidanceFile.path), "guidance file seeded with defaults on first load")
+check(seeded.rules.map(\.id) == ["no-unverified-claims", "no-full-restate-before-small-edit", "no-acknowledgment-padding"],
+    "default rule set has the 3 starter rules")
+check(seeded.rules.allSatisfy(\.enabled), "starter rules enabled by default")
+
+let reloadedGuidance = VeyrGuidanceRules.load(from: guidanceFile)
+check(reloadedGuidance == seeded, "second load reads the seeded file back unchanged (no code needed to iterate)")
+
+let guidanceSection = VeyrGuidanceRules.claudeMdSection(seeded)
+check(guidanceSection.contains("## Veyr agent guidance"), "guidance section has its own heading")
+check(guidanceSection.contains("Don't state unverified claims as fact"), "unverified-claims rule rendered")
+check(guidanceSection.contains("Don't restate full context before a small edit"), "restate-before-edit rule rendered")
+check(guidanceSection.contains("Skip acknowledgment boilerplate"), "acknowledgment-padding rule rendered")
+
+// Disabling a rule removes it from the rendered section without deleting it.
+var edited = seeded
+edited.rules[0].enabled = false
+let editedSection = VeyrGuidanceRules.claudeMdSection(edited)
+check(!editedSection.contains("Don't state unverified claims as fact"), "disabled rule dropped from section")
+check(editedSection.contains("Skip acknowledgment boilerplate"), "other rules still render")
+
+// CLAUDE.md round-trip: coexists with the spend section, independently added/removed.
+try! "# My project\n\nExisting notes.\n".write(
+    to: projDir.appendingPathComponent("CLAUDE.md"), atomically: true, encoding: .utf8)
+try! VeyrAgentStatusWriter.updateClaudeMd(projectPath: projDir.path, payload: payload)
+try! VeyrAgentStatusWriter.updateClaudeMdGuidanceSection(
+    projectPath: projDir.path, section: guidanceSection)
+claudeMd = try! String(contentsOf: projDir.appendingPathComponent("CLAUDE.md"), encoding: .utf8)
+check(claudeMd.contains("## Veyr spend status") && claudeMd.contains("## Veyr agent guidance"),
+    "spend and guidance sections coexist")
+try! VeyrAgentStatusWriter.removeClaudeMdGuidanceSection(projectPath: projDir.path)
+claudeMd = try! String(contentsOf: projDir.appendingPathComponent("CLAUDE.md"), encoding: .utf8)
+check(!claudeMd.contains("Veyr agent guidance"), "guidance section independently removable")
+check(claudeMd.contains("## Veyr spend status"), "spend section untouched by guidance removal")
+check(claudeMd.contains("Existing notes."), "existing content survives guidance round-trip")
+
+print("\n--- actual injected guidance block ---")
+print(guidanceSection)
+print("---")
+
 // MARK: - 5. Suggestion engine
 
 print("— suggestion engine —")

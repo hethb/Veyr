@@ -132,6 +132,52 @@ public enum VeyrAgentStatusWriter {
         return true
     }
 
+    // MARK: - CLAUDE.md guidance section (behavior rules, same mechanics, separate markers)
+
+    public static let claudeMdGuidanceSectionBegin = "<!-- veyr:guidance:begin -->"
+    public static let claudeMdGuidanceSectionEnd = "<!-- veyr:guidance:end -->"
+
+    /// Replaces (or appends) the managed `## Veyr agent guidance` section. The
+    /// section string must already carry the guidance markers (see
+    /// VeyrGuidanceRules.claudeMdSection). Opt-in and off by default — this
+    /// only ever writes the local context file, never request/response traffic.
+    @discardableResult
+    public static func updateClaudeMdGuidanceSection(
+        projectPath: String,
+        section: String,
+        createIfMissing: Bool = false,
+        fileManager: FileManager = .default) throws -> Bool
+    {
+        let claudeMdURL = URL(fileURLWithPath: projectPath).appendingPathComponent("CLAUDE.md")
+        let exists = fileManager.fileExists(atPath: claudeMdURL.path)
+        guard exists || createIfMissing else { return false }
+
+        let existing = exists ? (try? String(contentsOf: claudeMdURL, encoding: .utf8)) ?? "" : ""
+        let updated = Self.replacingManagedSection(
+            in: existing, with: section,
+            begin: Self.claudeMdGuidanceSectionBegin, end: Self.claudeMdGuidanceSectionEnd)
+        guard updated != existing else { return false }
+        try Data(updated.utf8).write(to: claudeMdURL, options: [.atomic])
+        return true
+    }
+
+    @discardableResult
+    public static func removeClaudeMdGuidanceSection(
+        projectPath: String,
+        fileManager: FileManager = .default) throws -> Bool
+    {
+        let claudeMdURL = URL(fileURLWithPath: projectPath).appendingPathComponent("CLAUDE.md")
+        guard fileManager.fileExists(atPath: claudeMdURL.path),
+              let existing = try? String(contentsOf: claudeMdURL, encoding: .utf8),
+              existing.contains(Self.claudeMdGuidanceSectionBegin)
+        else { return false }
+        let cleaned = Self.replacingManagedSection(
+            in: existing, with: nil,
+            begin: Self.claudeMdGuidanceSectionBegin, end: Self.claudeMdGuidanceSectionEnd)
+        try Data(cleaned.utf8).write(to: claudeMdURL, options: [.atomic])
+        return true
+    }
+
     static func claudeMdSection(payload: VeyrAgentStatusPayload, now: Date = Date()) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm"

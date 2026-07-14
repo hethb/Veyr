@@ -1,7 +1,10 @@
-# getcanopy
+# getcanopy — the Veyr CLI
 
-Veyr terminal CLI — monitor LLM costs, view optimization suggestions, and
-manage feature policies without leaving your terminal.
+Veyr's terminal surface: usage/cost, Graphify graph status, and the CLAUDE.md
+agent-guidance rule set, all read straight from the same local `~/.veyr/`
+files the Veyr menu bar app writes. No proxy, no account, no network calls —
+this CLI never sends or intercepts a single request/response. It's a thin
+reader (and, for guidance rules, a writer) of local JSON.
 
 ## Install
 
@@ -9,87 +12,45 @@ manage feature policies without leaving your terminal.
 npm install -g getcanopy
 ```
 
-Or run the onboarding wizard without installing anything:
+## How it works
 
-```bash
-npx getcanopy init
-```
-
-## Configuration
-
-The CLI reads `~/.veyr/config.json` (also written by the Veyr
-desktop app, so it finds a desktop-managed proxy automatically). Resolution
-order:
-
-1. `VEYR_PROXY_URL` / `VEYR_API_KEY` env vars
-2. `~/.veyr/config.json`
-3. Defaults (`http://localhost:3001`)
-
-No config file is required — with a local proxy on the default port everything
-just works.
+The Veyr menu bar app is the only thing that currently keeps `~/.veyr/`
+fresh — it scans your coding-agent session logs, builds the Graphify graph,
+and rewrites `~/.veyr/agent-status/VEYR_STATUS.json` every 30s while a
+session is active (every 5 minutes when idle). This CLI just reads that file
+(plus `~/.veyr/cache/graph.json` and `~/.veyr/guidance-rules.json`) and
+renders it in your terminal. **The Veyr menu bar app needs to be running**
+for `status`/`graph` to show live data — if it isn't, the CLI tells you so
+plainly rather than showing stale numbers silently.
 
 ## Commands
 
 | Command | What it does |
 |---|---|
-| `veyr init` | Interactive setup: pick local/hosted, verify your key, choose an integration |
-| `veyr status` | Proxy health plus today / week / month spend and top features |
-| `veyr suggestions` | Cost-optimization suggestions, each with the exact command to act on it |
-| `veyr policy list` | All feature policies as a table |
-| `veyr policy set <tag>` | Create/update a policy (`--budget`, `--model`, `--max-tokens`, `--rate-limit`, `--cache`) |
-| `veyr logs` | Recent requests (`--tag <feature>`, `--limit <n>`, `--follow` to tail) |
-| `veyr config` | Interactive wizard for `~/.veyr/config.json` |
-| `veyr open` | Open the dashboard in your browser |
-| `veyr integrate <tool>` | Route Claude Code, Cursor, or shell scripts through the proxy |
+| `veyr status` | Current session cost, today's spend, budget, alerts, recommendations |
+| `veyr status --watch` | Same, polling every 3s and re-rendering on change (not a live stream — see below) |
+| `veyr status --json` | Raw `VEYR_STATUS.json` payload |
+| `veyr graph` | Graphify graph status for whichever workspace Veyr last built |
+| `veyr graph --top <n>` | Show more/fewer top-connected nodes (default 10) |
+| `veyr graph --json` | Raw graph cache payload |
+| `veyr rules list` | The agent-guidance rule set and whether injection is on |
+| `veyr rules enable <id>` / `disable <id>` | Toggle one rule |
+| `veyr rules on` / `off` | Toggle the whole `## Veyr agent guidance` CLAUDE.md section (default off) |
 
-Examples:
+Rule/config changes take effect on the Mac app's next tick (≤5 minutes) —
+there's no daemon process to signal for an instant refresh.
 
-```bash
-veyr status
-veyr suggestions
-veyr policy set summarizer --model gpt-4o-mini --budget 50
-veyr logs --tag chatbot --follow
-```
+## What this CLI intentionally does not do
 
-## Integrations
-
-### Claude Code
-
-```bash
-veyr integrate claude-code           # show what to add to your shell profile
-veyr integrate claude-code --write   # append it to ~/.zshrc (or ~/.bashrc)
-source ~/.zshrc
-veyr integrate claude-code --check   # confirm ANTHROPIC_BASE_URL is set
-```
-
-Claude Code traffic appears in the dashboard under the feature tag
-`claude-code-cli`. The proxy needs `VEYR_ALLOW_ANON=true` (the desktop
-app sets this for you) since Claude Code can't send a Veyr key header.
-
-### Cursor
-
-```bash
-veyr integrate cursor
-```
-
-Prints the manual steps and, if Cursor's `settings.json` is found at the
-standard location, offers to set `openai.apiBaseUrl` for you. Usage shows up
-under the tag `cursor`.
-
-### Any shell script
-
-```bash
-veyr integrate shell
-```
-
-Prints `OPENAI_BASE_URL` / `ANTHROPIC_BASE_URL` exports for your profile plus a
-`veyr-tag` helper that sets `VEYR_FEATURE_TAG` (read by the Veyr
-SDK). Tools that can't send custom headers are tagged automatically from their
-User-Agent: `claude-code-cli`, `cursor`, `python-script`, `node-script`.
+- **No `integrate claude-code`, no Cursor/shell integration, no `ANTHROPIC_BASE_URL` swap.** Earlier versions of this CLI routed traffic through a proxy; that mechanism is gone for good, not just moved. Veyr never sits between you and a model provider.
+- **No dashboard, no web view.** Everything above is plain terminal output.
+- **No `veyr suggestions`.** The full suggestion-engine output only exists in the Mac app's memory and isn't persisted to a file yet — `veyr status`'s recommendations are a narrower, separate feed (budget/model-switch actions) that *is* persisted.
+- **No historical spend breakdown (week/month/per-project).** Only today's running total and the current session are exposed in the shared status file today.
 
 ## Development
 
 ```bash
 npm run dev -- status   # run from source with tsx
-npm run build           # compile to dist/
+npm run typecheck
+npm run build            # compile to dist/
 ```

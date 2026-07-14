@@ -17,6 +17,10 @@ public struct VeyrConfig: Sendable {
     }
 
     public var autoUpdateClaudeMd: Bool?
+    /// Injects the `## Veyr agent guidance` section (nil/false = off). Distinct
+    /// from `autoUpdateClaudeMd` and defaults off — a newer, separately opt-in
+    /// section layered on the same injection mechanism.
+    public var autoUpdateGuidance: Bool?
     /// "off" | "last_n" | "summarize" | "key_points_only" (proxy trimming).
     public var trimStrategy: String?
     public var outputConstraints: Bool?
@@ -52,6 +56,7 @@ public struct VeyrConfig: Sendable {
         else { return config }
         config.rawData = data
         config.autoUpdateClaudeMd = object["autoUpdateClaudeMd"] as? Bool
+        config.autoUpdateGuidance = object["autoUpdateGuidance"] as? Bool
         config.trimStrategy = object["trimStrategy"] as? String
         config.outputConstraints = object["outputConstraints"] as? Bool
         config.toolFilteringSuggestions = object["toolFilteringSuggestions"] as? Bool
@@ -69,6 +74,7 @@ public struct VeyrConfig: Sendable {
         } ?? [:]
         let updates: [(String, Any?)] = [
             ("autoUpdateClaudeMd", self.autoUpdateClaudeMd),
+            ("autoUpdateGuidance", self.autoUpdateGuidance),
             ("trimStrategy", self.trimStrategy),
             ("outputConstraints", self.outputConstraints),
             ("toolFilteringSuggestions", self.toolFilteringSuggestions),

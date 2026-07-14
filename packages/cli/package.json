@@ -1,7 +1,7 @@
 {
   "name": "getcanopy",
-  "version": "0.1.1",
-  "description": "Veyr terminal CLI \u2014 monitor LLM costs from your terminal",
+  "version": "0.2.0",
+  "description": "Veyr terminal CLI — usage/cost, Graphify graph status, and agent guidance rules, read from local Veyr data. No proxy, no account.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -10,8 +10,7 @@
   },
   "keywords": [
     "llm",
-    "openai",
-    "anthropic",
+    "claude-code",
     "cost",
     "observability",
     "cli",
@@ -19,8 +18,7 @@
   ],
   "type": "module",
   "bin": {
-    "veyr": "./dist/index.js",
-    "canopy": "./dist/index.js"
+    "veyr": "./dist/index.js"
   },
   "files": [
     "dist"
@@ -33,15 +31,9 @@
   },
   "dependencies": {
     "commander": "^12.0.0",
-    "chalk": "^5.3.0",
-    "ora": "^8.0.0",
-    "cli-table3": "^0.6.3",
-    "node-fetch": "^3.3.2",
-    "inquirer": "^9.0.0",
-    "open": "^10.0.0"
+    "chalk": "^5.3.0"
   },
   "devDependencies": {
-    "@types/inquirer": "^9.0.7",
     "@types/node": "^22.7.0",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2"
