@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Heth Bhatt
 import AppKit
-import CodexBarCore
 import SwiftUI
+import VeyrKit
 
 /// The "Agent" tab: what a coding agent sees about its own burn rate, plus
 /// human overrides. Mirrors ~/.veyr/agent-status/VEYR_STATUS.json.

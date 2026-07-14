@@ -9,7 +9,7 @@ import Crypto
 import Foundation
 
 // swiftlint:disable type_body_length file_length
-enum CostUsageScanner {
+public enum CostUsageScanner {
     typealias CancellationCheck = () throws -> Void
 
     static let log = CodexBarLog.logger(LogCategories.tokenCost)

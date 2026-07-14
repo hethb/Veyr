@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Heth Bhatt
 import AppKit
-import CodexBarCore
 import Foundation
+import VeyrKit
 
 /// Process-wide Veyr spend store. Started on first access; every surface
 /// (menu summary, dashboard window, status item label) reads the same instance.

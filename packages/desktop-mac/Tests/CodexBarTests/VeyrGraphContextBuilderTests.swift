@@ -1,6 +1,6 @@
-import CodexBarCore
 import Foundation
 import Testing
+import VeyrKit
 
 struct VeyrGraphContextBuilderTests {
     private func makeGraph(isPartial: Bool = false, fileCount: Int = 3) throws -> CodebaseGraph {

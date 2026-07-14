@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Heth Bhatt
 import Charts
-import CodexBarCore
 import SwiftUI
+import VeyrKit
 
 /// Veyr Spend dashboard: summary cards, 7-day chart, cost by feature tag, and
 /// the session timeline. Lives in its own window (CodexBar's menu is an NSMenu,

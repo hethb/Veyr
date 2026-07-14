@@ -3,7 +3,7 @@
 // Licensed under the MIT License.
 import Foundation
 
-enum CostUsagePricing {
+public enum CostUsagePricing {
     private static let codexPriorityInputTokenLimit = 272_000
 
     struct CodexPricing {
@@ -419,7 +419,7 @@ enum CostUsagePricing {
         return self.codex[key]?.displayLabel
     }
 
-    static func normalizeClaudeModel(_ raw: String) -> String {
+    public static func normalizeClaudeModel(_ raw: String) -> String {
         var trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.hasPrefix("anthropic.") {
             trimmed = String(trimmed.dropFirst("anthropic.".count))
@@ -557,7 +557,7 @@ enum CostUsagePricing {
             outputTokens: outputTokens)
     }
 
-    static func claudeCostUSD(
+    public static func claudeCostUSD(
         model: String,
         inputTokens: Int,
         cacheReadInputTokens: Int,
@@ -652,7 +652,7 @@ enum CostUsagePricing {
             tokens: tokens)
     }
 
-    static func modelsDevCatalog(now: Date = Date(), cacheRoot: URL? = nil) -> ModelsDevCatalog? {
+    public static func modelsDevCatalog(now: Date = Date(), cacheRoot: URL? = nil) -> ModelsDevCatalog? {
         ModelsDevCache.load(now: now, cacheRoot: cacheRoot).artifact?.catalog
     }
 

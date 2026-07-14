@@ -29,7 +29,7 @@ private enum CostUsageTimestampParser {
 }
 
 extension CostUsageScanner {
-    static func dateFromTimestamp(_ text: String) -> Date? {
+    public static func dateFromTimestamp(_ text: String) -> Date? {
         CostUsageTimestampParser.parseISO(text)
     }
 

@@ -1,6 +1,6 @@
-import CodexBarCore
 import Foundation
 import Testing
+import VeyrKit
 
 struct VeyrGraphifyGraphTests {
     /// Minimal graph.json in Graphify's real shape: "links" key, "L<line>"

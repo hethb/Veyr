@@ -2,6 +2,7 @@
 // https://github.com/hethb/Veyr
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Heth Bhatt
+import CodexBarCore
 import Foundation
 
 /// Per-session behavioral signals for suggestion rules 8–10: which tools the

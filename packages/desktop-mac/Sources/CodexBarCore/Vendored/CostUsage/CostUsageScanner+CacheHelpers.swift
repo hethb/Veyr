@@ -1435,7 +1435,7 @@ extension CostUsageScanner {
 }
 
 extension Data {
-    func containsAscii(_ needle: String) -> Bool {
+    public func containsAscii(_ needle: String) -> Bool {
         guard let n = needle.data(using: .utf8) else { return false }
         return self.range(of: n) != nil
     }

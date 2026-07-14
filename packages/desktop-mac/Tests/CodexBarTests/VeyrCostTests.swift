@@ -1,6 +1,6 @@
-import CodexBarCore
 import Foundation
 import Testing
+import VeyrKit
 
 struct VeyrPricingTests {
     @Test

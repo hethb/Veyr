@@ -6,6 +6,7 @@ import AppKit
 import CodexBarCore
 import Foundation
 import Observation
+import VeyrKit
 
 /// Maintains the agent-status feed: rebuilds the payload and rewrites
 /// `~/.veyr/agent-status/` every 30 seconds while a session is active, every

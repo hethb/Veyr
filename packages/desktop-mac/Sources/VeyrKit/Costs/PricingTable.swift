@@ -2,6 +2,7 @@
 // https://github.com/hethb/Veyr
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Heth Bhatt
+import CodexBarCore
 import Foundation
 
 /// Veyr's model pricing entry point.

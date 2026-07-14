@@ -2,8 +2,8 @@
 // https://github.com/hethb/Veyr
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Heth Bhatt
-import CodexBarCore
 import Foundation
+import VeyrKit
 
 // Veyr cost-layer smoke test. `swift test` needs Xcode's Testing/XCTest modules,
 // which Command Line Tools lack, so this executable covers the same fixtures and

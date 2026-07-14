@@ -5,6 +5,7 @@
 import CodexBarCore
 import Foundation
 import Observation
+import VeyrKit
 
 /// Drives the LLM task-complexity classifier: on each agent-status tick, pulls
 /// new turns from the active session log, classifies at most 3 per tick with

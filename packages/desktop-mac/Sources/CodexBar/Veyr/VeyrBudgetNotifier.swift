@@ -2,8 +2,8 @@
 // https://github.com/hethb/Veyr
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Heth Bhatt
-import CodexBarCore
 import Foundation
+import VeyrKit
 
 /// Posts budget-threshold notifications through the app's existing
 /// UNUserNotificationCenter wrapper. Each threshold fires once per month

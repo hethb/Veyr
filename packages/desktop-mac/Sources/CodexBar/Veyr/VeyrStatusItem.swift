@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Heth Bhatt
 import AppKit
-import CodexBarCore
 import Foundation
+import VeyrKit
 
 /// Veyr's own menu bar item: today's spend (`$0.84`), with a pulsing dot while
 /// a Claude Code session is active (any watched JSONL modified in the last 60s).

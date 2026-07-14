@@ -5,6 +5,7 @@
 import AppKit
 import CodexBarCore
 import SwiftUI
+import VeyrKit
 
 /// The "Veyr" tab in Settings: data retention, feature-tag overrides, toggles,
 /// the agent feed path, and session-history clearing.

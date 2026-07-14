@@ -27,6 +27,7 @@ let package = Package(
     products: {
         var products: [Product] = [
             .library(name: "CodexBarCore", targets: ["CodexBarCore"]),
+            .library(name: "VeyrKit", targets: ["VeyrKit"]),
             .executable(name: "CodexBarCLI", targets: ["CodexBarCLI"]),
         ]
 
@@ -71,6 +72,15 @@ let package = Package(
                     .enableUpcomingFeature("StrictConcurrency"),
                 ],
                 linkerSettings: sqlite3LinkerSettings),
+            .target(
+                name: "VeyrKit",
+                dependencies: [
+                    "CodexBarCore",
+                ],
+                path: "Sources/VeyrKit",
+                swiftSettings: [
+                    .enableUpcomingFeature("StrictConcurrency"),
+                ]),
             .executableTarget(
                 name: "CodexBarCLI",
                 dependencies: [
@@ -109,7 +119,7 @@ let package = Package(
             // Xcode's Testing module, unavailable with Command Line Tools).
             .executableTarget(
                 name: "VeyrSmoke",
-                dependencies: ["CodexBarCore"],
+                dependencies: ["CodexBarCore", "VeyrKit"],
                 path: "Sources/VeyrSmoke",
                 swiftSettings: [
                     .enableUpcomingFeature("StrictConcurrency"),
@@ -121,6 +131,7 @@ let package = Package(
                     .product(name: "KeyboardShortcuts", package: "KeyboardShortcuts"),
                     .product(name: "Vortex", package: "Vortex"),
                     "CodexBarCore",
+                    "VeyrKit",
                 ],
                 path: "Sources/CodexBar",
                 resources: [
@@ -149,7 +160,7 @@ let package = Package(
 
         targets.append(.testTarget(
             name: "CodexBarTests",
-            dependencies: ["CodexBar", "CodexBarCore", "CodexBarCLI", "CodexBarWidget"],
+            dependencies: ["CodexBar", "CodexBarCore", "CodexBarCLI", "CodexBarWidget", "VeyrKit"],
             path: "Tests",
             resources: [
                 .copy("CodexBarTests/Fixtures"),

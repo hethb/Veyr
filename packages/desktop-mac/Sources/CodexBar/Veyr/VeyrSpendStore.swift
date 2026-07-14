@@ -2,9 +2,9 @@
 // https://github.com/hethb/Veyr
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Heth Bhatt
-import CodexBarCore
 import Foundation
 import Observation
+import VeyrKit
 
 /// App-side store for Veyr session spend. Wraps `VeyrSessionScanner` (which does
 /// the JSONL parsing and caching in CodexBarCore) and republishes results for

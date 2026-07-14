@@ -5,6 +5,7 @@
 import CodexBarCore
 import Foundation
 import Security
+import VeyrKit
 
 /// Resolves the Anthropic API key for Veyr's optimization features.
 ///

@@ -28,14 +28,14 @@ struct ModelsDevPricingLookup: Equatable {
     var normalizedModelID: String
 }
 
-struct ModelsDevCatalog: Codable, Equatable {
+public struct ModelsDevCatalog: Codable, Equatable {
     var providers: [String: ModelsDevProvider]
 
     init(providers: [String: ModelsDevProvider]) {
         self.providers = providers
     }
 
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: ModelsDevAnyCodingKey.self)
         if let providersKey = ModelsDevAnyCodingKey(stringValue: "providers"),
            let decoded = try? container.decode([String: ModelsDevProvider].self, forKey: providersKey)
@@ -61,7 +61,7 @@ struct ModelsDevCatalog: Codable, Equatable {
         self.providers = providers
     }
 
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: ModelsDevAnyCodingKey.self)
         try container.encode(self.providers, forKey: ModelsDevAnyCodingKey(stringValue: "providers")!)
     }

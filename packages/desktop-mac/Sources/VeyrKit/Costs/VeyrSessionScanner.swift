@@ -2,6 +2,7 @@
 // https://github.com/hethb/Veyr
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Heth Bhatt
+import CodexBarCore
 import Foundation
 
 /// Scans Claude Code JSONL logs into per-session spend entries.

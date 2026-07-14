@@ -1,6 +1,6 @@
-import CodexBarCore
 import Foundation
 import Testing
+import VeyrKit
 
 /// Per-rule tests for the graph-powered suggestions, driven through the public
 /// analyze() and asserted on stable ids. Fixture graphs are decoded from JSON in

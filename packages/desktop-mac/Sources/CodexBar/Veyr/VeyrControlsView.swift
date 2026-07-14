@@ -2,8 +2,8 @@
 // https://github.com/hethb/Veyr
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Heth Bhatt
-import CodexBarCore
 import SwiftUI
+import VeyrKit
 
 /// The "Controls" tab: global monthly budget plus per-tag caps with progress
 /// bars and alert toggles. Persists to ~/.veyr/budget-controls.json, which both

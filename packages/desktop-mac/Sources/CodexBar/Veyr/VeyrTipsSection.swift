@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Heth Bhatt
 import AppKit
-import CodexBarCore
 import SwiftUI
+import VeyrKit
 
 /// "Tips" — suggestion-engine cards below the session timeline in the Spend tab.
 /// Shows up to 3 non-dismissed suggestions; "Show all tips" reveals dismissed

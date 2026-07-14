@@ -3,14 +3,14 @@
 // Licensed under the MIT License.
 import Foundation
 
-enum CostUsageJsonl {
-    struct Line {
-        let bytes: Data
-        let wasTruncated: Bool
+public enum CostUsageJsonl {
+    public struct Line {
+        public let bytes: Data
+        public let wasTruncated: Bool
     }
 
     @discardableResult
-    static func scan(
+    public static func scan(
         fileURL: URL,
         offset: Int64 = 0,
         maxLineBytes: Int,

@@ -5,6 +5,7 @@
 import CodexBarCore
 import Foundation
 import Observation
+import VeyrKit
 
 /// Owns the Graphify pipeline for the active workspace: Python detection and
 /// silent install (PythonEnvManager), graph builds (GraphifyRunner), refresh
