@@ -49,13 +49,11 @@
     </li>
     <li><a href="#what-you-get">What You Get</a></li>
     <li><a href="#token-optimization">Token Optimization</a></li>
-    <li><a href="#prompt-caching">Prompt Caching</a></li>
-    <li><a href="#optional-proxy-layer">Optional Proxy Layer</a></li>
     <li><a href="#editor--browser-integrations">Editor & Browser Integrations</a></li>
     <li><a href="#vs-helicone">vs Helicone</a></li>
     <li><a href="#repository-layout">Repository Layout</a></li>
-    <li><a href="#local-development">Local Development</a></li>
-    <li><a href="#deployment">Deployment</a></li>
+    <li><a href="#local-development-legacy-proxydashboard">Local Development (legacy proxy/dashboard)</a></li>
+    <li><a href="#deployment-legacy-proxydashboard">Deployment (legacy proxy/dashboard)</a></li>
     <li><a href="#automatic-dependency-installation">Automatic Dependency Installation</a></li>
     <li><a href="#privacy">Privacy</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
@@ -102,11 +100,10 @@ Built on [CodexBar](https://github.com/steipete/CodexBar) by Peter Steinberger (
 ## Built With
 
 * [![Swift](https://img.shields.io/badge/Swift-F05138?style=for-the-badge&logo=swift&logoColor=white)](https://swift.org) — native macOS menu bar app
-* [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org) — proxy, dashboard, SDK, CLI, VS Code extension
-* [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org) — web dashboard
+* [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org) — CLI, VS Code extension
 * [![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org) — ML classifier training (dev-side), Graphify
-* [![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://sqlite.org) — local proxy data store
-* [![Electron](https://img.shields.io/badge/Electron-47848F?style=for-the-badge&logo=electron&logoColor=white)](https://electronjs.org) — legacy desktop app
+
+The repo also carries a legacy proxy/dashboard stack (React, SQLite) and an Electron app from earlier iterations of Veyr — not part of the current three-surface product; see [Repository Layout](#repository-layout).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -118,7 +115,7 @@ Built on [CodexBar](https://github.com/steipete/CodexBar) by Peter Steinberger (
 ### Prerequisites
 
 - macOS 14+ (Sonoma) for the native Mac app
-- Node.js 20+ for the proxy, dashboard, and CLI
+- Node.js 20+ for the CLI and VS Code extension (also needed for the legacy proxy/dashboard, see [Local Development](#local-development-legacy-proxydashboard))
 - Python 3.8+ is **optional** — installed automatically on first launch for codebase graph features (see [Automatic Dependency Installation](#automatic-dependency-installation))
 - Xcode 16+ only if building from source
 
@@ -184,11 +181,11 @@ brew install --cask veyr   # coming soon
 | **13-rule optimization engine** | Wrong model, poor cache usage, runaway sessions, retry loops, tool-list bloat, redundant reads, and more — each with an estimated monthly saving. |
 | **Budgets** | Per-project monthly caps with macOS notifications at 80% and 100%. Agents see budget status in their feed and adjust behavior accordingly. |
 | **AI task classification** | Optional, uses your API key. Haiku classifies every agent turn — Veyr reports the cost wasted running simple tasks on expensive frontier models. |
-| **Prompt caching** | Detects cache-eligible prompts, auto-injects `cache_control` for Anthropic, tracks cache hit rate. Up to 90% cheaper input tokens on warm cache. |
+| **Prompt caching awareness** | Detects cache-eligible prompts in your session history and flags low cache-hit-rate features as a suggestion. Enabling native provider caching is a call your coding agent can act on — Veyr doesn't inject anything in the request path. |
 | **Document → Markdown** | Converts PDFs, Word docs, HTML, CSV, JSON, XML into compact LLM-friendly Markdown. 70–90% fewer input tokens than raw files. |
 | **VS Code extension** | Live session cost in status bar, sidebar panel with burn rate and suggestions, one-click model switch commands. |
-| **Browser extension** | Chrome MV3 overlay for chatgpt.com and claude.ai — live token counts, complexity-aware prompt compression, ingest into dashboard. |
-| **Terminal CLI** | `veyr status`, `veyr suggestions`, `veyr policy set`, `veyr logs --follow`, `veyr integrate claude-code`. |
+| **Browser extension** *(legacy, optional)* | Chrome MV3 overlay for chatgpt.com and claude.ai — live token counts, complexity-aware prompt compression. Not one of Veyr's core three surfaces; see [Repository Layout](#repository-layout). |
+| **Terminal CLI** | `veyr status`, `veyr suggestions` — reads the same local data as the other two surfaces. |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -226,101 +223,12 @@ Each suggestion includes an estimated monthly saving, the evidence that triggere
 
 ---
 
-<!-- PROMPT CACHING -->
-## Prompt Caching
-
-Provider prompt caching reuses the model's intermediate processing of a static prompt prefix — dropping input cost by **up to 90%** and cutting latency. Veyr detects when your prompts are cache-eligible, auto-injects `cache_control` for Anthropic, and tracks cache hit rate alongside spend.
-
-### Enable it
-
-Per-request header:
-```bash
--H "x-veyr-cache: 1"
-```
-
-Via SDK:
-```ts
-const openai = new OpenAI(
-  veyrOpenAI({
-    apiKey: process.env.OPENAI_API_KEY!,
-    feature: "policy-qa",
-    enablePromptCaching: true,
-  })
-);
-```
-
-Via dashboard (`PUT /api/policies`):
-```json
-{ "api_key_id": "…", "feature_tag": "policy-qa", "enable_prompt_caching": true }
-```
-
-When enabled on Anthropic, Veyr wraps your `system` prompt with `cache_control: { type: "ephemeral" }` — only when it's at least 1024 tokens (Anthropic's minimum). Below that it's a no-op.
-
-### What's tracked
-
-Every request logs `cached_tokens` (cache hit) and `cache_creation_tokens` (cache write). Cost is computed accordingly — reads discounted, writes at a small premium.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-<!-- OPTIONAL PROXY LAYER -->
-## Optional Proxy Layer
-
-Everything above works with zero infrastructure. If you also call OpenAI/Anthropic APIs from your own code and want request-level logging, compression, caching injection, and hard budget caps, run the bundled proxy.
-
-### Quickstart
-
-```bash
-npm install canopy-sdk openai
-```
-
-```ts
-import OpenAI from "openai";
-import { veyrOpenAI } from "canopy-sdk";
-
-const openai = new OpenAI(
-  veyrOpenAI({
-    apiKey: process.env.OPENAI_API_KEY!,
-    feature: "my-feature",
-  })
-);
-```
-
-Existing `chat.completions` calls are unchanged. The dashboard shows cost by feature, tokens, and top prompt templates.
-
-### Control plane
-
-Per-request headers:
-
-| Header | Effect |
-|---|---|
-| `x-veyr-compress: 1` | Rule-based prompt compression |
-| `x-veyr-cache: 1` | Provider prompt caching injection |
-| `x-veyr-max-tokens: 512` | Cap completion tokens |
-
-Per-feature policies via dashboard or `PUT /api/policies`:
-
-| Policy | Effect |
-|---|---|
-| `monthly_budget_usd` | Returns 429 when spend exceeds cap |
-| `compress_prompts` | Always compress for this feature |
-| `enable_prompt_caching` | Auto-inject Anthropic `cache_control` |
-| `max_completion_tokens` | Enforced server-side |
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
 <!-- EDITOR & BROWSER INTEGRATIONS -->
 ## Editor & Browser Integrations
 
-### Browser Extension (ChatGPT & Claude.ai)
+### Browser Extension (ChatGPT & Claude.ai) — legacy, optional
 
-Chrome MV3 overlay for chatgpt.com and claude.ai. Works three ways:
-- **Local estimate** — floating widget with live token counts, estimated cost, and rule-based prompt tips as you type
-- **Live ingest** — every send is POSTed to `/ingest/web-chat`; web chats appear in your dashboard charts immediately tagged `web-chatgpt` / `web-claude`
-- **Proxy data** — shows your real logged spend and top optimization suggestion
+Chrome MV3 overlay for chatgpt.com and claude.ai: a floating widget with live token counts, estimated cost, and rule-based prompt tips as you type. This is a standalone add-on from an earlier iteration of Veyr, not one of the three core surfaces, and it runs entirely local-estimate — it does not require or talk to any Veyr backend.
 
 Load via `chrome://extensions` → Developer mode → Load unpacked → `packages/browser-extension`. No build step.
 
@@ -329,26 +237,15 @@ Load via `chrome://extensions` → Developer mode → Load unpacked → `package
 ```bash
 npm install -g getcanopy   # or: npx getcanopy init
 
-veyr status                # proxy health + today/week/month spend
+veyr status                # today/week/month spend, read from local session logs
 veyr suggestions           # optimization tips with ready-to-run commands
-veyr policy set summarizer --model gpt-4o-mini --budget 50
-veyr logs --follow         # tail requests as they hit the proxy
-veyr integrate claude-code # route Claude Code through the proxy
 ```
 
-`veyr init` walks new users through setup, key verification, and integration with OpenAI SDK, Anthropic SDK, Claude Code, Cursor, or plain env vars.
+`veyr init` walks new users through setup — no account, no key.
 
 ### VS Code Extension + Claude Code
 
-The **Veyr** VS Code panel shows spend and optimization suggestions from the proxy, plus a command to route Claude Code through Veyr:
-
-```bash
-VEYR_ALLOW_ANON=true npm run dev:proxy
-```
-
-Then run **Veyr: Route Claude Code through proxy** — it sets `ANTHROPIC_BASE_URL=http://localhost:3001/anthropic` for new terminals.
-
-> `VEYR_ALLOW_ANON=true` attributes traffic without an `x-veyr-key` to a dedicated "Anonymous (local tools)" key, tagged by User-Agent.
+The **Veyr** VS Code panel shows live spend and optimization suggestions for the active Claude Code session, read from the same local agent feed the menu bar app writes — no proxy, no `ANTHROPIC_BASE_URL` change.
 
 ### Native macOS Menu Bar App
 
@@ -372,9 +269,9 @@ Helicone shows you that you're spending money. Veyr tells you **which feature is
 
 | | Helicone | Veyr |
 |---|---|---|
-| Per-request logging | ✓ | ✓ (proxy) |
-| Cost dashboard | ✓ | ✓ |
-| **Works without a proxy** | ✘ | ✓ (reads local agent logs) |
+| Per-request logging | ✓ (proxy) | ✓ (reads local session logs, no proxy) |
+| Spend UI | ✓ hosted dashboard | ✓ menu bar app + VS Code panel, local |
+| **Works without a proxy or account** | ✘ | ✓ |
 | **Cost by project/feature** | ⚠ manual tags | ✓ auto-inferred |
 | **13-rule optimization engine** | ✘ | ✓ |
 | **Codebase graph (Graphify)** | ✘ | ✓ |
@@ -388,19 +285,21 @@ Helicone shows you that you're spending money. Veyr tells you **which feature is
 <!-- REPOSITORY LAYOUT -->
 ## Repository Layout
 
+The three core surfaces, plus everything else still in the repo from earlier iterations of Veyr (kept for reference, not required to use the product):
+
 ```
 veyr/
 ├── packages/
-│   ├── desktop-mac/        # THE product: native Swift menu bar app (built on CodexBar)
-│   ├── vscode-extension/   # live session cost + optimization suggestions in VS Code
-│   ├── browser-extension/  # Chrome MV3 overlay for chatgpt.com / claude.ai
-│   ├── proxy/              # optional Express proxy (Node, TS) — local SQLite store
-│   ├── dashboard/          # React dashboard + public landing page
-│   ├── sdk/                # npm SDK wrapper (canopy-sdk)
-│   ├── cli/                # veyr terminal CLI (status, policies, logs)
+│   ├── desktop-mac/        # core: native Swift menu bar app (built on CodexBar)
+│   ├── vscode-extension/   # core: live session cost + optimization suggestions in VS Code
+│   ├── cli/                # core: veyr terminal CLI (status, suggestions)
+│   ├── browser-extension/  # legacy: Chrome MV3 overlay for chatgpt.com / claude.ai
+│   ├── proxy/              # legacy: Express proxy (Node, TS) — not used by the core surfaces
+│   ├── dashboard/          # legacy: React dashboard for the proxy, not part of the current product
+│   ├── sdk/                # legacy: npm SDK wrapper for the proxy (canopy-sdk)
 │   ├── ml/                 # dev-side Python: classifier training on local session data
 │   └── desktop/            # legacy Electron app (superseded by desktop-mac)
-├── examples/               # runnable customer integration demo
+├── examples/               # legacy: proxy integration demo
 ├── CREDITS.md              # open source attribution
 ├── package.json            # workspace root
 └── .env.example
@@ -411,13 +310,15 @@ veyr/
 ---
 
 <!-- LOCAL DEVELOPMENT -->
-## Local Development
+## Local Development (legacy proxy/dashboard)
+
+This section is for hacking on the legacy `proxy`/`dashboard`/`sdk` packages carried over from an earlier iteration of Veyr (see [Repository Layout](#repository-layout)) — it is **not** required to install or use Veyr. To develop the current product, see [Download & Get Started](#download--get-started) for the macOS app and VS Code extension, and `packages/cli` for the CLI.
 
 ### Prerequisites
 
 - Node.js 20+
 
-That's it — no database or cloud account. The proxy keeps keys and request logs in a local SQLite file at `packages/proxy/.veyr/data.db`.
+No cloud account needed to run this legacy stack either. The proxy keeps keys and request logs in a local SQLite file at `packages/proxy/.veyr/data.db`.
 
 ### Installation
 
@@ -479,9 +380,9 @@ You should see a row land in the `requests` table and the cost appear in the das
 ---
 
 <!-- DEPLOYMENT -->
-## Deployment
+## Deployment (legacy proxy/dashboard)
 
-For a full step-by-step guide, see [**DEPLOY.md**](./DEPLOY.md).
+Veyr's core product ships as downloadable/installable artifacts (DMG, VSIX, npm package) — there's nothing to deploy. This section only applies if you're hosting the legacy proxy/dashboard package yourself; see [**DEPLOY.md**](./DEPLOY.md) for the full guide.
 
 | Component | Platform | Config |
 |---|---|---|
@@ -529,7 +430,6 @@ Disable the feature entirely with `"codebaseGraph": false` in `~/.veyr/config.js
 
 - The Mac app reads your local Claude Code and Codex log files from disk. Nothing leaves your machine by default.
 - Session history is stored in `~/.veyr/` locally.
-- The proxy stores only structured metadata (token counts, cost, feature tag, prompt SHA-256 hash) in local SQLite. Full prompt content is never logged.
 - The optional AI classifier calls Anthropic's API using **your** key, only when you add one in Settings.
 - All ML training data stays in `~/.veyr/ml/` — never uploaded.
 - Graphify analyzes your codebase on-device (pure AST parsing, no LLM calls) — no source code leaves your machine. Veyr installs it automatically on first launch, pinned to an audited commit; see [Automatic Dependency Installation](#automatic-dependency-installation).
@@ -550,11 +450,11 @@ Disable the feature entirely with `"codebaseGraph": false` in `~/.veyr/config.js
 - [x] VS Code extension with live cost display
 - [x] Browser extension (ChatGPT & Claude.ai)
 - [x] Terminal CLI
-- [x] Prompt caching detection and injection
+- [x] Prompt caching detection (low cache-hit-rate suggestions)
 - [x] Document → Markdown converter
 - [x] AI task complexity classifier
 - [x] Graphify codebase graph integration (graph-aware suggestions, CLAUDE.md + VEYR_STATUS.json context)
-- [x] Interactive graph visualization in dashboard
+- [x] Interactive graph visualization in the menu bar app
 - [ ] Homebrew cask distribution
 - [ ] Apple notarization (Gatekeeper-clean DMG)
 - [ ] JetBrains IDE extension

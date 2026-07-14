@@ -1,55 +1,58 @@
 # Veyr product roadmap
 
-**Core product:** A hosted proxy between your app and OpenAI/Anthropic. Change where requests go — see (and eventually control) LLM spend by feature.
+**Core product:** A local tool that watches your coding agent's session logs and your codebase, then feeds what it learns back to you and to the agent — no proxy, no hosted account, no dashboard.
 
 ```
-your app  →  Veyr proxy  →  OpenAI / Anthropic
-                 │
-         observe · compress · enforce
-                 │
-            dashboard
+Claude Code / Codex CLI / etc. logs      Graphify codebase graph
+        │                                        │
+        ▼                                        ▼
+             Veyr (macOS app · VS Code extension · CLI)
+                            │
+        ┌───────────────────┼───────────────────┐
+        ▼                   ▼                   ▼
+  spend & budgets    CLAUDE.md guidance   prompt autocomplete
 ```
 
 ---
 
-## Layer 1 — Observability (**live**)
+## Multi-agent usage visibility (**live**)
 
-**Customer promise:** “Which feature is costing us money?”
+**Promise:** "Where is my coding-agent spend actually going?"
 
-- Proxy logs metadata (tokens, cost, model, feature tag, prompt hash — not content by default)
-- Dashboard: today / week / month, cost by feature, top prompt templates
-- Integration: one env var + `veyrOpenAI()` or base URL swap
-
----
-
-## Layer 2 — Optimization (**building now**)
-
-**Customer promise:** “Stop paying for bloated prompts.”
-
-- Rule-based system-prompt compression before upstream (ported from TokenGuard)
-- Opt-in per request: `x-veyr-compress: 1` or policy `compress_prompts`
-- **Provider prompt caching** — auto-inject Anthropic `cache_control` on long
-  prompts (`x-veyr-cache: 1` or policy `enable_prompt_caching`). Tracks
-  `cached_tokens` and `cache_creation_tokens` per request and discounts cost
-  accordingly. Up to 90% input cost reduction on repeated calls.
-- **Document → Markdown** (`/api/convert`, **Documents** page) — turn PDFs,
-  DOCX, HTML, CSV, JSON, and XML into compact Markdown before sending to an
-  LLM. Inspired by Microsoft MarkItDown; reimplemented in pure TypeScript.
-  Typical 70–90% input-token reduction on bloated source formats.
-- Pre-send linter flags cache-busters (live timestamps, wrong ordering)
-- Response headers report estimated tokens saved
-- *Next:* LLM-assisted rewrite tier, template-level savings report in dashboard
+- Reads session logs directly from disk — Claude Code (`~/.claude/projects/**/*.jsonl`), Codex CLI, and 50+ other providers — no proxy and no API key required just to see spend
+- Menu bar app, VS Code status bar, and CLI (`veyr status`) all read the same local data, so spend is consistent across surfaces
+- Per-project and per-session cost, budget caps with local notifications, and a 13-rule optimization engine that surfaces concrete, estimated-dollar savings
 
 ---
 
-## Layer 3 — Governance (**foundation in progress**)
+## Graphify-powered codebase context (**live**, expanding)
 
-**Customer promise:** “Enforce budgets without touching every team’s codebase.”
+**Promise:** "Give the agent — and you — a map of the codebase before it starts guessing."
 
-- `feature_policies` per API key + feature tag
-- Monthly budget cap → `429` when exceeded
-- `max_completion_tokens` enforced on outbound requests
-- *Next:* model downgrade rules, rate limits, alerts, team admin UI
+- On-device AST-based knowledge graph (call graph, dependency chain, critical path, test coverage gaps) via Graphify — tree-sitter parsing, zero LLM calls, nothing leaves the machine
+- Graph-aware optimization rules: leaf node on an expensive model, god-node blast-radius warnings, unexplored dependencies, redundant re-reads, test coverage gaps on high-connectivity code
+- *Next:* incremental graph updates on every save, deeper per-symbol impact scoring, richer graph visualization in the menu bar app and VS Code panel
+
+---
+
+## CLAUDE.md-injected guidance (**live**, expanding)
+
+**Promise:** "Tell the agent how to behave, automatically, instead of hoping it infers it."
+
+- Veyr keeps a marker-delimited block in the active project's `CLAUDE.md` with current spend, budget status, and a codebase graph summary, refreshed every session
+- *Next:* guidance aimed specifically at reducing hallucination and verbosity — pointing the agent at the graph summary instead of re-exploring the tree, flagging when it's about to touch a high-connectivity symbol, nudging shorter answers when a task is simple
+- *Next:* per-project tuning of what gets injected, so the block earns the tokens it costs
+
+---
+
+## Prompt autocomplete (**building now**)
+
+**Promise:** "Suggest the tighter version of what you were about to type."
+
+- Learns an individual's prompting style from accept/reject signal on past suggestions — metadata only by default, no raw prompt text stored unless explicitly opted in
+- Combines that learned style with Graphify's understanding of the codebase to suggest more specific, token-efficient phrasing as you type — e.g. naming the right file or symbol instead of describing it
+- Ships first as a rules-based linter, then per-user retrieval over accepted rewrites, with a trained ranker only once there's enough labeled data
+- Surfaces: VS Code panel first, CLI and menu bar app follow
 
 ---
 
@@ -57,14 +60,17 @@ your app  →  Veyr proxy  →  OpenAI / Anthropic
 
 | Tool | What it does |
 |------|----------------|
-| Helicone / LangSmith | Shows what happened |
-| **Veyr** | Changes what happens — compress, cap, block |
+| Helicone / LangSmith | Shows what happened, from a proxy or SDK wrapper |
+| **Veyr** | Reads what already happened, locally, then changes what the agent does next |
 
 ---
 
-## Hosted vs self-host
+## Surfaces
 
-- **Sell:** Hosted proxy + dashboard (`VEYR_KEY`, no database for customers to run)
-- **Enterprise:** Self-host this repo; same proxy, their data plane
+All three surfaces read the same local data under `~/.veyr/` and ship from this repo — no server-side component required:
+
+- **macOS menu bar app** (`packages/desktop-mac`) — the primary surface: spend, budgets, CLAUDE.md injection, Graphify graph
+- **VS Code extension** (`packages/vscode-extension`) — live cost in the status bar and a suggestions panel; reads the Mac app's local agent feed
+- **CLI** (`packages/cli`) — `veyr status`, `veyr suggestions`; scriptable and CI-friendly
 
 See [QUICKSTART.md](./QUICKSTART.md).
