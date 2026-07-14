@@ -10,12 +10,7 @@ import { suggestionsCommand } from "./commands/suggestions.js";
 import { policyListCommand, policySetCommand, type PolicySetOptions } from "./commands/policy.js";
 import { logsCommand, type LogsOptions } from "./commands/logs.js";
 import { configCommand } from "./commands/configCmd.js";
-import {
-  integrateClaudeCode,
-  integrateCursor,
-  integrateShell,
-  type ClaudeCodeOptions,
-} from "./commands/integrate.js";
+import { integrateCursor, integrateShell } from "./commands/integrate.js";
 import { initCommand } from "./commands/init.js";
 
 const require = createRequire(import.meta.url);
@@ -73,13 +68,6 @@ program
 const integrate = program
   .command("integrate")
   .description("Route terminal tools (Claude Code, Cursor, shell scripts) through Veyr");
-
-integrate
-  .command("claude-code")
-  .description("Route Claude Code through the Veyr proxy")
-  .option("--write", "append the export line to your shell profile")
-  .option("--check", "verify ANTHROPIC_BASE_URL is set in the current shell")
-  .action((opts: ClaudeCodeOptions) => run(() => integrateClaudeCode(opts)));
 
 integrate
   .command("cursor")

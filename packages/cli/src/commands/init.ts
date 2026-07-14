@@ -10,7 +10,6 @@ import ora from "ora";
 import fetch from "node-fetch";
 import { CONFIG_PATH, saveConfig } from "../config.js";
 import { type ApiKeyRow } from "../api.js";
-import { integrateClaudeCode } from "./integrate.js";
 import { integrateCursor } from "./integrate.js";
 import { integrateShell } from "./integrate.js";
 
@@ -184,7 +183,7 @@ export async function initCommand(): Promise<void> {
 
   // -------------------------------------------------------------- integration
   const { integration } = await inquirer.prompt<{
-    integration: "openai" | "anthropic" | "claude-code" | "cursor" | "env";
+    integration: "openai" | "anthropic" | "cursor" | "env";
   }>([
     {
       type: "list",
@@ -193,7 +192,6 @@ export async function initCommand(): Promise<void> {
       choices: [
         { name: "OpenAI SDK (add to my code)", value: "openai" },
         { name: "Anthropic SDK (add to my code)", value: "anthropic" },
-        { name: "Claude Code CLI", value: "claude-code" },
         { name: "Cursor", value: "cursor" },
         { name: "Just show me the env vars", value: "env" },
       ],
@@ -207,9 +205,6 @@ export async function initCommand(): Promise<void> {
       break;
     case "anthropic":
       showSdkSnippet("anthropic", baseUrl, trimmedKey || undefined);
-      break;
-    case "claude-code":
-      await integrateClaudeCode({});
       break;
     case "cursor":
       await integrateCursor();
