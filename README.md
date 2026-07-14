@@ -52,8 +52,7 @@
     <li><a href="#editor--browser-integrations">Editor & Browser Integrations</a></li>
     <li><a href="#vs-helicone">vs Helicone</a></li>
     <li><a href="#repository-layout">Repository Layout</a></li>
-    <li><a href="#local-development-legacy-proxydashboard">Local Development (legacy proxy/dashboard)</a></li>
-    <li><a href="#deployment-legacy-proxydashboard">Deployment (legacy proxy/dashboard)</a></li>
+    <li><a href="#local-development">Local Development</a></li>
     <li><a href="#automatic-dependency-installation">Automatic Dependency Installation</a></li>
     <li><a href="#privacy">Privacy</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
@@ -103,7 +102,7 @@ Built on [CodexBar](https://github.com/steipete/CodexBar) by Peter Steinberger (
 * [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org) — CLI, VS Code extension
 * [![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org) — ML classifier training (dev-side), Graphify
 
-The repo also carries a legacy proxy/dashboard stack (React, SQLite) and an Electron app from earlier iterations of Veyr — not part of the current three-surface product; see [Repository Layout](#repository-layout).
+`packages/dashboard` (React) is a legacy piece still in this repo, left untouched from an earlier iteration of Veyr — not part of the current three-surface product; see [Repository Layout](#repository-layout). The old proxy server and Electron app have already been fully extracted onto a separate branch.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -115,7 +114,7 @@ The repo also carries a legacy proxy/dashboard stack (React, SQLite) and an Elec
 ### Prerequisites
 
 - macOS 14+ (Sonoma) for the native Mac app
-- Node.js 20+ for the CLI and VS Code extension (also needed for the legacy proxy/dashboard, see [Local Development](#local-development-legacy-proxydashboard))
+- Node.js 20+ for the CLI and VS Code extension
 - Python 3.8+ is **optional** — installed automatically on first launch for codebase graph features (see [Automatic Dependency Installation](#automatic-dependency-installation))
 - Xcode 16+ only if building from source
 
@@ -228,9 +227,9 @@ Each suggestion includes an estimated monthly saving, the evidence that triggere
 
 ### Browser Extension (ChatGPT & Claude.ai) — legacy, optional
 
-Chrome MV3 overlay for chatgpt.com and claude.ai: a floating widget with live token counts, estimated cost, and rule-based prompt tips as you type. This is a standalone add-on from an earlier iteration of Veyr, not one of the three core surfaces, and it runs entirely local-estimate — it does not require or talk to any Veyr backend.
+Chrome MV3 overlay for chatgpt.com and claude.ai: a floating widget with live token counts, estimated cost, and rule-based prompt tips as you type. This is a standalone add-on from an earlier iteration of Veyr, not one of the three core surfaces, and it ran entirely local-estimate — it did not require or talk to any Veyr backend.
 
-Load via `chrome://extensions` → Developer mode → Load unpacked → `packages/browser-extension`. No build step.
+Its source has already been extracted out of this repo (see [Repository Layout](#repository-layout)); only a packaged build artifact remains at `packages/browser-extension/dist-zip/veyr-extension.zip`. To load it: unzip that file, then `chrome://extensions` → Developer mode → Load unpacked → the unzipped folder.
 
 ### Terminal CLI
 
@@ -285,7 +284,7 @@ Helicone shows you that you're spending money. Veyr tells you **which feature is
 <!-- REPOSITORY LAYOUT -->
 ## Repository Layout
 
-The three core surfaces, plus everything else still in the repo from earlier iterations of Veyr (kept for reference, not required to use the product):
+The three core surfaces, plus one legacy package still physically in this repo:
 
 ```
 veyr/
@@ -293,104 +292,39 @@ veyr/
 │   ├── desktop-mac/        # core: native Swift menu bar app (built on CodexBar)
 │   ├── vscode-extension/   # core: live session cost + optimization suggestions in VS Code
 │   ├── cli/                # core: veyr terminal CLI (status, suggestions)
-│   ├── browser-extension/  # legacy: Chrome MV3 overlay for chatgpt.com / claude.ai
-│   ├── proxy/              # legacy: Express proxy (Node, TS) — not used by the core surfaces
-│   ├── dashboard/          # legacy: React dashboard for the proxy, not part of the current product
-│   ├── sdk/                # legacy: npm SDK wrapper for the proxy (canopy-sdk)
-│   ├── ml/                 # dev-side Python: classifier training on local session data
-│   └── desktop/            # legacy Electron app (superseded by desktop-mac)
-├── examples/               # legacy: proxy integration demo
+│   ├── dashboard/          # legacy: React dashboard UI for the old proxy-based product — not part of the current product, untouched
+│   ├── browser-extension/  # legacy remnant: only a packaged build artifact (dist-zip/), no source
+│   └── ml/                 # dev-side Python: classifier training on local session data
+├── examples/               # legacy: old proxy integration demo (customer-demo.mjs), untouched
 ├── CREDITS.md              # open source attribution
 ├── package.json            # workspace root
 └── .env.example
 ```
+
+The proxy server and the SDK wrapper (`canopy-sdk`) it shipped with, plus the legacy Electron desktop app, have already been fully extracted out of this repo — they're archived on the `archive/promptlens-gateway` branch, not on `main`. `packages/dashboard` is the one legacy piece still physically here: it's a frontend for that now-archived proxy and has no backend to talk to on `main`. It's left untouched and unused by the three core surfaces.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
 <!-- LOCAL DEVELOPMENT -->
-## Local Development (legacy proxy/dashboard)
+## Local Development
 
-This section is for hacking on the legacy `proxy`/`dashboard`/`sdk` packages carried over from an earlier iteration of Veyr (see [Repository Layout](#repository-layout)) — it is **not** required to install or use Veyr. To develop the current product, see [Download & Get Started](#download--get-started) for the macOS app and VS Code extension, and `packages/cli` for the CLI.
+To develop the current product, see [Download & Get Started](#download--get-started) for building the macOS app from source; `packages/vscode-extension` and `packages/cli` build with standard `npm install` + their own `npm run build`.
 
 ### Prerequisites
 
 - Node.js 20+
 
-No cloud account needed to run this legacy stack either. The proxy keeps keys and request logs in a local SQLite file at `packages/proxy/.veyr/data.db`.
-
 ### Installation
 
-1. Clone the repo
-   ```bash
-   git clone https://github.com/hethb/Veyr.git
-   cd Veyr
-   ```
-
-2. Install dependencies
-   ```bash
-   npm install
-   ```
-
-3. Seed the database
-   ```bash
-   npm run seed
-   ```
-   This prints a `pl_live_…` demo key and fills the store with 30 days of sample data so the dashboard is populated immediately. Re-run any time to mint a fresh key; add `-- --reset` to wipe everything.
-
-4. _(Optional)_ Configure environment
-   ```bash
-   cp .env.example .env
-   cp .env packages/proxy/.env
-   cp .env packages/dashboard/.env
-   ```
-
-### Running locally
-
 ```bash
-# Terminal 1
-npm run dev:proxy        # http://localhost:3001
-
-# Terminal 2
-npm run dev:dashboard    # http://localhost:5173
+git clone https://github.com/hethb/Veyr.git
+cd Veyr
+npm install
 ```
 
-Open the dashboard — no login. Use any `pl_live_…` key as `VEYR_KEY` in your application.
-
-### Smoke test (free — Groq)
-
-1. Get a free key at [console.groq.com](https://console.groq.com)
-2. Set in `.env`:
-   ```bash
-   OPENAI_UPSTREAM_URL=https://api.groq.com/openai/v1/chat/completions
-   GROQ_API_KEY=gsk_...
-   ```
-3. Run:
-   ```bash
-   export VEYR_KEY=pl_live_…
-   export GROQ_API_KEY=gsk_…
-   ./scripts/smoke-groq.sh
-   ```
-
-You should see a row land in the `requests` table and the cost appear in the dashboard tagged `smoke-test`.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-<!-- DEPLOYMENT -->
-## Deployment (legacy proxy/dashboard)
-
-Veyr's core product ships as downloadable/installable artifacts (DMG, VSIX, npm package) — there's nothing to deploy. This section only applies if you're hosting the legacy proxy/dashboard package yourself; see [**DEPLOY.md**](./DEPLOY.md) for the full guide.
-
-| Component | Platform | Config |
-|---|---|---|
-| Proxy (Node + SQLite) | Fly.io | `Dockerfile`, `fly.toml` |
-| Dashboard (Vite SPA) | Vercel | `packages/dashboard/vercel.json` |
-| Auth (multi-tenant) | Supabase | env vars only |
-
-`render.yaml` is also included for one-click Render deployments.
+> `packages/dashboard` is a legacy frontend left untouched from an earlier proxy-based iteration of Veyr (see [Repository Layout](#repository-layout)). Its backend — the proxy — has already been extracted out of this repo onto the `archive/promptlens-gateway` branch, so `npm run dev:dashboard` will start the UI but it has nothing to talk to on `main`. It isn't part of, or required by, the three core surfaces.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
