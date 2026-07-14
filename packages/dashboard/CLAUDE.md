@@ -1,6 +1,6 @@
 <!-- veyr:spend-status:begin -->
 ## Veyr spend status
-> Auto-updated by Veyr · 2026-07-13 20:58 · disable in Veyr settings
+> Auto-updated by Veyr · 2026-07-13 20:59 · disable in Veyr settings
 
 **Current session:** claude-fable-5 · $111.7700/session · $0.0180/min
 **Cache hit rate:** 100%
@@ -10,10 +10,10 @@
 
 <!-- veyr:graph-context:begin -->
 ## Veyr codebase graph
-> Powered by Graphify · Full graph · 2026-07-13 20:58
+> Powered by Graphify · Full graph · 2026-07-13 20:59
 
 ### Architecture
-2957 files, 37721 symbols in 1185 communities. Primary languages: Swift, TypeScript, JavaScript. Highest-impact code: .logger(), L(), UsageFetcher.
+2957 files, 37721 symbols in 1178 communities. Primary languages: Swift, TypeScript, JavaScript. Highest-impact code: .logger(), L(), UsageFetcher.
 
 ### Critical path (highest-impact files)
 - **.logger()** (packages/desktop-mac/Sources/CodexBarCore/Logging/CodexBarLog.swift) — 251 connections
