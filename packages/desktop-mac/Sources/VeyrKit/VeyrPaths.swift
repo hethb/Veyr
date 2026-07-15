@@ -66,6 +66,14 @@ public enum VeyrPaths {
         self.cacheDirectory(base: base).appendingPathComponent("graph-focus.json")
     }
 
+    /// Learned prompt-style corpus (VeyrPromptStyleStore) — derived n-grams,
+    /// openers, task shapes, and referenced file/symbol tokens, never raw
+    /// prompt text. Lives in cache/ like graph.json: fully rebuildable by
+    /// rescanning the local JSONL logs, so wiping cache/ erases it entirely.
+    public static func promptStyleStoreFile(base: URL = FileManager.default.homeDirectoryForCurrentUser) -> URL {
+        self.cacheDirectory(base: base).appendingPathComponent("prompt-style.json")
+    }
+
     /// Discovery file for the in-process daemon HTTP server the Mac app hosts
     /// while running (`VeyrDaemonServer`, packages/desktop-mac/Sources/CodexBar).
     /// The CLI reads this to find the live port; absent or unreachable means

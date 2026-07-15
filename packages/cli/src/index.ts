@@ -9,6 +9,7 @@
 import { createRequire } from "node:module";
 import { Command } from "commander";
 import { run } from "./cliError.js";
+import { composeCommand } from "./commands/compose.js";
 import { graphCommand } from "./commands/graph.js";
 import {
   rulesDisableCommand,
@@ -18,6 +19,7 @@ import {
   rulesOnCommand,
 } from "./commands/rules.js";
 import { statusCommand } from "./commands/status.js";
+import { styleDisableCommand, styleEnableCommand, styleStatusCommand } from "./commands/style.js";
 
 const require = createRequire(import.meta.url);
 const { version } = require("../package.json") as { version: string };
@@ -72,5 +74,29 @@ rules
   .command("off")
   .description("Turn off CLAUDE.md guidance injection")
   .action(() => run(rulesOffCommand));
+
+program
+  .command("compose")
+  .description("Compose a prompt interactively, with style-based ghost-text suggestions; copies to clipboard when done")
+  .action(() => run(composeCommand));
+
+const style = program
+  .command("style")
+  .description("View or toggle on-device prompt-style learning (off by default)");
+
+style
+  .command("status")
+  .description("Show whether prompt-style learning is on")
+  .action(() => run(styleStatusCommand));
+
+style
+  .command("enable")
+  .description("Turn on prompt-style learning + `veyr compose` suggestions")
+  .action(() => run(styleEnableCommand));
+
+style
+  .command("disable")
+  .description("Turn off prompt-style learning + `veyr compose` suggestions")
+  .action(() => run(styleDisableCommand));
 
 program.parseAsync(process.argv);

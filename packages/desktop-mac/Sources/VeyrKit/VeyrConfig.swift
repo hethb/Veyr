@@ -30,6 +30,12 @@ public struct VeyrConfig: Sendable {
     /// Graphify-backed codebase graph (nil = enabled). Kill switch for the
     /// silent-install + background-build pipeline.
     public var codebaseGraph: Bool?
+    /// On-device prompt-style learning + autocomplete (nil/false = off).
+    /// Gates both the background corpus scanner and whether
+    /// `GET /style/complete` returns anything — default off since this is
+    /// the first Veyr feature that persists anything derived from the
+    /// content of prompt text, not just scalar/boolean features.
+    public var promptStyleLearning: Bool?
     /// Web dashboard origin for outbound links (nil = production). Dev builds
     /// set "http://localhost:5173" here.
     public var dashboardUrl: String?
@@ -64,6 +70,7 @@ public struct VeyrConfig: Sendable {
         config.structuredOutputDetection = object["structuredOutputDetection"] as? Bool
         config.codebaseGraph = object["codebaseGraph"] as? Bool
         config.dashboardUrl = object["dashboardUrl"] as? String
+        config.promptStyleLearning = object["promptStyleLearning"] as? Bool
         return config
     }
 
@@ -82,6 +89,7 @@ public struct VeyrConfig: Sendable {
             ("structuredOutputDetection", self.structuredOutputDetection),
             ("codebaseGraph", self.codebaseGraph),
             ("dashboardUrl", self.dashboardUrl),
+            ("promptStyleLearning", self.promptStyleLearning),
         ]
         for (key, value) in updates {
             if let value {

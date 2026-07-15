@@ -82,7 +82,9 @@ public final class VeyrDaemonServer {
             return self.handleGraph()
         case ("POST", "/graph/refresh"):
             return await self.handleGraphRefresh(queryItems: request.queryItems)
-        case (_, "/health"), (_, "/status"), (_, "/graph"):
+        case ("GET", "/style/complete"):
+            return Self.handleStyleComplete(queryItems: request.queryItems)
+        case (_, "/health"), (_, "/status"), (_, "/graph"), (_, "/style/complete"):
             return CLILocalHTTPResponse(
                 status: .methodNotAllowed,
                 body: Data(#"{"error":"method not allowed"}"#.utf8))
@@ -137,6 +139,46 @@ public final class VeyrDaemonServer {
             await VeyrGraphService.shared.refreshNow(root: path)
         }
         return Self.json(["ok": true, "status": "refresh_started"])
+    }
+
+    private struct StyleCompletionResponse: Encodable {
+        struct Suggestion: Encodable {
+            var text: String
+            var kind: String
+            var confidence: Double
+        }
+        var suggestions: [Suggestion]
+        /// Always [] in phase 1 (no Graphify grounding yet) — present, not
+        /// omitted, so a later phase populating it isn't a breaking schema
+        /// change for clients that already decode this field.
+        var groundedIn: [String]
+    }
+
+    /// Gated by VeyrConfig.promptStyleLearning: when off, returns 200 with
+    /// an empty suggestions array rather than an error, so callers only ever
+    /// need one code path ("array possibly empty"), matching the daemon's
+    /// existing "absence is normal" philosophy (see packages/cli/src/veyr/daemon.ts).
+    private static func handleStyleComplete(queryItems: [String: String]) -> CLILocalHTTPResponse {
+        guard VeyrConfig.load().promptStyleLearning == true else {
+            return Self.encodeStyleResponse(suggestions: [])
+        }
+        let prefix = queryItems["text"] ?? ""
+        let max = queryItems["max"].flatMap { Int($0) } ?? 3
+        let store = VeyrPromptStyleStore.load()
+        let suggestions = VeyrPromptStyleCompleter.complete(prefix: prefix, store: store, max: max)
+        return Self.encodeStyleResponse(suggestions: suggestions)
+    }
+
+    private static func encodeStyleResponse(suggestions: [VeyrPromptStyleCompleter.Suggestion]) -> CLILocalHTTPResponse {
+        let response = StyleCompletionResponse(
+            suggestions: suggestions.map { StyleCompletionResponse.Suggestion(text: $0.text, kind: $0.kind, confidence: $0.confidence) },
+            groundedIn: [])
+        guard let data = try? JSONEncoder().encode(response) else {
+            return CLILocalHTTPResponse(
+                status: .internalServerError,
+                body: Data(#"{"error":"encoding failed"}"#.utf8))
+        }
+        return CLILocalHTTPResponse(status: .ok, body: data)
     }
 
     // MARK: - Helpers
