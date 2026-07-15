@@ -407,6 +407,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.ensureStatusController()
         VeyrStatusItem.shared.activate()
         VeyrAgentStatusService.shared.start()
+        VeyrDaemonServer.shared.start()
         KeyboardShortcuts.onKeyUp(for: .openMenu) { [weak self] in
             // KeyboardShortcuts dispatches both normal and menu-tracking hotkeys on the main event loop.
             MainActor.assumeIsolated {
@@ -437,6 +438,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.confettiOverlayController.dismiss()
         self.dismissAppKitWindowsForShutdown()
         self.terminateActiveProcessesForAppShutdown()
+        VeyrDaemonServer.shared.stop()
     }
 
     func runProviderLoginFlow(_ provider: UsageProvider) async {

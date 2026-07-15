@@ -1,0 +1,148 @@
+// Veyr — original code
+// https://github.com/hethb/Veyr
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Heth Bhatt
+import CodexBarCore
+import Foundation
+import VeyrKit
+
+/// Local HTTP surface the terminal CLI (`packages/cli`) talks to instead of
+/// polling `~/.veyr/*.json` directly. Runs in-process inside the menu bar app
+/// — there is no separate headless daemon binary (see stage-3 note in
+/// packages/cli/CLAUDE.md) — backed by the same live state
+/// VeyrAgentStatusService/VeyrGraphService already maintain, so reads are
+/// fresher than the file cache and writes that need live computation (a
+/// Graphify rescan) don't wait for the next tick.
+///
+/// Binds an OS-assigned ephemeral port and publishes it via
+/// `~/.veyr/daemon.json` (`VeyrDaemonInfo`) once listening. Config/state
+/// writes (rule toggles, the injection gate) still go straight to their files
+/// from the CLI — this server does not need to be running for those.
+@MainActor
+public final class VeyrDaemonServer {
+    public static let shared = VeyrDaemonServer()
+
+    private let logger = CodexBarLog.logger(LogCategories.veyr)
+    private var server: CLILocalHTTPServer?
+    private var runTask: Task<Void, Never>?
+
+    private init() {}
+
+    public func start() {
+        guard self.runTask == nil else { return }
+        let server = CLILocalHTTPServer(host: "127.0.0.1", port: 0) { request in
+            await VeyrDaemonServer.shared.handle(request)
+        }
+        self.server = server
+        self.runTask = Task { [weak self] in
+            do {
+                try await server.run { port in
+                    Task { @MainActor in self?.didStartListening(port: port) }
+                }
+            } catch {
+                self?.logger.error(
+                    "[Veyr] Daemon server stopped",
+                    metadata: ["error": String(describing: error)])
+            }
+        }
+    }
+
+    public func stop() {
+        self.server?.stop()
+        self.runTask?.cancel()
+        self.runTask = nil
+        self.server = nil
+        VeyrDaemonInfo.remove()
+    }
+
+    private func didStartListening(port: UInt16) {
+        let info = VeyrDaemonInfo(
+            port: Int(port),
+            pid: ProcessInfo.processInfo.processIdentifier,
+            startedAt: Date())
+        do {
+            try info.save()
+            self.logger.info("[Veyr] Daemon listening", metadata: ["port": "\(port)"])
+        } catch {
+            self.logger.error(
+                "[Veyr] Failed writing daemon.json",
+                metadata: ["error": String(describing: error)])
+        }
+    }
+
+    // MARK: - Routing
+
+    private func handle(_ request: CLILocalHTTPRequest) async -> CLILocalHTTPResponse {
+        switch (request.method, request.path) {
+        case ("GET", "/health"):
+            return Self.json(["status": "ok"])
+        case ("GET", "/status"):
+            return await self.handleStatus()
+        case ("GET", "/graph"):
+            return self.handleGraph()
+        case ("POST", "/graph/refresh"):
+            return await self.handleGraphRefresh(queryItems: request.queryItems)
+        case (_, "/health"), (_, "/status"), (_, "/graph"):
+            return CLILocalHTTPResponse(
+                status: .methodNotAllowed,
+                body: Data(#"{"error":"method not allowed"}"#.utf8))
+        default:
+            return CLILocalHTTPResponse(status: .notFound, body: Data(#"{"error":"not found"}"#.utf8))
+        }
+    }
+
+    private func handleStatus() async -> CLILocalHTTPResponse {
+        if VeyrAgentStatusService.shared.latestPayload == nil {
+            await VeyrAgentStatusService.shared.tick()
+        }
+        guard let payload = VeyrAgentStatusService.shared.latestPayload else {
+            return CLILocalHTTPResponse(
+                status: .internalServerError,
+                body: Data(#"{"error":"status unavailable"}"#.utf8))
+        }
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        encoder.dateEncodingStrategy = .iso8601
+        guard let data = try? encoder.encode(payload) else {
+            return CLILocalHTTPResponse(
+                status: .internalServerError,
+                body: Data(#"{"error":"encoding failed"}"#.utf8))
+        }
+        return CLILocalHTTPResponse(status: .ok, body: data)
+    }
+
+    private func handleGraph() -> CLILocalHTTPResponse {
+        guard let graph = VeyrGraphService.shared.currentGraph else {
+            return CLILocalHTTPResponse(status: .notFound, body: Data(#"{"error":"no graph yet"}"#.utf8))
+        }
+        let payload = GraphifyRunner.cachePayload(for: graph)
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        guard let data = try? encoder.encode(payload) else {
+            return CLILocalHTTPResponse(
+                status: .internalServerError,
+                body: Data(#"{"error":"encoding failed"}"#.utf8))
+        }
+        return CLILocalHTTPResponse(status: .ok, body: data)
+    }
+
+    /// Fires the rescan and returns immediately — a full build can take
+    /// minutes on a large repo, far longer than a request should block for.
+    /// The CLI polls `GET /graph` afterward to observe the result.
+    private func handleGraphRefresh(queryItems: [String: String]) async -> CLILocalHTTPResponse {
+        guard let path = queryItems["path"], !path.isEmpty else {
+            return CLILocalHTTPResponse(status: .badRequest, body: Data(#"{"error":"missing path"}"#.utf8))
+        }
+        Task { @MainActor in
+            await VeyrGraphService.shared.refreshNow(root: path)
+        }
+        return Self.json(["ok": true, "status": "refresh_started"])
+    }
+
+    // MARK: - Helpers
+
+    private static func json(_ object: [String: Any]) -> CLILocalHTTPResponse {
+        let data = (try? JSONSerialization.data(withJSONObject: object)) ?? Data("{}".utf8)
+        return CLILocalHTTPResponse(status: .ok, body: data)
+    }
+}

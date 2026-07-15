@@ -66,6 +66,14 @@ public enum VeyrPaths {
         self.cacheDirectory(base: base).appendingPathComponent("graph-focus.json")
     }
 
+    /// Discovery file for the in-process daemon HTTP server the Mac app hosts
+    /// while running (`VeyrDaemonServer`, packages/desktop-mac/Sources/CodexBar).
+    /// The CLI reads this to find the live port; absent or unreachable means
+    /// no daemon is running and callers should fall back to the flat files.
+    public static func daemonInfoFile(base: URL = FileManager.default.homeDirectoryForCurrentUser) -> URL {
+        self.home(base: base).appendingPathComponent("daemon.json")
+    }
+
     /// Deterministic, dependency-free path hash (FNV-1a 64) for cache directory names.
     /// Not cryptographic — only needs to be stable and collision-unlikely across the
     /// handful of workspaces one user opens.

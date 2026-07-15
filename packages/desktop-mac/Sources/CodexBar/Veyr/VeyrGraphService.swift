@@ -64,6 +64,24 @@ public final class VeyrGraphService {
         }
     }
 
+    /// Forces an on-demand rescan of `root` — used by `veyr graph --refresh`
+    /// via the daemon. Unlike `ensureWorkspace`, this rebuilds even when `root`
+    /// already matches the tracked workspace; `GraphifyRunner.startBuild()`
+    /// itself no-ops if a build is already in flight, so this is safe to call
+    /// while one is running.
+    public func refreshNow(root: String) async {
+        guard self.isEnabled, !root.isEmpty else { return }
+        guard let current = self.workspaceRoot, root == current || root.hasPrefix(current + "/") else {
+            self.ensureWorkspace(root)
+            return
+        }
+        guard let runner = self.runner else {
+            self.ensureWorkspace(root)
+            return
+        }
+        await runner.startBuild()
+    }
+
     public func focusedContext(activeFile: String?, cursorLine: Int) -> FocusedContext {
         guard let graph = self.currentGraph else { return .empty }
         guard let activeFile else {

@@ -1,7 +1,10 @@
 // `veyr rules` — view and toggle the CLAUDE.md agent-guidance rule set from
 // ~/.veyr/guidance-rules.json, plus its master gate in ~/.veyr/config.json.
-// Writes take effect on the Mac app's next tick (≤5 min) — there's no daemon
-// to signal for an immediate refresh.
+// Deliberately file-only, unlike status/graph: this is config, not something
+// that needs live computation, so it uses the same trust model as the rest
+// of the repo and never depends on the daemon being up. Writes still take
+// effect on the Mac app's next tick (≤5 min) — the daemon doesn't shortcut
+// that, by design.
 
 import chalk from "chalk";
 import { CliError } from "../cliError.js";

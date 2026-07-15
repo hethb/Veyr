@@ -1,13 +1,47 @@
-// `veyr graph` — Graphify graph status, reading ~/.veyr/cache/graph.json.
-// Single global file: reflects whichever workspace the Mac app most recently
+// `veyr graph` — Graphify graph status. Prefers the live daemon the menu bar
+// app hosts while running, falling back to ~/.veyr/cache/graph.json — a
+// single global file reflecting whichever workspace the app most recently
 // built a graph for, not necessarily the CLI's current working directory.
+// `--refresh` targets the CLI's cwd explicitly via the daemon.
 
 import chalk from "chalk";
-import { readGraphCache, topNodesByConnections } from "../veyr/graph.js";
+import { readGraphCache, requestGraphRefresh, topNodesByConnections, type GraphCacheResult } from "../veyr/graph.js";
 import { fmtAge } from "../ui.js";
 
-export async function graphCommand(opts: { json?: boolean; top?: string }): Promise<void> {
-  const result = readGraphCache();
+const REFRESH_POLL_INTERVAL_MS = 1000;
+const REFRESH_POLL_TIMEOUT_MS = 5 * 60 * 1000;
+
+async function waitForFreshGraph(startedAfter: Date): Promise<GraphCacheResult> {
+  const deadline = Date.now() + REFRESH_POLL_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    const result = await readGraphCache();
+    if (result.kind === "ok" && result.generatedAt > startedAfter) return result;
+    await new Promise((resolve) => setTimeout(resolve, REFRESH_POLL_INTERVAL_MS));
+  }
+  return readGraphCache();
+}
+
+export async function graphCommand(opts: { json?: boolean; top?: string; refresh?: boolean }): Promise<void> {
+  let result: GraphCacheResult;
+
+  if (opts.refresh) {
+    const startedAt = new Date();
+    console.log(chalk.dim("requesting an on-demand rescan…"));
+    const requested = await requestGraphRefresh(process.cwd());
+    if (!requested.ok) {
+      console.log(chalk.red(`✗ ${requested.reason}`));
+      process.exitCode = 1;
+      return;
+    }
+    console.log(chalk.dim("rescan started — this can take a few seconds to a few minutes on a large repo"));
+    result = await waitForFreshGraph(startedAt);
+    if (result.kind === "missing" || result.generatedAt <= startedAt) {
+      console.log(chalk.yellow("still building — run `veyr graph` again shortly to check."));
+      return;
+    }
+  } else {
+    result = await readGraphCache();
+  }
 
   if (opts.json) {
     console.log(JSON.stringify(result.kind === "missing" ? result : result.payload, null, 2));
