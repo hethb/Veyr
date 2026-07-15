@@ -5,6 +5,7 @@
 // minutes when idle.
 
 import * as fs from "node:fs";
+import { daemonGet } from "./daemon.js";
 import { statusFilePath } from "./paths.js";
 
 export interface VeyrCurrentSession {
@@ -146,7 +147,15 @@ function isVeyrStatus(value: unknown): value is VeyrStatus {
   );
 }
 
-export function readStatus(now: Date = new Date()): VeyrStatusResult {
+function resultFor(parsed: unknown, now: Date): VeyrStatusResult {
+  if (!isVeyrStatus(parsed)) return { kind: "missing" };
+  const generatedAt = new Date(parsed.generated_at);
+  if (Number.isNaN(generatedAt.getTime())) return { kind: "missing" };
+  const stale = now.getTime() - generatedAt.getTime() > STALE_AFTER_MS;
+  return { kind: stale ? "stale" : "ok", status: parsed, generatedAt };
+}
+
+function readStatusFromFile(now: Date): VeyrStatusResult {
   let raw: string;
   try {
     raw = fs.readFileSync(statusFilePath(), "utf8");
@@ -159,10 +168,21 @@ export function readStatus(now: Date = new Date()): VeyrStatusResult {
   } catch {
     return { kind: "missing" };
   }
-  if (!isVeyrStatus(parsed)) return { kind: "missing" };
+  return resultFor(parsed, now);
+}
 
-  const generatedAt = new Date(parsed.generated_at);
-  if (Number.isNaN(generatedAt.getTime())) return { kind: "missing" };
-  const stale = now.getTime() - generatedAt.getTime() > STALE_AFTER_MS;
-  return { kind: stale ? "stale" : "ok", status: parsed, generatedAt };
+/**
+ * Prefers the live daemon (fresher than the ≤30s file cache, and works even
+ * on the tick right before the file is rewritten) but never requires it —
+ * the menu bar app not running is a normal state, not an error, so any
+ * daemon failure (absent, unreachable, timed out) falls straight back to
+ * VEYR_STATUS.json.
+ */
+export async function readStatus(now: Date = new Date()): Promise<VeyrStatusResult> {
+  const fromDaemon = await daemonGet<unknown>("/status");
+  if (fromDaemon !== null) {
+    const result = resultFor(fromDaemon, now);
+    if (result.kind !== "missing") return result;
+  }
+  return readStatusFromFile(now);
 }

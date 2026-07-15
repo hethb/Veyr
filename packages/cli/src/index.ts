@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 // Veyr terminal CLI — usage/cost, Graphify graph status, and agent-guidance
-// rules, read straight from the same local ~/.veyr/ files the Veyr menu bar
-// app writes. No proxy, no network calls, no traffic interception.
+// rules. A thin client of the daemon the Veyr menu bar app hosts on
+// 127.0.0.1 while it's running, falling back to the same local ~/.veyr/
+// files it writes when the daemon isn't reachable. No proxy, no traffic
+// interception — the only network calls this makes are loopback, to a
+// process on this machine.
 
 import { createRequire } from "node:module";
 import { Command } from "commander";
@@ -38,6 +41,7 @@ program
   .description("Graphify codebase graph status for the workspace Veyr last built")
   .option("--json", "Print the raw graph cache payload")
   .option("--top <n>", "Number of top-connected nodes to show", "10")
+  .option("--refresh", "Trigger an on-demand rescan of the current directory via the daemon")
   .action((opts) => run(() => graphCommand(opts)));
 
 const rules = program

@@ -1,5 +1,6 @@
 // Paths into ~/.veyr/, mirroring packages/desktop-mac/Sources/VeyrKit/VeyrPaths.swift.
-// Pure file-system layout — no network, no daemon process to talk to.
+// Pure file-system layout — this module makes no network calls itself; see
+// daemon.ts for the client that reads daemonInfoFilePath()'s contents.
 
 import * as os from "node:os";
 import * as path from "node:path";
@@ -28,4 +29,9 @@ export function guidanceRulesFilePath(): string {
 
 export function configFilePath(): string {
   return path.join(veyrHome(), "config.json");
+}
+
+/** Written by VeyrDaemonServer once it's listening; absent means no daemon is up. */
+export function daemonInfoFilePath(): string {
+  return path.join(veyrHome(), "daemon.json");
 }

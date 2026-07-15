@@ -12,14 +12,14 @@ import Musl
 
 private let requestReadTimeoutMilliseconds: Int32 = 5000
 
-struct CLILocalHTTPRequest {
-    let method: String
-    let target: String
-    let host: String
-    let path: String
-    let queryItems: [String: String]
+public struct CLILocalHTTPRequest: Sendable {
+    public let method: String
+    public let target: String
+    public let host: String
+    public let path: String
+    public let queryItems: [String: String]
 
-    static func parse(_ data: Data) -> Result<CLILocalHTTPRequest, CLILocalHTTPRequestParseError> {
+    public static func parse(_ data: Data) -> Result<CLILocalHTTPRequest, CLILocalHTTPRequestParseError> {
         guard let raw = String(data: data, encoding: .utf8),
               let firstLine = raw.components(separatedBy: "\r\n").first
         else {
@@ -125,14 +125,14 @@ struct CLILocalHTTPRequest {
     }
 }
 
-enum CLILocalHTTPRequestParseError: Error, Equatable {
+public enum CLILocalHTTPRequestParseError: Error, Equatable, Sendable {
     case invalidRequest
     case missingHost
     case duplicateHost
     case disallowedHost
 }
 
-enum CLIHTTPStatus {
+public enum CLIHTTPStatus: Sendable {
     case ok
     case badRequest
     case forbidden
@@ -140,7 +140,7 @@ enum CLIHTTPStatus {
     case methodNotAllowed
     case internalServerError
     case gatewayTimeout
-    var code: Int {
+    public var code: Int {
         switch self {
         case .ok: 200
         case .badRequest: 400
@@ -152,7 +152,7 @@ enum CLIHTTPStatus {
         }
     }
 
-    var reason: String {
+    public var reason: String {
         switch self {
         case .ok: "OK"
         case .badRequest: "Bad Request"
@@ -165,13 +165,13 @@ enum CLIHTTPStatus {
     }
 }
 
-struct CLILocalHTTPResponse {
-    let status: CLIHTTPStatus
-    let body: Data
-    let contentType: String
-    let usageCacheKeys: [String?]?
+public struct CLILocalHTTPResponse: Sendable {
+    public let status: CLIHTTPStatus
+    public let body: Data
+    public let contentType: String
+    public let usageCacheKeys: [String?]?
 
-    init(
+    public init(
         status: CLIHTTPStatus,
         body: Data,
         contentType: String = "application/json; charset=utf-8",
@@ -196,8 +196,8 @@ struct CLILocalHTTPResponse {
     }
 }
 
-final class CLILocalHTTPServer: @unchecked Sendable {
-    typealias Handler = @Sendable (CLILocalHTTPRequest) async -> CLILocalHTTPResponse
+public final class CLILocalHTTPServer: @unchecked Sendable {
+    public typealias Handler = @Sendable (CLILocalHTTPRequest) async -> CLILocalHTTPResponse
 
     private let host: String
     private let port: UInt16
@@ -206,19 +206,23 @@ final class CLILocalHTTPServer: @unchecked Sendable {
     private var listeningFD: Int32?
     private var stopRequested = false
 
-    init(host: String, port: UInt16, handler: @escaping Handler) {
+    public init(host: String, port: UInt16, handler: @escaping Handler) {
         self.host = host
         self.port = port
         self.handler = handler
     }
 
-    func stop() {
+    public func stop() {
         self.stateLock.lock()
         self.stopRequested = true
         self.stateLock.unlock()
     }
 
-    func run(onListening: @Sendable () -> Void = {}) async throws {
+    /// Binds and serves until `stop()` is called. `onListening` receives the
+    /// port actually bound — pass `port: 0` at init to let the OS assign an
+    /// ephemeral port (retrieved here via `getsockname`) and avoid collisions
+    /// with any other local server.
+    public func run(onListening: @Sendable (UInt16) -> Void = { _ in }) async throws {
         ignoreSIGPIPE()
 
         #if canImport(Darwin)
@@ -279,7 +283,7 @@ final class CLILocalHTTPServer: @unchecked Sendable {
                 closeSocket(serverFD)
             }
         }
-        onListening()
+        onListening(Self.resolvedPort(fd: serverFD, requestedPort: self.port))
 
         while !self.isStopRequested {
             guard waitForReadable(serverFD, timeoutMilliseconds: 250) else {
@@ -324,6 +328,21 @@ final class CLILocalHTTPServer: @unchecked Sendable {
         guard self.listeningFD == fd else { return false }
         self.listeningFD = nil
         return true
+    }
+
+    /// `requestedPort == 0` means "ask the OS" — read back what it actually
+    /// bound. Falls back to the requested port if `getsockname` fails, which
+    /// only happens for an explicit non-zero port anyway.
+    private static func resolvedPort(fd: Int32, requestedPort: UInt16) -> UInt16 {
+        guard requestedPort == 0 else { return requestedPort }
+        var boundAddress = sockaddr_in()
+        var boundLength = socklen_t(MemoryLayout<sockaddr_in>.size)
+        let ok = withUnsafeMutablePointer(to: &boundAddress) { pointer in
+            pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) { socketAddress in
+                getsockname(fd, socketAddress, &boundLength) == 0
+            }
+        }
+        return ok ? UInt16(bigEndian: boundAddress.sin_port) : requestedPort
     }
 }
 

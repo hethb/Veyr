@@ -2,7 +2,8 @@
 // rendered into CLAUDE.md's `## Veyr agent guidance` section by
 // packages/desktop-mac/Sources/VeyrKit/Guidance/VeyrGuidanceRules.swift.
 // Plain camelCase JSON, no key-strategy conversion. Edits here are picked up
-// by the Mac app on its next tick — there's no daemon to signal immediately.
+// by the Mac app on its next tick (≤5 min) — deliberately file-only, not
+// routed through the daemon; see commands/rules.ts for why.
 
 import * as fs from "node:fs";
 import * as path from "node:path";

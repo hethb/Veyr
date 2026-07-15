@@ -484,7 +484,7 @@ extension CodexBarCLI {
         defer { signalMonitor.cancel() }
 
         do {
-            try await server.run {
+            try await server.run { _ in
                 Self.writeStderr("CodexBar server listening on http://127.0.0.1:\(port)\n")
             }
         } catch {

@@ -1,10 +1,8 @@
-// `veyr status` — usage/cost snapshot, reading ~/.veyr/agent-status/VEYR_STATUS.json.
-// Replaces the old proxy-backed `status`/`logs` commands with a thin reader
-// over the file VeyrKit's embedding process (today, the Mac app) writes.
+// `veyr status` — usage/cost snapshot. Prefers the live daemon the menu bar
+// app hosts while running, falling back to ~/.veyr/agent-status/VEYR_STATUS.json
+// when it isn't reachable. Replaces the old proxy-backed `status`/`logs` commands.
 
-import { statSync } from "node:fs";
 import chalk from "chalk";
-import { statusFilePath } from "../veyr/paths.js";
 import { readStatus, type VeyrRecommendation, type VeyrStatusResult } from "../veyr/status.js";
 import { alertBadge, divider, fmtUsd, freshnessLine, plural } from "../ui.js";
 
@@ -104,34 +102,26 @@ function render(result: VeyrStatusResult, now: Date): void {
 
 export async function statusCommand(opts: { watch?: boolean; json?: boolean }): Promise<void> {
   if (opts.json) {
-    const result = readStatus();
+    const result = await readStatus();
     console.log(JSON.stringify(result.kind === "missing" ? result : result.status, null, 2));
     return;
   }
 
   if (!opts.watch) {
-    render(readStatus(), new Date());
+    render(await readStatus(), new Date());
     return;
   }
 
   console.log(divider());
   console.log(chalk.dim("watching — polling every 3s, not a live event stream. Ctrl-C to stop."));
   console.log(divider());
-  let lastMtimeMs = -1;
-  const poll = (): void => {
-    let mtimeMs = -1;
-    try {
-      mtimeMs = statSync(statusFilePath()).mtimeMs;
-    } catch {
-      // file absent — fall through, mtimeMs stays -1 so a first render still happens
-    }
-    if (mtimeMs === lastMtimeMs) return;
-    lastMtimeMs = mtimeMs;
+  const poll = async (): Promise<void> => {
+    const result = await readStatus();
     console.clear();
-    render(readStatus(), new Date());
+    render(result, new Date());
   };
-  poll();
-  const timer = setInterval(poll, 3000);
+  await poll();
+  const timer = setInterval(() => void poll(), 3000);
   process.on("SIGINT", () => {
     clearInterval(timer);
     process.exit(0);
