@@ -510,6 +510,116 @@ let flagged = VeyrSignalsScanner.flagVagueTools(["do_thing", "process", "send_em
 check(flagged.count == 3 && !flagged.contains { $0.name == "send_email" },
     "vague tool names flagged, specific names pass")
 
+// MARK: - 9. Prompt style model
+
+print("— prompt style extractor —")
+let fixExtraction = VeyrPromptStyleExtractor.extract(userText: "fix the bug in foo.ts")
+check(fixExtraction.taskShape == "fix_bug", "verb-based task-shape classification")
+check(fixExtraction.opener == "fix the bug in <file>", "file token collapsed to <file> placeholder in opener")
+check(fixExtraction.referencedFiles.contains("foo.ts"), "file token captured")
+check(fixExtraction.bigrams.contains("fix the"), "bigram extracted")
+check(fixExtraction.trigrams.contains("fix the bug"), "trigram extracted")
+
+let barExtraction = VeyrPromptStyleExtractor.extract(userText: "fix the bug in bar.ts")
+check(barExtraction.opener == fixExtraction.opener,
+    "different filenames collapse into the same opener template")
+
+check(VeyrPromptStyleExtractor.extract(userText: "add tests for VeyrConfig").taskShape == "write_tests",
+    "test-shaped 'add' beats the generic add_feature bucket")
+check(VeyrPromptStyleExtractor.extract(userText: "add tests for VeyrConfig").referencedSymbols.contains("veyrconfig"),
+    "camelCase/PascalCase symbol token captured")
+check(VeyrPromptStyleExtractor.extract(userText: "why does this fail?").taskShape == "explain_question",
+    "question-shaped prompt classified")
+check(VeyrPromptStyleExtractor.extract(userText: "implement a new cache layer").taskShape == "add_feature",
+    "generic add-verb falls into add_feature without 'test' in the text")
+check(VeyrPromptStyleExtractor.extract(userText: "   ") == VeyrPromptStyleExtractor.Extraction(),
+    "whitespace-only text extracts to nothing")
+
+print("— prompt style scanner (incremental, offset-tracked) —")
+// Isolated subdirectory: tempRoot already accumulates every other section's
+// jsonl fixtures by this point, and scanning tempRoot itself would pick
+// those up too (VeyrPromptStyleScanner walks the whole subtree).
+let styleRoot = tempRoot.appendingPathComponent("style-only", isDirectory: true)
+try! FileManager.default.createDirectory(at: styleRoot, withIntermediateDirectories: true)
+let styleLog = styleRoot.appendingPathComponent("style-session.jsonl")
+func styleUserLine(_ text: String, ts: String) -> String {
+    let obj: [String: Any] = [
+        "type": "user", "sessionId": "style1", "cwd": "/Users/x/styleproj",
+        "timestamp": ts, "message": ["role": "user", "content": text],
+    ]
+    return String(data: try! JSONSerialization.data(withJSONObject: obj), encoding: .utf8)!
+}
+func styleAssistantLine(ts: String) -> String {
+    let obj: [String: Any] = [
+        "type": "assistant", "sessionId": "style1", "cwd": "/Users/x/styleproj", "timestamp": ts,
+        "message": [
+            "model": "claude-sonnet-5",
+            "content": [["type": "text", "text": "Done."]],
+            "usage": ["input_tokens": 10, "output_tokens": 5],
+        ],
+    ]
+    return String(data: try! JSONSerialization.data(withJSONObject: obj), encoding: .utf8)!
+}
+try! [
+    styleUserLine("fix the bug in foo.ts", ts: "2026-07-15T10:00:00.000Z"),
+    styleAssistantLine(ts: "2026-07-15T10:00:05.000Z"),
+    styleUserLine("fix the bug in bar.ts", ts: "2026-07-15T10:01:00.000Z"),
+    styleAssistantLine(ts: "2026-07-15T10:01:05.000Z"),
+    styleUserLine("add tests for VeyrConfig", ts: "2026-07-15T10:02:00.000Z"),
+    styleAssistantLine(ts: "2026-07-15T10:02:05.000Z"),
+    styleUserLine("why does this fail?", ts: "2026-07-15T10:03:00.000Z"),
+    styleAssistantLine(ts: "2026-07-15T10:03:05.000Z"),
+].joined(separator: "\n").appending("\n").write(to: styleLog, atomically: true, encoding: .utf8)
+
+let styleStoreURL = tempRoot.appendingPathComponent("prompt-style.json")
+let styleStore = VeyrPromptStyleScanner.scan(roots: [styleRoot], storeURL: styleStoreURL)
+check(styleStore.turnsObserved == 4, "4 user turns ingested from fixture")
+check(styleStore.openers["fix the bug in <file>"] == 2, "two filenames collapsed into one opener, counted twice")
+check(styleStore.taskShapes["fix_bug"] == 2, "two fix_bug turns")
+check(styleStore.taskShapes["write_tests"] == 1, "one write_tests turn")
+check(styleStore.taskShapes["explain_question"] == 1, "one explain_question turn")
+check(styleStore.referencedFiles["foo.ts"] == 1 && styleStore.referencedFiles["bar.ts"] == 1,
+    "both distinct filenames tracked separately in referencedFiles")
+// Not comparing against styleLog.path directly: /var is a symlink to
+// /private/var on macOS, and the enumerator's resolved URLs differ textually
+// from a path built via appendingPathComponent, even though they're the same
+// file (same behavior VeyrSignalsScanner already has — not specific to this
+// scanner). Checking non-emptiness is the meaningful assertion here.
+check(!styleStore.fileOffsets.isEmpty, "offset recorded for the scanned file")
+
+let noOpRescan = VeyrPromptStyleScanner.scan(
+    roots: [styleRoot], store: styleStore, storeURL: styleStoreURL)
+check(noOpRescan.turnsObserved == styleStore.turnsObserved, "re-scan with no new bytes is a no-op")
+
+let styleHandle = try! FileHandle(forWritingTo: styleLog)
+try! styleHandle.seekToEnd()
+try! styleHandle.write(contentsOf: Data(
+    (styleUserLine("refactor the auth module", ts: "2026-07-15T10:04:00.000Z") +
+        "\n" + styleAssistantLine(ts: "2026-07-15T10:04:05.000Z") + "\n").utf8))
+try! styleHandle.close()
+try! FileManager.default.setAttributes(
+    [.modificationDate: Date().addingTimeInterval(5)], ofItemAtPath: styleLog.path)
+let appendedStore = VeyrPromptStyleScanner.scan(
+    roots: [styleRoot], store: noOpRescan, storeURL: styleStoreURL)
+check(appendedStore.turnsObserved == 5, "incremental append picked up exactly one new turn")
+check(appendedStore.taskShapes["refactor"] == 1, "new turn classified and folded into existing counts")
+
+var capStore = VeyrPromptStyleStore()
+for i in 0..<700 { capStore.bigrams["word\(i) token"] = 1 }
+capStore.trimIfNeeded()
+check(capStore.bigrams.count == VeyrPromptStyleStore.bigramCap, "bigram map trimmed down to its cap")
+
+var decayStore = VeyrPromptStyleStore(lastDecayedAt: Date().addingTimeInterval(-25 * 60 * 60))
+decayStore.bigrams = ["fix the": 10, "add a": 1]
+decayStore.applyDecayIfDue()
+check(decayStore.bigrams["fix the"] == 9, "count decayed by 0.9x after 24h")
+check(decayStore.bigrams["add a"] == nil, "count rounding to zero is dropped entirely")
+
+var freshDecayStore = VeyrPromptStyleStore(lastDecayedAt: Date())
+freshDecayStore.bigrams = ["fix the": 10]
+freshDecayStore.applyDecayIfDue()
+check(freshDecayStore.bigrams["fix the"] == 10, "no decay applied before the 24h interval elapses")
+
 // MARK: - 4. Real logs
 
 print("— real ~/.claude/projects scan —")

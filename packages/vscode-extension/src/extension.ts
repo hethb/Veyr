@@ -14,9 +14,12 @@ import {
   pollIntervalMs,
   readStatus,
   writeAutoInjectClaudeMd,
+  writePromptStyleLearning,
   type VeyrStatusResult,
 } from "./agentStatus";
+import { composePromptCommand, copyComposedPromptCommand } from "./composePrompt";
 import { VeyrStatusBar } from "./statusBar";
+import { veyrComposeLanguageSelector, VeyrStyleCompletionProvider } from "./styleCompletionProvider";
 
 function cfg(): vscode.WorkspaceConfiguration {
   return vscode.workspace.getConfiguration("veyr");
@@ -449,6 +452,12 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("veyr.openGraph", () =>
       vscode.env.openExternal(vscode.Uri.parse(graphPageUrl())),
     ),
+    vscode.commands.registerCommand("veyr.composePrompt", () => void composePromptCommand()),
+    vscode.commands.registerCommand("veyr.copyComposedPrompt", () => void copyComposedPromptCommand()),
+    vscode.languages.registerInlineCompletionItemProvider(
+      veyrComposeLanguageSelector,
+      new VeyrStyleCompletionProvider(),
+    ),
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration("veyr.autoInjectClaudeMd")) {
         const enabled = cfg().get<boolean>("autoInjectClaudeMd", false);
@@ -458,6 +467,21 @@ export function activate(context: vscode.ExtensionContext): void {
             enabled
               ? "Veyr will append spend status to your project's CLAUDE.md (applied by the Veyr menu bar app)."
               : "Veyr CLAUDE.md auto-update disabled.",
+          );
+        } catch (err) {
+          void vscode.window.showErrorMessage(
+            `Veyr: could not write ~/.veyr/config.json (${err instanceof Error ? err.message : String(err)})`,
+          );
+        }
+      }
+      if (event.affectsConfiguration("veyr.promptStyleLearning")) {
+        const enabled = cfg().get<boolean>("promptStyleLearning", false);
+        try {
+          writePromptStyleLearning(enabled);
+          void vscode.window.showInformationMessage(
+            enabled
+              ? "Veyr will learn from your local prompt history (applied by the Veyr menu bar app)."
+              : "Veyr prompt-style learning disabled.",
           );
         } catch (err) {
           void vscode.window.showErrorMessage(

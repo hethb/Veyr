@@ -20,6 +20,9 @@ struct VeyrDashboardRootView: View {
             VeyrControlsView(store: self.store)
                 .tabItem { Label("Controls", systemImage: "slider.horizontal.3") }
                 .tag(2)
+            VeyrPromptStyleStatsView()
+                .tabItem { Label("Style", systemImage: "text.bubble") }
+                .tag(3)
         }
     }
 }

@@ -133,6 +133,15 @@ public final class VeyrAgentStatusService {
         }.value
         let allSignals = Array(signalsStore.sessions.values)
         let config = VeyrConfig.load()
+        // Default off (see VeyrConfig.promptStyleLearning) — this is the
+        // first Veyr feature that persists anything derived from prompt
+        // text content, not just scalar/boolean features, so it stays
+        // opt-in until reviewed working in at least one client.
+        if config.promptStyleLearning == true {
+            _ = await Task.detached(priority: .utility) {
+                VeyrPromptStyleScanner.scan()
+            }.value
+        }
         let engineSuggestions = VeyrSuggestionEngine.analyze(
             sessions: store.sessions,
             currentSession: currentSession,

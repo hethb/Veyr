@@ -31,6 +31,15 @@ export function readAutoUpdateClaudeMd(): boolean {
   return typeof value === "boolean" ? value : true;
 }
 
+/** `promptStyleLearning` — gates the on-device prompt-style corpus + `veyr
+ * compose` completions. Absent/undefined means off: this is the first Veyr
+ * feature that persists anything derived from prompt text content, not just
+ * scalar/boolean features, so it stays opt-in until reviewed. */
+export function readPromptStyleLearning(): boolean {
+  const value = readRaw()["promptStyleLearning"];
+  return typeof value === "boolean" ? value : false;
+}
+
 /** Sets exactly one key, preserving every other key already in the file
  * (written by the Mac app, VS Code extension, or a prior CLI run). */
 export function writeConfigKey(key: string, value: unknown): void {
