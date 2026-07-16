@@ -13,7 +13,7 @@ const FEATURE_CARDS = [
   {
     icon: <DollarSign className="size-4 text-[#B1C5FF]" />,
     title: "Menu bar spend",
-    description: "Today's cost with a live-session pulse",
+    description: "Live cost, plus rate-limit resets per provider",
     date: "Live",
     titleClassName: "text-[#076EFF]",
   },
@@ -44,13 +44,13 @@ interface FeatureDetail {
 const FEATURE_DETAILS: FeatureDetail[] = [
   {
     icon: DollarSign,
-    title: "Multi-agent usage visibility",
-    body: "Where your coding-agent spend is actually going — Claude Code, Codex, and 50+ other providers, read straight from local session logs. No proxy and no API key required just to see spend. The menu bar app, VS Code status bar, and CLI (veyr status) all read the same local data, so the number is consistent everywhere you look.",
+    title: "Multi-provider usage & rate limits",
+    body: "Where your coding-agent spend is actually going — Claude Code, Codex, and 50+ other providers, read straight from local session logs, no proxy and no API key required. Rate-limit windows are tracked alongside spend: session resets, weekly caps, and regen percentages per provider, so you get a warning before you hit a wall instead of after. The menu bar app, VS Code status bar, and CLI (veyr status) all read the same local data, so the number is consistent everywhere you look.",
   },
   {
     icon: Waypoints,
     title: "Graphify codebase graph",
-    body: "Veyr builds a knowledge graph of your repo locally — pure AST parsing via Graphify, no LLM calls, nothing leaves your device. Your agent reads a 400-token structural summary instead of exploring 40 files, and Veyr's suggestions become structurally aware: leaf functions get cheap models, god nodes get a warning, redundant re-reads get flagged.",
+    body: "Veyr builds a knowledge graph of your repo locally — pure AST parsing via Graphify, no LLM calls, nothing leaves your device. It's a real call graph, not a file tree: critical-path ranking by structural connections, plus per-cursor context (callers, callees, related tests) for whatever you have open. An interactive force-directed view lets you explore it visually, and five structural rules flag leaf functions for cheap models, god nodes, redundant re-reads, and untested high-connection code before your agent finds out the hard way.",
   },
   {
     icon: Bot,

@@ -5,6 +5,7 @@ import {
   BarChart3,
   CheckCircle2,
   Code2,
+  Gauge,
   Home,
   Layers,
   Monitor,
@@ -22,6 +23,7 @@ const LANDING_NAV_ITEMS = [
   { name: "How it works", url: "#how", icon: Zap },
   { name: "Setup", url: "#setup", icon: Terminal },
   { name: "Features", url: "#features", icon: Layers },
+  { name: "Usage", url: "#usage", icon: Gauge },
   { name: "Graph", url: "#graph", icon: Waypoints },
   { name: "Compare", url: "#compare", icon: BarChart3 },
   { name: "Download", url: "#download", icon: Monitor },
@@ -42,6 +44,7 @@ export function Landing() {
       <PrivacySection />
       <ComparisonSection />
       <FeaturesSection />
+      <UsageSection />
       <GraphSection />
       <DownloadSection />
       <FinalCta />
@@ -384,6 +387,75 @@ function ComparisonSection() {
   );
 }
 
+function UsageSection() {
+  const gauges: Array<[string, number, string]> = [
+    ["Claude Code", 62, "resets in 3h 12m"],
+    ["Codex", 28, "resets in 1h 47m"],
+    ["Cursor", 91, "weekly cap · resets Mon"],
+  ];
+  return (
+    <section id="usage" className="border-t border-white/10 bg-black">
+      <div className="mx-auto max-w-6xl px-6 py-24">
+        <SectionHeader
+          eyebrow="Usage & rate limits"
+          title="Every provider, one place — before you hit a wall, not after"
+          subtitle="Veyr reads local session logs and, where a provider exposes it, live rate-limit data. No proxy, no API key needed just to see where you stand."
+        />
+        <div className="mt-14 grid items-center gap-12 lg:grid-cols-2">
+          <div className="border border-white/10 bg-white/[0.02] p-6">
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-neutral-500">
+              Rate-limit windows
+            </p>
+            <ul className="mt-5 space-y-5">
+              {gauges.map(([name, percent, reset]) => (
+                <li key={name}>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-white">{name}</span>
+                    <span className="text-neutral-500">{reset}</span>
+                  </div>
+                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-[#4FABFF]"
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <ul className="space-y-5">
+              {[
+                [
+                  "Every provider, one place",
+                  "Claude Code, Codex, and 50+ other coding-agent providers, read from local session logs — for Codex, straight from its own local RPC, not scraped or guessed.",
+                ],
+                [
+                  "Rate-limit windows, not just totals",
+                  "Session resets, weekly caps, and regen percentages tracked per provider, so you get a warning before you hit a wall instead of after.",
+                ],
+                [
+                  "Same number everywhere",
+                  "The menu bar app, VS Code status bar, and veyr status all read the same local data — never a proxy in between.",
+                ],
+              ].map(([title, body]) => (
+                <li key={title} className="flex gap-4">
+                  <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#4FABFF]" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-white">{title}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-neutral-500">{body}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <CopyCodeBlock code="veyr status" className="mt-8 max-w-xs" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function GraphSection() {
   const nodes: Array<[number, number, number, string, boolean]> = [
     [200, 130, 16, "#16A34A", true],
@@ -447,7 +519,7 @@ function GraphSection() {
               {[
                 ["Built on your machine", "Pure AST parsing via Graphify — pinned install, zero LLM calls, no code leaves your device."],
                 ["Injected where agents look", "The graph summary lands in CLAUDE.md and VEYR_STATUS.json: architecture, the active file's callers and callees, the critical path."],
-                ["Structurally aware suggestions", "Leaf function on Opus? God node with no tests? Veyr's graph rules catch what spend data alone can't see."],
+                ["Structurally aware suggestions", "Leaf function on Opus, a god node, a redundant re-read, an unexplored dependency, high-connection code with no tests — five structural rules catch what spend data alone can't see."],
               ].map(([title, body]) => (
                 <li key={title} className="flex gap-4">
                   <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#4FABFF]" />
