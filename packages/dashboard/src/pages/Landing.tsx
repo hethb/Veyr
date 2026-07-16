@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { type ReactNode } from "react";
 import VeyrMark, { VeyrWordmark } from "../components/VeyrMark";
 import {
   ArrowRight,
@@ -13,11 +13,8 @@ import {
   Zap,
 } from "lucide-react";
 import { CopyCodeBlock } from "../components/CopyCodeBlock";
-import { DemoDashboard } from "../components/DemoDashboard";
 import { FeaturesSection } from "../components/FeaturesSection";
 import { HeroSection } from "../components/HeroSection";
-import { MagicLinkForm } from "../components/MagicLinkForm";
-import { authEnabled } from "../lib/auth";
 import { NavBar } from "@/components/ui/tubelight-navbar";
 
 const LANDING_NAV_ITEMS = [
@@ -26,26 +23,26 @@ const LANDING_NAV_ITEMS = [
   { name: "Setup", url: "#setup", icon: Terminal },
   { name: "Features", url: "#features", icon: Layers },
   { name: "Graph", url: "#graph", icon: Waypoints },
-  { name: "Demo", url: "#demo", icon: BarChart3 },
-  { name: "Built for", url: "#built-for", icon: CheckCircle2 },
+  { name: "Compare", url: "#compare", icon: BarChart3 },
   { name: "Download", url: "#download", icon: Monitor },
 ] as const;
 
 const ACCENTS = ["#076EFF", "#4FABFF", "#B1C5FF"] as const;
+const VEYR_VERSION = "0.2.2";
+const MAC_DMG_URL = `/downloads/Veyr-${VEYR_VERSION}.dmg`;
+const VSIX_URL = "/downloads/veyr-vscode-0.2.1.vsix";
 
 export function Landing() {
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
-      <HeroSection authEnabled={authEnabled} />
+      <HeroSection />
       <HowItWorks />
       <GetRunning />
       <PrivacySection />
-      <ProductLayers />
+      <ComparisonSection />
       <FeaturesSection />
       <GraphSection />
-      <DemoSection />
-      <BuiltForSection />
       <DownloadSection />
       <FinalCta />
       <Footer />
@@ -69,25 +66,10 @@ function Header() {
         <div className="pointer-events-auto absolute right-6 top-6 flex items-center gap-2">
           <a
             href="#download"
-            className="hidden border border-white/20 px-3 py-2 text-sm font-medium text-white transition-colors hover:border-white sm:inline-flex"
+            className="border border-white bg-white px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
           >
             Download
           </a>
-          {authEnabled ? (
-            <a
-              href="#get-started"
-              className="border border-white bg-white px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
-            >
-              Get started
-            </a>
-          ) : (
-            <Link
-              to="/dashboard"
-              className="border border-white bg-white px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
-            >
-              Open dashboard
-            </Link>
-          )}
         </div>
       </div>
 
@@ -101,22 +83,22 @@ function HowItWorks() {
     {
       icon: Monitor,
       accent: ACCENTS[0],
-      title: "Install Veyr",
-      body: "Veyr is a native Mac app that lives in your menu bar. Download the DMG below (Homebrew coming soon). No account, no API key, no configuration needed to get started.",
-      code: "# one download — no account, no API key",
+      title: "Install a surface",
+      body: "Menu bar app, VS Code extension, or CLI — pick one, or use all three, they read the same local data. No account, no API key, no configuration needed to get started.",
+      code: "npm install -g getcanopy   # or download the .dmg / .vsix",
     },
     {
       icon: Terminal,
       accent: ACCENTS[1],
       title: "Open Claude Code",
-      body: "Veyr reads your local session logs automatically. The moment you start a session, Veyr shows you the cost in real time — by project, by model, by session. (Cursor support is on the roadmap.)",
+      body: "Veyr reads your local session logs automatically. The moment you start a session, Veyr shows you the cost in real time — by project, by model, by session. (Codex CLI and other providers are read the same way.)",
       code: "ls ~/.claude/projects  # the logs Veyr reads",
     },
     {
       icon: Zap,
       accent: ACCENTS[2],
-      title: "Let Veyr optimize",
-      body: "Veyr analyzes your usage patterns and injects recommendations directly into your Claude Code context (on by default, off in one click). Your agent learns to switch models for simple tasks and compact context when sessions get long.",
+      title: "Let Veyr feed context back",
+      body: "Veyr writes a spend, budget, and codebase-graph summary into your project's CLAUDE.md (on by default, one click to disable) — so your agent knows its burn rate and the shape of the codebase before it starts guessing.",
       code: "cat ~/.veyr/agent-status/VEYR_STATUS.json",
     },
   ];
@@ -159,7 +141,6 @@ function HowItWorks() {
 
 interface SetupStep {
   title: string;
-  /** Plain-language explanation of exactly what to do / what you'll see. */
   detail?: string;
   code?: string;
 }
@@ -185,54 +166,84 @@ function StepList({ steps }: { steps: SetupStep[] }) {
   );
 }
 
+interface InstallCardProps {
+  icon: typeof Monitor;
+  label: string;
+  title: string;
+  steps: SetupStep[];
+  cta: { href: string; label: string; download?: boolean; external?: boolean };
+  accent: string;
+  footnote?: ReactNode;
+}
+
+function InstallCard({ icon: Icon, label, title, steps, cta, accent, footnote }: InstallCardProps) {
+  return (
+    <div className="flex flex-col border border-white/10 bg-black p-6">
+      <div className="flex items-center gap-3">
+        <div
+          className="grid h-10 w-10 place-items-center border"
+          style={{ borderColor: `${accent}40`, backgroundColor: `${accent}10`, color: accent }}
+        >
+          <Icon className="h-5 w-5" />
+        </div>
+        <div>
+          <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#4FABFF]">
+            {label}
+          </p>
+          <h3 className="text-lg font-semibold text-white">{title}</h3>
+        </div>
+      </div>
+      <StepList steps={steps} />
+      <a
+        href={cta.href}
+        download={cta.download}
+        target={cta.external ? "_blank" : undefined}
+        rel={cta.external ? "noreferrer" : undefined}
+        className="mt-6 inline-flex w-fit items-center gap-2 border border-white bg-white px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
+      >
+        <Icon className="h-4 w-4" />
+        {cta.label}
+      </a>
+      {footnote && <div className="mt-6">{footnote}</div>}
+    </div>
+  );
+}
+
 function GetRunning() {
   const macSteps: SetupStep[] = [
-    {
-      title: "Download Veyr",
-      detail: "Grab Veyr-0.2.2.dmg with the button below (or in the Download section).",
-    },
+    { title: "Download Veyr", detail: `Grab Veyr-${VEYR_VERSION}.dmg with the button below.` },
     {
       title: "Install",
       detail: "Open the DMG, drag Veyr to your Applications folder, then open Veyr from Applications.",
     },
     {
       title: "Bypass Gatekeeper (required for unsigned builds)",
-      detail:
-        "Veyr is not yet notarized with Apple. This command removes the quarantine flag so macOS allows it to run. It is safe — it only affects the Veyr app.",
+      detail: "Removes the quarantine flag so macOS allows it to run. Safe — only affects the Veyr app.",
       code: "xattr -cr /Applications/Veyr.app",
     },
     {
       title: "Start a Claude Code session",
-      detail:
-        "Veyr will automatically detect your Claude Code sessions and begin tracking cost. No configuration needed.",
-    },
-    {
-      title: "CLAUDE.md spend status is on by default",
-      detail:
-        "Veyr keeps a marker-delimited block in your active project's CLAUDE.md so Claude Code sees its burn rate, budget, and tips at session start. Disable in Veyr → Settings → Veyr if you prefer.",
-    },
-    {
-      title: "Optional — add your Anthropic API key",
-      detail:
-        "Settings → Veyr → Anthropic API key (stored in the macOS Keychain). Enables AI task-complexity analysis with Haiku (~$0.01/day typical) — Veyr then reports cost wasted running simple tasks on frontier models.",
+      detail: "Veyr detects it automatically and begins tracking cost. No configuration needed.",
     },
   ];
 
   const vscodeSteps: SetupStep[] = [
-    {
-      title: "Download the extension",
-      detail: "Grab veyr-vscode-0.2.1.vsix with the button below.",
-    },
+    { title: "Download the extension", detail: "Grab veyr-vscode-0.2.1.vsix with the button below." },
     {
       title: "Install from VSIX",
       detail:
-        "Open VS Code → Extensions panel (Cmd+Shift+X) → click ··· (top right) → \"Install from VSIX…\" → choose the downloaded file.",
+        "VS Code → Extensions panel (Cmd+Shift+X) → ··· (top right) → \"Install from VSIX…\" → choose the downloaded file.",
     },
     {
       title: "Done — it activates automatically",
-      detail:
-        "You'll see Veyr in the status bar the next time a Claude Code session is active (the Mac app must be running — it writes the feed the extension reads).",
+      detail: "Status bar shows spend the next time a session is active (the Mac app must be running — it writes the local feed the extension reads).",
     },
+  ];
+
+  const cliSteps: SetupStep[] = [
+    { title: "Install", detail: "Requires Node 20+.", code: "npm install -g getcanopy" },
+    { title: "Check your spend", code: "veyr status" },
+    { title: "See the codebase graph", code: "veyr graph" },
   ];
 
   return (
@@ -240,87 +251,43 @@ function GetRunning() {
       <div className="mx-auto max-w-6xl px-6 py-24">
         <SectionHeader
           eyebrow="Get started"
-          title="Get started in 5 minutes"
-          subtitle="Install the Mac app, open Claude Code, and your spend appears. Add the VS Code extension to see it in your editor."
+          title="Three ways in — pick one, or use all three"
+          subtitle="They read the same local data under ~/.veyr/, so spend is consistent no matter which surface you open."
         />
 
-        <div className="mt-14 grid gap-6 lg:grid-cols-2">
-          {/* Option A — macOS app */}
-          <div className="flex flex-col border border-white/10 bg-black p-6">
-            <div className="flex items-center gap-3">
-              <div
-                className="grid h-10 w-10 place-items-center border"
-                style={{
-                  borderColor: `${ACCENTS[0]}40`,
-                  backgroundColor: `${ACCENTS[0]}10`,
-                  color: ACCENTS[0],
-                }}
-              >
-                <Monitor className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#4FABFF]">
-                  Option A — recommended
-                </p>
-                <h3 className="text-lg font-semibold text-white">macOS app</h3>
-              </div>
-            </div>
-            <StepList steps={macSteps} />
-            <a
-              href="/downloads/Veyr-0.2.2.dmg"
-              download
-              className="mt-6 inline-flex w-fit items-center gap-2 border border-white bg-white px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
-            >
-              <Monitor className="h-4 w-4" />
-              Download Veyr-0.2.2.dmg
-            </a>
-          </div>
-
-          {/* Option B — VS Code extension */}
-          <div className="flex flex-col border border-white/10 bg-black p-6">
-            <div className="flex items-center gap-3">
-              <div
-                className="grid h-10 w-10 place-items-center border"
-                style={{
-                  borderColor: `${ACCENTS[1]}40`,
-                  backgroundColor: `${ACCENTS[1]}10`,
-                  color: ACCENTS[1],
-                }}
-              >
-                <Code2 className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#4FABFF]">
-                  Option B
-                </p>
-                <h3 className="text-lg font-semibold text-white">
-                  VS Code extension
-                </h3>
-              </div>
-            </div>
-            <StepList steps={vscodeSteps} />
-            <a
-              href="/downloads/veyr-vscode-0.2.1.vsix"
-              download
-              className="mt-6 inline-flex w-fit items-center gap-2 border border-white bg-white px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
-            >
-              <Code2 className="h-4 w-4" />
-              Download veyr-vscode-0.2.1.vsix
-            </a>
-
-            {/* Option C — Homebrew (coming soon) */}
-            <div className="relative mt-8">
-              <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#4FABFF]">
-                Option C
-              </p>
-              <div className="relative mt-2">
+        <div className="mt-14 grid gap-6 lg:grid-cols-3">
+          <InstallCard
+            icon={Monitor}
+            label="macOS menu bar app"
+            title="Veyr for macOS"
+            steps={macSteps}
+            cta={{ href: MAC_DMG_URL, label: `Download Veyr-${VEYR_VERSION}.dmg`, download: true }}
+            accent={ACCENTS[0]}
+            footnote={
+              <div className="relative">
                 <CopyCodeBlock code="brew install --cask veyr" />
                 <span className="absolute -top-2 right-2 border border-[#f5a623]/50 bg-black px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#f5a623]">
-                  Coming soon
+                  Homebrew coming soon
                 </span>
               </div>
-            </div>
-          </div>
+            }
+          />
+          <InstallCard
+            icon={Code2}
+            label="VS Code extension"
+            title="Veyr for VS Code"
+            steps={vscodeSteps}
+            cta={{ href: VSIX_URL, label: "Download veyr-vscode-0.2.1.vsix", download: true }}
+            accent={ACCENTS[1]}
+          />
+          <InstallCard
+            icon={Terminal}
+            label="CLI"
+            title="Veyr CLI"
+            steps={cliSteps}
+            cta={{ href: "https://www.npmjs.com/package/getcanopy", label: "View on npm", external: true }}
+            accent={ACCENTS[2]}
+          />
         </div>
       </div>
     </section>
@@ -382,64 +349,52 @@ function PrivacySection() {
   );
 }
 
-function ProductLayers() {
-  const layers = [
-    {
-      phase: "Layer 1 — Live",
-      title: "Observability",
-      detail:
-        "Summarization costs $4.2k/mo. Chatbot $800. Search $200. Your OpenAI bill never breaks this down — we do.",
-      code: 'feature: "summarization"',
-    },
-    {
-      phase: "Layer 2 — Building",
-      title: "Optimization",
-      detail:
-        "Compress bloated system prompts before they hit the model. TokenGuard logic, running in your proxy — 20–40% input savings on verbose prompts.",
-      code: "compress: true  // SDK flag → x-veyr-compress",
-    },
-    {
-      phase: "Layer 3 — Foundation",
-      title: "Governance",
-      detail:
-        "Monthly budget per feature. Max tokens per request. 429 when a team blows their cap — no codebase changes.",
-      code: 'monthly_budget_usd: 5000  // dashboard policies API',
-    },
+function ComparisonSection() {
+  const rows: [string, string, string][] = [
+    ["How it sees your usage", "Sits in the request path — you point ANTHROPIC_BASE_URL at it", "Reads session logs already on disk"],
+    ["Setup", "API key + base-URL swap, often an account", "Download and open — no account or key required for spend visibility"],
+    ["Your traffic", "Passes through their infrastructure", "Never touches it"],
+    ["What you get back", "Logs of what happened", "Spend and a codebase map fed into your agent's own context"],
   ];
 
   return (
-    <section id="layers" className="border-t border-white/10 bg-black">
+    <section id="compare" className="border-t border-white/10 bg-black">
       <div className="mx-auto max-w-6xl px-6 py-24">
         <SectionHeader
-          eyebrow="Product"
-          title="Observe → optimize → enforce"
-          subtitle="One proxy in your API path. Three layers that compound as you scale — from startup spend to enterprise controls."
+          eyebrow="How this is different"
+          title="Not another gateway"
+          subtitle="Helicone, LiteLLM, and similar tools all work the same way: they sit in the request path. Veyr doesn't sit anywhere."
         />
-        <div className="mt-14 grid gap-4 md:grid-cols-3">
-          {layers.map((l) => (
-            <div key={l.title} className="border border-white/10 bg-black p-6">
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#4FABFF]">
-                {l.phase}
-              </p>
-              <h3 className="mt-3 text-lg font-semibold text-white">{l.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-neutral-500">{l.detail}</p>
-              <CopyCodeBlock code={l.code} />
-            </div>
-          ))}
+        <div className="mt-10 overflow-hidden border border-white/10">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-white/10 bg-white/[0.02] text-xs uppercase tracking-wider text-neutral-500">
+                <th className="px-5 py-3 text-left font-medium"></th>
+                <th className="px-5 py-3 text-left font-medium">Gateway / proxy tools</th>
+                <th className="px-5 py-3 text-left font-medium text-[#4FABFF]">Veyr</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {rows.map(([label, them, us]) => (
+                <tr key={label}>
+                  <td className="px-5 py-4 font-medium text-white">{label}</td>
+                  <td className="px-5 py-4 text-neutral-500">{them}</td>
+                  <td className="px-5 py-4 text-[#B1C5FF]">{us}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
   );
 }
 
-
 function GraphSection() {
-  // Node/edge colors are the validated graph-page palette (see Graph.tsx).
   const nodes: Array<[number, number, number, string, boolean]> = [
-    // [x, y, r, color, criticalRing]
-    [200, 130, 16, "#16A34A", true],   // hub function
-    [110, 70, 11, "#2563EB", false],   // file
-    [300, 75, 12, "#7C3AED", true],    // class
+    [200, 130, 16, "#16A34A", true],
+    [110, 70, 11, "#2563EB", false],
+    [300, 75, 12, "#7C3AED", true],
     [70, 170, 9, "#16A34A", false],
     [150, 225, 10, "#2563EB", false],
     [265, 210, 9, "#16A34A", false],
@@ -499,7 +454,6 @@ function GraphSection() {
                 ["Built on your machine", "Pure AST parsing via Graphify — pinned install, zero LLM calls, no code leaves your device."],
                 ["Injected where agents look", "The graph summary lands in CLAUDE.md and VEYR_STATUS.json: architecture, the active file's callers and callees, the critical path."],
                 ["Structurally aware suggestions", "Leaf function on Opus? God node with no tests? Veyr's graph rules catch what spend data alone can't see."],
-                ["Interactive visualization", "Click through 37,000 nodes in the dashboard — filter by kind, isolate neighborhoods, set your agent's focus."],
               ].map(([title, body]) => (
                 <li key={title} className="flex gap-4">
                   <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#4FABFF]" />
@@ -510,105 +464,13 @@ function GraphSection() {
                 </li>
               ))}
             </ul>
-            <Link
-              to="/graph"
-              className="mt-8 inline-flex border border-white/20 px-4 py-2 text-sm font-medium text-white transition-colors hover:border-white"
-            >
-              Open the graph view →
-            </Link>
+            <CopyCodeBlock code="veyr graph" className="mt-8 max-w-xs" />
           </div>
         </div>
       </div>
     </section>
   );
 }
-
-function DemoSection() {
-  return (
-    <section id="demo" className="border-t border-white/10 bg-black">
-      <div className="mx-auto max-w-6xl px-6 py-24">
-        <SectionHeader
-          eyebrow="Live demo"
-          title="See it in action"
-          subtitle="Real charts, real components, sample data. Everything you see here is exactly what shows up in your dashboard once you start sending traffic."
-        />
-
-        <div className="mt-10 border border-white/10">
-          <DemoDashboard variant="dark" />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function BuiltForSection() {
-  const capabilities = [
-    {
-      label: "Per-request logging",
-      detail: "Every call captured with latency, tokens, and status",
-    },
-    {
-      label: "Cost dashboard",
-      detail: "Today, this week, and this month at a glance",
-    },
-    {
-      label: "Cost attribution by feature",
-      detail: "Auto-inferred from your request path — no manual tagging",
-      highlight: true,
-    },
-    {
-      label: "Top prompt templates by spend",
-      detail: "Rank prompt hashes by total cost and volume",
-      highlight: true,
-    },
-    {
-      label: "Optimization suggestions",
-      detail: "Compressed prompt recommendations to cut token waste",
-      highlight: true,
-    },
-  ];
-
-  return (
-    <section id="built-for" className="border-t border-white/10 bg-black">
-      <div className="mx-auto max-w-6xl px-6 py-24">
-        <SectionHeader
-          eyebrow="Built for teams"
-          title="Costs are table stakes. We tell you what to do about them."
-          subtitle="Veyr goes beyond spend totals — see which feature is responsible and how to spend less."
-        />
-
-        <div className="mt-10 overflow-hidden border border-white/10">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/10 bg-white/[0.02] text-xs uppercase tracking-wider text-neutral-500">
-                <th className="px-5 py-3 text-left font-medium">Capability</th>
-                <th className="px-5 py-3 text-left font-medium text-[#4FABFF]">
-                  What you get
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {capabilities.map((row) => (
-                <tr
-                  key={row.label}
-                  className={row.highlight ? "bg-[#076EFF]/[0.04]" : ""}
-                >
-                  <td className="px-5 py-4 font-medium text-white">
-                    {row.label}
-                  </td>
-                  <td className="px-5 py-4 text-[#B1C5FF]">{row.detail}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-const MAC_DMG_URL = "/downloads/Veyr-0.2.2.dmg";
-const VSIX_URL = "/downloads/veyr-vscode-0.2.1.vsix";
 
 function DownloadSection() {
   return (
@@ -617,15 +479,15 @@ function DownloadSection() {
         <SectionHeader
           eyebrow="Download"
           title="Veyr on your machine"
-          subtitle="A native menu bar app that reads your local Claude Code logs — live spend, budgets, and an agent-readable status feed. No proxy required."
+          subtitle="Three surfaces, one local data store under ~/.veyr/. No proxy required, no server-side component."
         />
-        <div className="mt-12 grid gap-6 sm:grid-cols-2">
+        <div className="mt-12 grid gap-6 lg:grid-cols-3">
           <div className="flex flex-col border border-white/10 p-8">
             <Monitor className="h-6 w-6 text-[#4FABFF]" />
             <h3 className="mt-4 text-lg font-semibold text-white">Veyr for macOS</h3>
             <p className="mt-2 flex-1 text-sm leading-relaxed text-neutral-400">
               Menu bar spend with a live-session pulse, spend dashboard, budget
-              caps with notifications, optimization tips, and the{" "}
+              caps with notifications, the Graphify codebase graph, and the{" "}
               <code className="text-neutral-300">VEYR_STATUS.json</code> agent
               feed your coding agents can read to self-optimize.
             </p>
@@ -638,8 +500,8 @@ function DownloadSection() {
               Download for macOS (.dmg)
             </a>
             <p className="mt-4 text-xs leading-relaxed text-neutral-600">
-              macOS 14+ · Apple Silicon &amp; Intel · v0.1.0 · unsigned preview
-              build — after installing, run{" "}
+              macOS 14+ · Apple Silicon &amp; Intel · v{VEYR_VERSION} · unsigned
+              preview build — after installing, run{" "}
               <code className="text-neutral-400">xattr -cr /Applications/Veyr.app</code>{" "}
               once to pass Gatekeeper.
             </p>
@@ -652,8 +514,8 @@ function DownloadSection() {
             </h3>
             <p className="mt-2 flex-1 text-sm leading-relaxed text-neutral-400">
               Live session cost in your status bar and a panel with burn rate,
-              cache hit rate, and one-click optimization commands — fed by the
-              Mac app&apos;s local agent feed.
+              cache hit rate, and codebase graph status — fed by the Mac
+              app&apos;s local agent feed.
             </p>
             <a
               href={VSIX_URL}
@@ -667,6 +529,24 @@ function DownloadSection() {
               Install from file: Extensions panel → ··· → Install from VSIX. Or
               build from source in{" "}
               <code className="text-neutral-400">packages/vscode-extension</code>.
+            </p>
+          </div>
+
+          <div className="flex flex-col border border-white/10 p-8">
+            <Terminal className="h-6 w-6 text-[#4FABFF]" />
+            <h3 className="mt-4 text-lg font-semibold text-white">Veyr CLI</h3>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-neutral-400">
+              Scriptable and CI-friendly. <code className="text-neutral-300">veyr status</code>{" "}
+              and <code className="text-neutral-300">veyr graph</code> read the
+              same local data as the other two surfaces.
+            </p>
+            <div id="cli-install" className="mt-6">
+              <CopyCodeBlock code="npm install -g getcanopy" />
+            </div>
+            <p className="mt-4 text-xs leading-relaxed text-neutral-600">
+              Requires Node 20+. Package name is{" "}
+              <code className="text-neutral-400">getcanopy</code> on npm; the
+              binary is <code className="text-neutral-400">veyr</code>.
             </p>
           </div>
         </div>
@@ -697,46 +577,35 @@ function FinalCta() {
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FFB7C5]/40 to-transparent opacity-40" />
       </div>
 
-      <div id="get-started" className="relative mx-auto max-w-3xl px-6 py-24 text-center">
+      <div className="relative mx-auto max-w-3xl px-6 py-24 text-center">
         <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#4FABFF]">
           Get started
         </p>
         <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
           Stop guessing what you&apos;re spending on.
         </h2>
-        {authEnabled ? (
-          <>
-            <p className="mx-auto mt-4 max-w-xl text-base text-neutral-500">
-              Enter your email — we&apos;ll send a magic link. No password, no
-              credit card. You&apos;ll have an API key in under a minute.
-            </p>
-            <div className="mt-8">
-              <MagicLinkForm />
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="mx-auto mt-4 max-w-xl text-base text-neutral-500">
-              Two lines of code and a single seed command — full LLM cost
-              attribution for your team, running locally.
-            </p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <Link
-                to="/dashboard"
-                className="inline-flex items-center gap-2 border border-white bg-white px-5 py-3 text-sm font-semibold text-black transition-colors hover:bg-neutral-200"
-              >
-                Open your dashboard
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <a
-                href="#demo"
-                className="border border-white/20 px-5 py-3 text-sm font-semibold text-white transition-colors hover:border-[#4FABFF]/50 hover:bg-[#076EFF]/10"
-              >
-                Replay the demo
-              </a>
-            </div>
-          </>
-        )}
+        <p className="mx-auto mt-4 max-w-xl text-base text-neutral-500">
+          Download the app, install the extension, or run the CLI — all three
+          read the same local data. No account, no seed command, nothing to
+          configure.
+        </p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <a
+            href="#setup"
+            className="inline-flex items-center gap-2 border border-white bg-white px-5 py-3 text-sm font-semibold text-black transition-colors hover:bg-neutral-200"
+          >
+            Jump to setup
+            <ArrowRight className="h-4 w-4" />
+          </a>
+          <a
+            href="https://github.com/hethb/Veyr"
+            target="_blank"
+            rel="noreferrer"
+            className="border border-white/20 px-5 py-3 text-sm font-semibold text-white transition-colors hover:border-[#4FABFF]/50 hover:bg-[#076EFF]/10"
+          >
+            View on GitHub
+          </a>
+        </div>
       </div>
     </section>
   );
@@ -749,7 +618,7 @@ function Footer() {
         <div className="flex items-center gap-2">
           <VeyrMark className="h-6 w-6" />
           <span className="flex items-center gap-1.5">
-            Veyr v0.1
+            Veyr v{VEYR_VERSION}
             <Layers className="h-3 w-3 text-neutral-600" />
           </span>
         </div>
@@ -763,11 +632,8 @@ function Footer() {
           <a href="#features" className="transition-colors hover:text-white">
             Features
           </a>
-          <a href="#demo" className="transition-colors hover:text-white">
-            Demo
-          </a>
-          <a href="#built-for" className="transition-colors hover:text-white">
-            Built for
+          <a href="#compare" className="transition-colors hover:text-white">
+            Compare
           </a>
           <a
             href="https://github.com/hethb/Veyr"
@@ -777,9 +643,6 @@ function Footer() {
           >
             GitHub
           </a>
-          <Link to="/dashboard" className="transition-colors hover:text-white">
-            Dashboard
-          </Link>
         </div>
       </div>
       <div className="mx-auto max-w-6xl border-t border-white/5 px-6 py-4 text-center text-xs text-neutral-600">
