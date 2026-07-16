@@ -242,6 +242,7 @@ function GetRunning() {
 
   const cliSteps: SetupStep[] = [
     { title: "Install", detail: "Requires Node 20+.", code: "npm install -g getcanopy" },
+    { title: "Or via Homebrew", code: "brew install hethb/veyr/veyr" },
     { title: "Check your spend", code: "veyr status" },
     { title: "See the codebase graph", code: "veyr graph" },
   ];
@@ -263,14 +264,7 @@ function GetRunning() {
             steps={macSteps}
             cta={{ href: MAC_DMG_URL, label: `Download Veyr-${VEYR_VERSION}.dmg`, download: true }}
             accent={ACCENTS[0]}
-            footnote={
-              <div className="relative">
-                <CopyCodeBlock code="brew install --cask veyr" />
-                <span className="absolute -top-2 right-2 border border-[#f5a623]/50 bg-black px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#f5a623]">
-                  Homebrew coming soon
-                </span>
-              </div>
-            }
+            footnote={<CopyCodeBlock code="brew install --cask hethb/veyr/veyr" />}
           />
           <InstallCard
             icon={Code2}
