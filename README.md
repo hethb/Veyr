@@ -161,7 +161,8 @@ cd packages/desktop-mac
 ### Homebrew
 
 ```bash
-brew install --cask veyr   # coming soon
+brew install --cask hethb/veyr/veyr   # macOS app
+brew install hethb/veyr/veyr          # CLI
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -234,7 +235,7 @@ Its source has already been extracted out of this repo (see [Repository Layout](
 ### Terminal CLI
 
 ```bash
-npm install -g getcanopy   # or: npx getcanopy init
+npm install -g getcanopy   # or: brew install hethb/veyr/veyr
 
 veyr status                # today/week/month spend, read from local session logs
 veyr suggestions           # optimization tips with ready-to-run commands
@@ -389,7 +390,7 @@ Disable the feature entirely with `"codebaseGraph": false` in `~/.veyr/config.js
 - [x] AI task complexity classifier
 - [x] Graphify codebase graph integration (graph-aware suggestions, CLAUDE.md + VEYR_STATUS.json context)
 - [x] Interactive graph visualization in the menu bar app
-- [ ] Homebrew cask distribution
+- [x] Homebrew distribution (formula + cask)
 - [ ] Apple notarization (Gatekeeper-clean DMG)
 - [ ] JetBrains IDE extension
 - [ ] Windows and Linux support
