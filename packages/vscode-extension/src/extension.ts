@@ -15,9 +15,11 @@ import {
   readStatus,
   writeAutoInjectClaudeMd,
   writePromptStyleLearning,
+  writeSavingsTracker,
   type VeyrStatusResult,
 } from "./agentStatus";
 import { composePromptCommand, copyComposedPromptCommand } from "./composePrompt";
+import { showSavingsDetailCommand, VeyrSavingsStatusBar } from "./savingsStatusBar";
 import { VeyrStatusBar } from "./statusBar";
 import { veyrComposeLanguageSelector, VeyrStyleCompletionProvider } from "./styleCompletionProvider";
 
@@ -432,10 +434,13 @@ export function activate(context: vscode.ExtensionContext): void {
   const provider = new VeyrViewProvider();
   const statusBar = new VeyrStatusBar();
   statusBar.start();
+  const savingsStatusBar = new VeyrSavingsStatusBar();
+  savingsStatusBar.start();
 
   context.subscriptions.push(
     provider,
     statusBar,
+    savingsStatusBar,
     vscode.window.registerWebviewViewProvider("veyr.panel", provider),
     vscode.commands.registerCommand("veyr.refresh", () => {
       statusBar.refresh();
@@ -454,6 +459,7 @@ export function activate(context: vscode.ExtensionContext): void {
     ),
     vscode.commands.registerCommand("veyr.composePrompt", () => void composePromptCommand()),
     vscode.commands.registerCommand("veyr.copyComposedPrompt", () => void copyComposedPromptCommand()),
+    vscode.commands.registerCommand("veyr.showSavingsDetail", () => void showSavingsDetailCommand(savingsStatusBar)),
     vscode.languages.registerInlineCompletionItemProvider(
       veyrComposeLanguageSelector,
       new VeyrStyleCompletionProvider(),
@@ -488,6 +494,22 @@ export function activate(context: vscode.ExtensionContext): void {
             `Veyr: could not write ~/.veyr/config.json (${err instanceof Error ? err.message : String(err)})`,
           );
         }
+      }
+      if (event.affectsConfiguration("veyr.savingsTracker")) {
+        const enabled = cfg().get<boolean>("savingsTracker", false);
+        try {
+          writeSavingsTracker(enabled);
+          void vscode.window.showInformationMessage(
+            enabled
+              ? "Veyr will start tracking estimated savings (applied by the Veyr menu bar app)."
+              : "Veyr savings tracker disabled.",
+          );
+        } catch (err) {
+          void vscode.window.showErrorMessage(
+            `Veyr: could not write ~/.veyr/config.json (${err instanceof Error ? err.message : String(err)})`,
+          );
+        }
+        savingsStatusBar.onConfigChanged();
       }
       if (
         event.affectsConfiguration("veyr.showCostInStatusBar") ||

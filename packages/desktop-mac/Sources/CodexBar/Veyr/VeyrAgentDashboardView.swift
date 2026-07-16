@@ -41,6 +41,7 @@ struct VeyrAgentDashboardView: View {
                 self.graphSection
                 self.recommendationsSection
                 self.toolHealthSection
+                self.savingsSection
                 self.overridePanel
                 self.agentFeedFooter
             }
@@ -375,6 +376,73 @@ struct VeyrAgentDashboardView: View {
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
+        }
+    }
+
+    // MARK: - Savings tracker (off by default — VeyrConfig.savingsTracker)
+
+    /// Retrospective savings breakdown. Off by default pending an explicit
+    /// methodology review; when off, shows a short explanation instead of
+    /// silently omitting the whole section, matching how the classifier
+    /// API-key nudge works at the top of this tab. Every figure is tagged
+    /// by confidence tier — never blended into one unlabeled total. See
+    /// VeyrSavingsCalculator for the exact formulas behind each number.
+    @ViewBuilder
+    private var savingsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Estimated savings")
+                .font(.headline)
+            if VeyrConfig.load().savingsTracker == true {
+                let store = VeyrSavingsStore.load()
+                let currentTag = self.service.latestPayload?.currentSession?.project
+                self.savingsTotalsRows(label: "Lifetime", totals: store.lifetimeTotals)
+                if let currentTag, let projectTotals = store.perProjectTotals[currentTag] {
+                    Divider()
+                    self.savingsTotalsRows(label: "This project (\(currentTag))", totals: projectTotals)
+                }
+            } else {
+                Text("Off by default — enable in Settings or with `veyr savings enable` to start " +
+                    "tracking estimated token/dollar savings. Every figure shown is confidence-tagged " +
+                    "(measured / estimated / correlational), never a single opaque total.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    @ViewBuilder
+    private func savingsTotalsRows(label: String, totals: VeyrSavingsStore.SavingsTotals) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.caption.bold())
+            if totals.component1MeasuredTokens > 0 {
+                Text("Graph exploration: \(Int(totals.component1MeasuredTokens)) tokens / " +
+                    VeyrFormat.usd(totals.component1MeasuredUSD) + " (measured)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            if totals.component1AssumptionTokens > 0 {
+                Text("Graph exploration: \(Int(totals.component1AssumptionTokens)) tokens / " +
+                    VeyrFormat.usd(totals.component1AssumptionUSD) + " (estimated — limited personal history)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            if totals.component3CorrelationalTokens > 0 {
+                Text("Guidance verbosity: \(Int(totals.component3CorrelationalTokens)) tokens / " +
+                    VeyrFormat.usd(totals.component3CorrelationalUSD) + " (correlational, not causal)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            if totals.component1MeasuredTokens == 0, totals.component1AssumptionTokens == 0,
+               totals.component3CorrelationalTokens == 0
+            {
+                Text("No data yet.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 

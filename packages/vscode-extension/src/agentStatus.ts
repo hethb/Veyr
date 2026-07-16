@@ -212,6 +212,24 @@ export function writePromptStyleLearning(enabled: boolean): void {
   fs.writeFileSync(file, `${JSON.stringify(config, null, 2)}\n`, "utf8");
 }
 
+/** Gates the retrospective savings tracker — off by default, pending an
+ * explicit methodology review before it's shown by default. */
+export function writeSavingsTracker(enabled: boolean): void {
+  const file = veyrConfigPath();
+  let config: Record<string, unknown> = {};
+  try {
+    const parsed: unknown = JSON.parse(fs.readFileSync(file, "utf8"));
+    if (typeof parsed === "object" && parsed !== null) {
+      config = parsed as Record<string, unknown>;
+    }
+  } catch {
+    // Missing or invalid file — start fresh.
+  }
+  config["savingsTracker"] = enabled;
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, `${JSON.stringify(config, null, 2)}\n`, "utf8");
+}
+
 // --- Proxy optimization stats (for the "N% saved" status-bar suffix) --------
 
 export function proxyBaseUrl(): string {

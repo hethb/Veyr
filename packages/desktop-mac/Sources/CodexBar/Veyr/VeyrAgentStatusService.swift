@@ -159,6 +159,21 @@ public final class VeyrAgentStatusService {
         let graphService = VeyrGraphService.shared
         graphService.ensureWorkspace(currentSession?.projectPath)
         let graph = graphService.currentGraph
+
+        // Default off (see VeyrConfig.savingsTracker) — pending an explicit
+        // review of real numbers before this is shown by default. See
+        // VeyrSavingsCalculator for the exact estimation methodology.
+        if config.savingsTracker == true, let currentSession {
+            var savingsStore = VeyrSavingsStore.load()
+            VeyrSavingsTracker.fold(
+                session: currentSession,
+                signals: currentSignals,
+                graphFileCount: graph?.fileCount,
+                guidanceOn: self.autoUpdateGuidanceEnabled,
+                into: &savingsStore)
+            try? savingsStore.save()
+        }
+
         let focusOverride = graphService.focusOverride()
         let focused = graphService.focusedContext(
             activeFile: focusOverride?.file ?? currentSignals?.readFiles?.last,

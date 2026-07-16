@@ -18,6 +18,12 @@ import {
   rulesOffCommand,
   rulesOnCommand,
 } from "./commands/rules.js";
+import {
+  savingsCommand,
+  savingsDisableCommand,
+  savingsEnableCommand,
+  savingsStatusCommand,
+} from "./commands/savings.js";
 import { statusCommand } from "./commands/status.js";
 import { styleDisableCommand, styleEnableCommand, styleStatusCommand } from "./commands/style.js";
 
@@ -98,5 +104,26 @@ style
   .command("disable")
   .description("Turn off prompt-style learning + `veyr compose` suggestions")
   .action(() => run(styleDisableCommand));
+
+const savings = program
+  .command("savings")
+  .description("Retrospective token/dollar savings — lifetime + current project (off by default)")
+  .option("--detail", "Show the full per-component breakdown and methodology")
+  .action((opts) => run(() => savingsCommand(opts)));
+
+savings
+  .command("status")
+  .description("Show whether the savings tracker is on")
+  .action(() => run(savingsStatusCommand));
+
+savings
+  .command("enable")
+  .description("Turn on the savings tracker")
+  .action(() => run(savingsEnableCommand));
+
+savings
+  .command("disable")
+  .description("Turn off the savings tracker")
+  .action(() => run(savingsDisableCommand));
 
 program.parseAsync(process.argv);
