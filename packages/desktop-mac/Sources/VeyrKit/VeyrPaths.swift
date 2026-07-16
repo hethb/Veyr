@@ -29,6 +29,16 @@ public enum VeyrPaths {
         self.home(base: base).appendingPathComponent("budget-controls.json")
     }
 
+    /// Savings-tracker running baselines + lifetime/per-project totals.
+    /// Deliberately top-level, not cache/: unlike graph.json or the prompt-
+    /// style corpus, these running means capture a fact (was Graphify/
+    /// guidance live during a historical tick) that cannot be reconstructed
+    /// by rescanning JSONL — losing this file loses history permanently, so
+    /// it must survive a cache clear.
+    public static func savingsStoreFile(base: URL = FileManager.default.homeDirectoryForCurrentUser) -> URL {
+        self.home(base: base).appendingPathComponent("savings.json")
+    }
+
     public static func agentStatusDirectory(base: URL = FileManager.default.homeDirectoryForCurrentUser) -> URL {
         self.home(base: base).appendingPathComponent("agent-status", isDirectory: true)
     }

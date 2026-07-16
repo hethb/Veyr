@@ -36,6 +36,12 @@ public struct VeyrConfig: Sendable {
     /// the first Veyr feature that persists anything derived from the
     /// content of prompt text, not just scalar/boolean features.
     public var promptStyleLearning: Bool?
+    /// Retrospective token/dollar savings tracker (nil/false = off). Gates
+    /// both the background baseline-folding tracker and whether
+    /// `GET /savings` returns anything — default off pending an explicit
+    /// review of real numbers before this is shown by default (see
+    /// VeyrSavingsCalculator for the exact estimation methodology).
+    public var savingsTracker: Bool?
     /// Web dashboard origin for outbound links (nil = production). Dev builds
     /// set "http://localhost:5173" here.
     public var dashboardUrl: String?
@@ -71,6 +77,7 @@ public struct VeyrConfig: Sendable {
         config.codebaseGraph = object["codebaseGraph"] as? Bool
         config.dashboardUrl = object["dashboardUrl"] as? String
         config.promptStyleLearning = object["promptStyleLearning"] as? Bool
+        config.savingsTracker = object["savingsTracker"] as? Bool
         return config
     }
 
@@ -90,6 +97,7 @@ public struct VeyrConfig: Sendable {
             ("codebaseGraph", self.codebaseGraph),
             ("dashboardUrl", self.dashboardUrl),
             ("promptStyleLearning", self.promptStyleLearning),
+            ("savingsTracker", self.savingsTracker),
         ]
         for (key, value) in updates {
             if let value {

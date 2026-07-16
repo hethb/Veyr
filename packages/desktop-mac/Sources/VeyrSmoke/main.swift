@@ -620,6 +620,111 @@ freshDecayStore.bigrams = ["fix the": 10]
 freshDecayStore.applyDecayIfDue()
 check(freshDecayStore.bigrams["fix the"] == 10, "no decay applied before the 24h interval elapses")
 
+// MARK: - 10. Savings tracker
+
+print("— savings calculator (pure) —")
+check(VeyrSavingsCalculator.tier(fileCount: 10) == "small", "tier boundary: <50 is small")
+check(VeyrSavingsCalculator.tier(fileCount: 50) == "medium", "tier boundary: 50 is medium (inclusive)")
+check(VeyrSavingsCalculator.tier(fileCount: 199) == "medium", "tier boundary: 199 is still medium")
+check(VeyrSavingsCalculator.tier(fileCount: 200) == "large", "tier boundary: 200 is large (inclusive)")
+
+let redundant = VeyrSavingsCalculator.redundantReadTokens(readCounts: ["a.ts": 3, "b.ts": 1, "c.ts": 2])
+check(redundant == 3 * VeyrSavingsCalculator.tokensPerFileRead,
+    "redundant reads: (3-1)+(1-1)+(2-1) = 3 redundant reads, never negative per-file")
+
+let belowGateBaseline = VeyrSavingsStore.TierBaseline(sumReads: 40, sessionCount: 4)
+let belowGateEstimate = VeyrSavingsCalculator.graphExplorationSavings(
+    fileCount: 10, sessionReadFilesCount: 2, baseline: belowGateBaseline, modelId: "claude-sonnet-5")
+check(belowGateEstimate.tier == .assumption, "below the 5-session gate falls back to the assumption tier")
+check(belowGateEstimate.tokens == Double(VeyrGraphContextBuilder.exploreTokens(fileCount: 10) - 400),
+    "assumption tier reuses the existing exploreTokens heuristic exactly")
+
+let atGateBaseline = VeyrSavingsStore.TierBaseline(sumReads: 50, sessionCount: 5)
+let atGateEstimate = VeyrSavingsCalculator.graphExplorationSavings(
+    fileCount: 10, sessionReadFilesCount: 3, baseline: atGateBaseline, modelId: "claude-sonnet-5")
+check(atGateEstimate.tier == .measured, "at the 5-session gate, uses the measured personal baseline")
+check(atGateEstimate.tokens == (10.0 - 3.0) * VeyrSavingsCalculator.tokensPerFileRead,
+    "measured tier: (baseline mean 10 - actual 3) * 500")
+
+check(
+    VeyrSavingsCalculator.guidanceVerbositySavings(
+        guidanceOn: .init(sumOutputTokens: 1000, turnCount: 10),
+        guidanceOff: .init(sumOutputTokens: 3000, turnCount: 30),
+        sessionEntryCount: 5, modelId: "claude-sonnet-5") == nil,
+    "component 3 below the 20-turn gate on the ON side returns nil, not zero")
+if let guidanceEstimate = VeyrSavingsCalculator.guidanceVerbositySavings(
+    guidanceOn: .init(sumOutputTokens: 2000, turnCount: 20),
+    guidanceOff: .init(sumOutputTokens: 6000, turnCount: 20),
+    sessionEntryCount: 4, modelId: "claude-sonnet-5")
+{
+    check(guidanceEstimate.tier == .correlational, "component 3 tagged correlational")
+    check(guidanceEstimate.tokens == (300.0 - 100.0) * 4.0,
+        "component 3: (off mean 300 - on mean 100) * this session's entryCount")
+} else {
+    check(false, "component 3 should produce an estimate once both populations meet the gate")
+}
+
+print("— savings tracker (revision-aware folding) —")
+func savingsSession(
+    id: String, tag: String, outputTokens: Int, entryCount: Int,
+    model: String = "claude-sonnet-5") -> SessionEntry
+{
+    SessionEntry(
+        timestamp: Date(), startedAt: Date().addingTimeInterval(-300),
+        provider: "claude", modelId: model, featureTag: tag,
+        usage: TokenUsage(inputTokens: 500, outputTokens: outputTokens, costUSD: 1),
+        projectPath: "/Users/x/\(tag)", sessionId: id, entryCount: entryCount)
+}
+
+// No-graph session ticked 3 times: sessionCount must stay 1 (a revision, not
+// 3 new samples), and the baseline reflects only the LATEST read count.
+var revStore = VeyrSavingsStore()
+let sess1 = savingsSession(id: "rev1", tag: "proj1", outputTokens: 500, entryCount: 5)
+VeyrSavingsTracker.fold(
+    session: sess1, signals: VeyrSessionSignals(sessionId: "rev1", readFiles: ["a.ts", "b.ts"]),
+    graphFileCount: nil, guidanceOn: false, into: &revStore)
+check(revStore.graphTierBaselines["small"] == nil, "no tier known yet — this project has never had a graph")
+
+// A DIFFERENT session in the same project builds a graph first (caches the tier)...
+let sess0 = savingsSession(id: "rev0", tag: "proj1", outputTokens: 500, entryCount: 5)
+VeyrSavingsTracker.fold(
+    session: sess0, signals: VeyrSessionSignals(sessionId: "rev0", readFiles: ["z.ts"]),
+    graphFileCount: 10, guidanceOn: false, into: &revStore)
+check(revStore.projectTiers["proj1"] == "small", "project tier cached once any graph is seen for it")
+
+// ...now re-observe sess1 (still no live graph this tick) 3 times with a growing read count.
+for readFiles in [["a.ts", "b.ts"], ["a.ts", "b.ts", "c.ts"], ["a.ts", "b.ts", "c.ts", "d.ts"]] {
+    VeyrSavingsTracker.fold(
+        session: sess1, signals: VeyrSessionSignals(sessionId: "rev1", readFiles: readFiles),
+        graphFileCount: nil, guidanceOn: false, into: &revStore)
+}
+check(revStore.graphTierBaselines["small"]?.sessionCount == 1,
+    "3 repeated ticks of the SAME session fold as 1 sample, not 3 (revision-aware)")
+check(revStore.graphTierBaselines["small"]?.sumReads == 4,
+    "baseline reflects only the LATEST read count (4), not the sum across ticks")
+
+print("— savings tracker (sticky-graph transition retracts baseline contribution) —")
+var transStore = VeyrSavingsStore()
+// Seed a project tier via one graph-active session elsewhere.
+VeyrSavingsTracker.fold(
+    session: savingsSession(id: "seed", tag: "proj2", outputTokens: 100, entryCount: 1),
+    signals: VeyrSessionSignals(sessionId: "seed", readFiles: []),
+    graphFileCount: 10, guidanceOn: false, into: &transStore)
+let transSession = savingsSession(id: "trans1", tag: "proj2", outputTokens: 500, entryCount: 5)
+// Starts with no live graph — folds into the no-graph baseline.
+VeyrSavingsTracker.fold(
+    session: transSession, signals: VeyrSessionSignals(sessionId: "trans1", readFiles: ["a.ts", "b.ts", "c.ts"]),
+    graphFileCount: nil, guidanceOn: false, into: &transStore)
+let baselineCountBefore = transStore.graphTierBaselines["small"]?.sessionCount ?? 0
+// Graph becomes active mid-session — must retract the earlier baseline contribution.
+VeyrSavingsTracker.fold(
+    session: transSession, signals: VeyrSessionSignals(sessionId: "trans1", readFiles: ["a.ts", "b.ts", "c.ts"]),
+    graphFileCount: 10, guidanceOn: false, into: &transStore)
+check((transStore.graphTierBaselines["small"]?.sessionCount ?? -1) == baselineCountBefore - 1,
+    "mid-session graph activation retracts the session's earlier no-graph baseline contribution")
+
+print()
+
 // MARK: - 4. Real logs
 
 print("— real ~/.claude/projects scan —")

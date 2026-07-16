@@ -40,6 +40,15 @@ export function readPromptStyleLearning(): boolean {
   return typeof value === "boolean" ? value : false;
 }
 
+/** `savingsTracker` — gates the retrospective token/dollar savings tracker.
+ * Absent/undefined means off, pending an explicit methodology review before
+ * this is shown by default (see packages/desktop-mac/Sources/VeyrKit/Savings/
+ * VeyrSavingsCalculator.swift for the exact estimation formulas). */
+export function readSavingsTracker(): boolean {
+  const value = readRaw()["savingsTracker"];
+  return typeof value === "boolean" ? value : false;
+}
+
 /** Sets exactly one key, preserving every other key already in the file
  * (written by the Mac app, VS Code extension, or a prior CLI run). */
 export function writeConfigKey(key: string, value: unknown): void {

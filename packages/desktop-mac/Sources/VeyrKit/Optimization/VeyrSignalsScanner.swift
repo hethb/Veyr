@@ -24,6 +24,13 @@ public struct VeyrSessionSignals: Codable, Equatable, Sendable {
     /// Distinct file paths passed to Read tool calls (graph rule G4). Optional so
     /// stores persisted before this field decode unchanged; capped per session.
     public var readFiles: [String]?
+    /// Raw (non-deduped) Read-tool call count per file path this session —
+    /// unlike `readFiles`, repeat reads of the SAME file are NOT collapsed.
+    /// Feeds the savings tracker's redundant-reads observation (never a
+    /// savings claim, just a measured cost). Optional/nil-default, same
+    /// backward-compat trick as `readFiles`; capped at the same
+    /// `maxReadFilesPerSession` distinct-key bound.
+    public var readCounts: [String: Int]?
 
     public init(
         sessionId: String,
@@ -33,7 +40,8 @@ public struct VeyrSessionSignals: Codable, Equatable, Sendable {
         toolUseCount: Int = 0,
         messageCount: Int = 0,
         retryClusters: Int = 0,
-        readFiles: [String]? = nil)
+        readFiles: [String]? = nil,
+        readCounts: [String: Int]? = nil)
     {
         self.sessionId = sessionId
         self.cwd = cwd
@@ -43,6 +51,7 @@ public struct VeyrSessionSignals: Codable, Equatable, Sendable {
         self.messageCount = messageCount
         self.retryClusters = retryClusters
         self.readFiles = readFiles
+        self.readCounts = readCounts
     }
 }
 
@@ -167,6 +176,11 @@ public enum VeyrSignalsScanner {
                                 if reads.count < Self.maxReadFilesPerSession, !reads.contains(path) {
                                     reads.append(path)
                                     signals.readFiles = reads
+                                }
+                                var counts = signals.readCounts ?? [:]
+                                if counts[path] != nil || counts.count < Self.maxReadFilesPerSession {
+                                    counts[path, default: 0] += 1
+                                    signals.readCounts = counts
                                 }
                             }
                         }

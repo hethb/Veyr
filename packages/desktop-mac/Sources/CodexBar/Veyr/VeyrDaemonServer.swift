@@ -84,7 +84,9 @@ public final class VeyrDaemonServer {
             return await self.handleGraphRefresh(queryItems: request.queryItems)
         case ("GET", "/style/complete"):
             return Self.handleStyleComplete(queryItems: request.queryItems)
-        case (_, "/health"), (_, "/status"), (_, "/graph"), (_, "/style/complete"):
+        case ("GET", "/savings"):
+            return Self.handleSavings()
+        case (_, "/health"), (_, "/status"), (_, "/graph"), (_, "/style/complete"), (_, "/savings"):
             return CLILocalHTTPResponse(
                 status: .methodNotAllowed,
                 body: Data(#"{"error":"method not allowed"}"#.utf8))
@@ -173,6 +175,78 @@ public final class VeyrDaemonServer {
         let response = StyleCompletionResponse(
             suggestions: suggestions.map { StyleCompletionResponse.Suggestion(text: $0.text, kind: $0.kind, confidence: $0.confidence) },
             groundedIn: [])
+        guard let data = try? JSONEncoder().encode(response) else {
+            return CLILocalHTTPResponse(
+                status: .internalServerError,
+                body: Data(#"{"error":"encoding failed"}"#.utf8))
+        }
+        return CLILocalHTTPResponse(status: .ok, body: data)
+    }
+
+    private struct SavingsTotalsPayload: Encodable {
+        var component1MeasuredTokens: Double
+        var component1MeasuredUSD: Double
+        var component1AssumptionTokens: Double
+        var component1AssumptionUSD: Double
+        var component3CorrelationalTokens: Double
+        var component3CorrelationalUSD: Double
+
+        init(_ totals: VeyrSavingsStore.SavingsTotals) {
+            self.component1MeasuredTokens = totals.component1MeasuredTokens
+            self.component1MeasuredUSD = totals.component1MeasuredUSD
+            self.component1AssumptionTokens = totals.component1AssumptionTokens
+            self.component1AssumptionUSD = totals.component1AssumptionUSD
+            self.component3CorrelationalTokens = totals.component3CorrelationalTokens
+            self.component3CorrelationalUSD = totals.component3CorrelationalUSD
+        }
+    }
+
+    private struct SavingsResponse: Encodable {
+        var enabled: Bool
+        var lifetime: SavingsTotalsPayload
+        var currentProjectTag: String?
+        var currentProject: SavingsTotalsPayload?
+        /// Component 2 — informational only, never summed into any total.
+        var component2RedundantReadTokensThisSession: Double
+        var component3Disclaimer: String
+    }
+
+    /// Gated by VeyrConfig.savingsTracker: when off, returns 200 with all
+    /// figures zeroed and `enabled: false` rather than an error — same
+    /// "absence is normal" philosophy as `/style/complete`. See
+    /// VeyrSavingsCalculator for the exact estimation methodology behind
+    /// every figure this returns.
+    private static func handleSavings() -> CLILocalHTTPResponse {
+        guard VeyrConfig.load().savingsTracker == true else {
+            return Self.encodeSavings(SavingsResponse(
+                enabled: false,
+                lifetime: SavingsTotalsPayload(.init()),
+                currentProjectTag: nil,
+                currentProject: nil,
+                component2RedundantReadTokensThisSession: 0,
+                component3Disclaimer: VeyrSavingsCalculator.component3Disclaimer))
+        }
+        let store = VeyrSavingsStore.load()
+        let currentTag = VeyrAgentStatusService.shared.latestPayload?.currentSession?.project
+        let currentProjectTotals = currentTag.flatMap { store.perProjectTotals[$0] }
+
+        // Component 2 (redundant reads) is a live, current-session-only
+        // observation, not a stored total — re-derive the current session
+        // the same way tick() does, then look up its signals.
+        let currentSession = VeyrSpend.shared.sessions.max { $0.timestamp < $1.timestamp }
+        let signals = currentSession?.sessionId.flatMap { VeyrSignalsScanner.scan().sessions[$0] }
+        let redundantTokens = VeyrSavingsCalculator.redundantReadTokens(readCounts: signals?.readCounts ?? [:])
+
+        return Self.encodeSavings(SavingsResponse(
+            enabled: true,
+            lifetime: SavingsTotalsPayload(store.lifetimeTotals),
+            currentProjectTag: currentTag,
+            currentProject: currentProjectTotals.map(SavingsTotalsPayload.init),
+            component2RedundantReadTokensThisSession: redundantTokens,
+            component3Disclaimer: VeyrSavingsCalculator.component3Disclaimer))
+    }
+
+    private static func encodeSavings(_ response: SavingsResponse) -> CLILocalHTTPResponse {
         guard let data = try? JSONEncoder().encode(response) else {
             return CLILocalHTTPResponse(
                 status: .internalServerError,

@@ -67,6 +67,10 @@
       {
         "command": "veyr.copyComposedPrompt",
         "title": "Veyr: Copy Composed Prompt"
+      },
+      {
+        "command": "veyr.showSavingsDetail",
+        "title": "Veyr: Show Savings Detail"
       }
     ],
     "menus": {
@@ -135,6 +139,11 @@
           "type": "boolean",
           "default": false,
           "description": "Learn from your local prompt history to suggest phrasing while composing a prompt (\"Veyr: Compose Prompt\"). Off by default — 100% local, mirrors the Veyr menu bar app setting (shared via ~/.veyr/config.json)."
+        },
+        "veyr.savingsTracker": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show estimated token/dollar savings (lifetime + current project) in the status bar. Off by default pending a methodology review — see \"Veyr: Show Savings Detail\" for the exact estimation formulas and confidence tags. Mirrors the Veyr menu bar app setting (shared via ~/.veyr/config.json)."
         }
       }
     }

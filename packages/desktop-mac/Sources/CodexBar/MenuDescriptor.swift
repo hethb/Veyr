@@ -3,6 +3,7 @@
 // Licensed under the MIT License.
 import CodexBarCore
 import Foundation
+import VeyrKit
 
 @MainActor
 struct MenuDescriptor {
@@ -674,10 +675,27 @@ struct MenuDescriptor {
             header += "  ·  Top: \(top.tag) (\(VeyrFormat.usd(top.costUSD))/mo) ↗"
             topTag = top.tag
         }
-        return Section(entries: [
+        var entries: [Entry] = [
             .action(header, .veyrSpend(filterTag: topTag)),
             .action(L("Open Spend Dashboard…"), .veyrSpend(filterTag: nil)),
-        ])
+        ]
+        // Gated off by default (VeyrConfig.savingsTracker) — pending an
+        // explicit review of real numbers. Plain text, not an action: the
+        // full confidence-tagged breakdown lives in the Style/Agent tabs'
+        // savings section, not a dedicated menu click-through, keeping this
+        // addition low-risk (no new action/selector wiring).
+        if VeyrConfig.load().savingsTracker == true {
+            let savings = VeyrSavingsStore.load()
+            let usd = savings.lifetimeTotals.component1MeasuredUSD
+                + savings.lifetimeTotals.component1AssumptionUSD
+                + savings.lifetimeTotals.component3CorrelationalUSD
+            if usd > 0 {
+                entries.append(.text(
+                    "Estimated savings: \(VeyrFormat.usd(usd)) lifetime — see Agent tab for breakdown",
+                    .secondary))
+            }
+        }
+        return Section(entries: entries)
     }
 
     private static func metaSection(updateReady: Bool) -> Section {
