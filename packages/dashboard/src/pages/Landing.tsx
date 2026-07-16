@@ -15,16 +15,17 @@ import {
 } from "lucide-react";
 import { CopyCodeBlock } from "../components/CopyCodeBlock";
 import { FeaturesSection } from "../components/FeaturesSection";
+import { GraphDemo } from "../components/GraphDemo";
 import { HeroSection } from "../components/HeroSection";
 import { NavBar } from "@/components/ui/tubelight-navbar";
 
 const LANDING_NAV_ITEMS = [
   { name: "Home", url: "#top", icon: Home },
   { name: "How it works", url: "#how", icon: Zap },
-  { name: "Setup", url: "#setup", icon: Terminal },
-  { name: "Features", url: "#features", icon: Layers },
   { name: "Usage", url: "#usage", icon: Gauge },
   { name: "Graph", url: "#graph", icon: Waypoints },
+  { name: "Setup", url: "#setup", icon: Terminal },
+  { name: "Features", url: "#features", icon: Layers },
   { name: "Compare", url: "#compare", icon: BarChart3 },
   { name: "Download", url: "#download", icon: Monitor },
 ] as const;
@@ -40,12 +41,12 @@ export function Landing() {
       <Header />
       <HeroSection />
       <HowItWorks />
+      <UsageSection />
+      <GraphSection />
       <GetRunning />
       <PrivacySection />
       <ComparisonSection />
       <FeaturesSection />
-      <UsageSection />
-      <GraphSection />
       <DownloadSection />
       <FinalCta />
       <Footer />
@@ -457,82 +458,35 @@ function UsageSection() {
 }
 
 function GraphSection() {
-  const nodes: Array<[number, number, number, string, boolean]> = [
-    [200, 130, 16, "#16A34A", true],
-    [110, 70, 11, "#2563EB", false],
-    [300, 75, 12, "#7C3AED", true],
-    [70, 170, 9, "#16A34A", false],
-    [150, 225, 10, "#2563EB", false],
-    [265, 210, 9, "#16A34A", false],
-    [340, 160, 10, "#2563EB", false],
-    [235, 30, 8, "#16A34A", false],
-    [45, 110, 7, "#7C3AED", false],
-  ];
-  const edges: Array<[number, number, string]> = [
-    [1, 0, "#3B82F6"], [2, 0, "#DB2777"], [3, 0, "#EA580C"], [4, 0, "#EA580C"],
-    [5, 0, "#EA580C"], [6, 0, "#3B82F6"], [7, 2, "#EA580C"], [8, 1, "#3B82F6"],
-    [4, 5, "#0D9488"],
-  ];
   return (
     <section id="graph" className="border-t border-white/10 bg-black">
       <div className="mx-auto max-w-6xl px-6 py-24">
         <SectionHeader
           eyebrow="Codebase graph"
           title="Your agent stops exploring and starts knowing"
-          subtitle="Veyr builds a knowledge graph of your codebase locally — powered by Graphify — and hands your agent a 400-token map instead of a 40-file reading list."
+          subtitle="Veyr builds a knowledge graph of your codebase locally — powered by Graphify — and hands your agent a 400-token map instead of a 40-file reading list. This is the real graph renderer, not a screenshot — try it below."
         />
-        <div className="mt-14 grid items-center gap-12 lg:grid-cols-2">
-          <svg
-            viewBox="0 0 400 260"
-            role="img"
-            aria-label="Illustration of a codebase graph: files, functions and classes connected by call and import edges"
-            className="mx-auto w-full max-w-md"
-          >
-            {edges.map(([from, to, color], i) => (
-              <line
-                key={i}
-                x1={nodes[from][0]}
-                y1={nodes[from][1]}
-                x2={nodes[to][0]}
-                y2={nodes[to][1]}
-                stroke={color}
-                strokeOpacity={0.45}
-                strokeWidth={1.5}
-              />
-            ))}
-            {nodes.map(([x, y, r, color, ring], i) => (
-              <g key={i}>
-                <circle cx={x} cy={y} r={r + 3} fill="#000" />
-                {ring && <circle cx={x} cy={y} r={r + 2.5} fill="#EAB308" />}
-                <circle cx={x} cy={y} r={r} fill={color} />
-              </g>
-            ))}
-            <text x="200" y="162" textAnchor="middle" fill="#c7ccd6" fontSize="11">
-              refreshToken()
-            </text>
-            <text x="300" y="103" textAnchor="middle" fill="#8a8f99" fontSize="10">
-              TokenStore
-            </text>
-          </svg>
-          <div>
-            <ul className="space-y-5">
-              {[
-                ["Built on your machine", "Pure AST parsing via Graphify — pinned install, zero LLM calls, no code leaves your device."],
-                ["Injected where agents look", "The graph summary lands in CLAUDE.md and VEYR_STATUS.json: architecture, the active file's callers and callees, the critical path."],
-                ["Structurally aware suggestions", "Leaf function on Opus, a god node, a redundant re-read, an unexplored dependency, high-connection code with no tests — five structural rules catch what spend data alone can't see."],
-              ].map(([title, body]) => (
-                <li key={title} className="flex gap-4">
-                  <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#4FABFF]" />
-                  <div>
-                    <h3 className="text-sm font-semibold text-white">{title}</h3>
-                    <p className="mt-1 text-sm leading-relaxed text-neutral-500">{body}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <CopyCodeBlock code="veyr graph" className="mt-8 max-w-xs" />
-          </div>
+
+        <div className="mt-14 grid gap-6 sm:grid-cols-3">
+          {[
+            ["Built on your machine", "Pure AST parsing via Graphify — pinned install, zero LLM calls, no code leaves your device."],
+            ["Injected where agents look", "The graph summary lands in CLAUDE.md and VEYR_STATUS.json: architecture, the active file's callers and callees, the critical path."],
+            ["Structurally aware suggestions", "Leaf function on Opus, a god node, a redundant re-read, an unexplored dependency, high-connection code with no tests — five structural rules catch what spend data alone can't see."],
+          ].map(([title, body]) => (
+            <div key={title}>
+              <h3 className="flex items-center gap-3 text-sm font-semibold text-white">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-[#4FABFF]" />
+                {title}
+              </h3>
+              <p className="mt-1.5 pl-5 text-sm leading-relaxed text-neutral-500">{body}</p>
+            </div>
+          ))}
         </div>
+
+        <div className="mt-12">
+          <GraphDemo />
+        </div>
+        <CopyCodeBlock code="veyr graph" className="mt-6 max-w-xs" />
       </div>
     </section>
   );
