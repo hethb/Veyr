@@ -7,6 +7,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { scanClaudeSessions } from "./claudeSessionScanner.js";
 import { daemonGet } from "./daemon.js";
 import { sessionsCacheFilePath } from "./paths.js";
 import { costUsd } from "./pricing.js";
@@ -158,16 +159,24 @@ function fromCacheFile(): readonly CliSessionEntry[] | null {
 }
 
 /**
- * Daemon first (app-priced, fresh), sessions.json fallback (CLI-priced from
- * the built-in table — close but not guaranteed identical to the app's
- * models.dev-backed figures). "missing" means neither source exists, i.e.
- * the Mac app has never scanned any Claude Code logs on this machine.
+ * Daemon first (app-priced, fresh) when a Mac app is running one. Otherwise
+ * — the permanent case on platforms with no daemon at all, not just a
+ * fallback — scans Claude Code's JSONL logs directly (scanClaudeSessions is
+ * incremental: unchanged files are skipped, so calling it on every read is
+ * cheap) and reads the resulting cache, CLI-priced from the built-in table
+ * (close but not guaranteed identical to the app's models.dev-backed
+ * figures). "missing" means no Claude Code logs exist on this machine at all.
  */
 export async function readSessions(): Promise<SessionsResult> {
   const payload = await daemonGet<unknown>("/sessions", 2000);
   if (payload !== null) {
     const sessions = fromDaemon(payload);
     if (sessions !== null) return { kind: "daemon", sessions };
+  }
+  try {
+    scanClaudeSessions();
+  } catch {
+    // Scanning is best-effort — fall through to whatever's already cached.
   }
   const sessions = fromCacheFile();
   if (sessions !== null) return { kind: "cache", sessions };
