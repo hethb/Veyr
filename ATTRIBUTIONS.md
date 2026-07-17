@@ -68,12 +68,27 @@ released under the BSD-2-Clause license.
   `packages/dashboard/src/components/ui/` are adapted from
   [Motion Primitives](https://github.com/ibelick/motion-primitives) by
   ibelick, MIT licensed.
-- The Claude, OpenAI, Groq, Cursor, Gemini, and GitHub Copilot marks are
-  SVG renderings sourced from [`@lobehub/icons-static-svg`](https://github.com/lobehub/lobe-icons)
-  (MIT-licensed wrapper). The `droid.svg` mark is Factory's official site
-  favicon, fetched directly from factory.ai. Each mark remains the trademark
-  of its respective owner (Anthropic, OpenAI, Groq, Cursor/Anysphere, Google,
-  GitHub/Microsoft, Factory) and is used here only to indicate interoperability,
-  per each brand's nominative-use allowances — not as an endorsement.
-  Per Microsoft's VS Code brand guidelines, which disallow the icon in
-  "works with" listings, VS Code is intentionally omitted from this row.
+- The Claude, OpenAI, Groq, Cursor, Gemini, GitHub Copilot, Antigravity,
+  Ollama, Perplexity, DeepSeek, ElevenLabs, and OpenCode marks are SVG
+  renderings sourced from [`@lobehub/icons-static-svg`](https://github.com/lobehub/lobe-icons)
+  (MIT-licensed wrapper).
+- The JetBrains mark is sourced from [`simple-icons`](https://github.com/simple-icons/simple-icons)
+  (CC0 wrapper); JetBrains additionally publishes its own logos for reuse at
+  [JetBrains/logos](https://github.com/JetBrains/logos) under terms requiring
+  the mark stay unaltered, in original colors, and secondary to the host's
+  own branding — satisfied here (small, unmodified, in a scrolling strip
+  under Veyr's own nav/branding).
+- The `droid.svg` (Factory) and `augment.svg` (Augment Code) marks are each
+  company's official site favicon, fetched directly from factory.ai and
+  augmentcode.com respectively — no other licensed vector source exists for
+  either.
+- LiteLLM has no distinct vector logomark; its own README and site use the
+  🚅 (bullet train) emoji as its brand identifier, so that Unicode character
+  is rendered directly as text rather than reproducing any third-party
+  graphic — this avoids depending on any particular emoji artwork's license.
+- Each mark remains the trademark of its respective owner and is used here
+  only to indicate interoperability, per each brand's nominative-use
+  allowances — not as an endorsement. Per Microsoft's VS Code brand
+  guidelines, which disallow the icon in "works with" listings, VS Code is
+  intentionally omitted from this row (see git history for the prior
+  discussion).

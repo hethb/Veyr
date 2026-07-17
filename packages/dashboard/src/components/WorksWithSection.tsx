@@ -1,13 +1,22 @@
 import { LogoCloud, type Logo } from "@/components/ui/logo-cloud";
 
 const AGENT_LOGOS: Logo[] = [
-  { src: "/logos/claude.svg", alt: "Claude" },
-  { src: "/logos/openai.svg", alt: "OpenAI / GPT" },
-  { src: "/logos/gemini.svg", alt: "Gemini" },
-  { src: "/logos/cursor.svg", alt: "Cursor" },
-  { src: "/logos/githubcopilot.svg", alt: "GitHub Copilot" },
-  { src: "/logos/groq.svg", alt: "Groq" },
-  { src: "/logos/droid.svg", alt: "Droid" },
+  { src: "/logos/claude.svg", name: "Claude" },
+  { src: "/logos/openai.svg", name: "GPT" },
+  { src: "/logos/gemini.svg", name: "Gemini" },
+  { src: "/logos/cursor.svg", name: "Cursor" },
+  { src: "/logos/githubcopilot.svg", name: "Copilot" },
+  { src: "/logos/groq.svg", name: "Groq" },
+  { src: "/logos/droid.svg", name: "Droid" },
+  { src: "/logos/opencode.svg", name: "Open Code" },
+  { src: "/logos/antigravity.svg", name: "Antigravity" },
+  { src: "/logos/augment.svg", name: "Augment" },
+  { src: "/logos/ollama.svg", name: "Ollama" },
+  { src: "/logos/perplexity.svg", name: "Perplexity" },
+  { src: "/logos/jetbrains.svg", name: "JetBrains AI" },
+  { src: "/logos/deepseek.svg", name: "DeepSeek" },
+  { src: "/logos/elevenlabs.svg", name: "ElevenLabs" },
+  { emoji: "🚅", name: "LiteLLM" },
 ];
 
 export function WorksWithSection() {
