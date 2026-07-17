@@ -326,6 +326,22 @@ function PrivacySection() {
       LLM calls, no code leaves your machine. See the README for how to manage
       or disable it.
     </>,
+    <>
+      macOS may prompt for Full Disk Access or Keychain access — both are
+      optional, used only to read browser cookies for web-based providers or
+      OAuth credentials, and both can be scoped to Veyr alone or disabled
+      entirely in Settings → Advanced. No Screen Recording, no Accessibility,
+      ever. No passwords stored.{" "}
+      <a
+        href="https://github.com/hethb/Veyr#macos-permissions"
+        target="_blank"
+        rel="noreferrer"
+        className="text-neutral-300 underline decoration-neutral-600 underline-offset-2 hover:text-white"
+      >
+        Full breakdown in the README
+      </a>
+      .
+    </>,
   ];
 
   return (

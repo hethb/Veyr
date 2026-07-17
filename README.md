@@ -55,6 +55,7 @@
     <li><a href="#local-development">Local Development</a></li>
     <li><a href="#automatic-dependency-installation">Automatic Dependency Installation</a></li>
     <li><a href="#privacy">Privacy</a></li>
+    <li><a href="#macos-permissions">macOS Permissions</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
@@ -374,6 +375,36 @@ Disable the feature entirely with `"codebaseGraph": false` in `~/.veyr/config.js
 - The optional AI classifier calls Anthropic's API using **your** key, only when you add one in Settings.
 - All ML training data stays in `~/.veyr/ml/` — never uploaded.
 - Graphify analyzes your codebase on-device (pure AST parsing, no LLM calls) — no source code leaves your machine. Veyr installs it automatically on first launch, pinned to an audited commit; see [Automatic Dependency Installation](#automatic-dependency-installation).
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+<!-- MACOS PERMISSIONS -->
+## macOS Permissions
+
+Why each permission is requested, and how to control it.
+
+- **Full Disk Access (optional)** — only required to read Safari cookies/local storage for web-based providers. If you don't grant it, use another supported browser, manual cookies/API keys, OAuth, or CLI/local sources where that provider supports them.
+- **Keychain access (prompted by macOS)**:
+  - Chromium cookie import needs the browser's "Safe Storage" key to decrypt cookies.
+  - Claude OAuth bootstrap may read the Claude CLI Keychain item when Veyr has no usable cached credentials.
+  - Veyr may use Keychain for browser cookie decryption, cached cookie headers, and OAuth/device-flow credentials where those sources require it.
+- **Files & Folders prompts (folder/volume access)** — Veyr launches provider CLIs and local probes for some providers. If those helpers read a project directory or external drive, macOS may ask Veyr for that folder/volume (e.g., Desktop or an external volume). This is driven by the helper's working directory, not background disk scanning.
+- **What we do not request in the background** — no Screen Recording or Accessibility permissions. User-triggered helper actions may ask macOS for Automation permission to open Terminal. No passwords are stored (browser cookies are reused only when you opt in).
+
+### How do I prevent the Keychain alerts?
+
+1. Open **Keychain Access.app** → login keychain → search for the prompted item (for Claude OAuth, usually "Claude Code-credentials").
+2. Open the item → **Access Control** → add `Veyr.app` under "Always allow access by these applications".
+3. Prefer adding just Veyr (avoid "Allow all applications" unless you want it wide open).
+4. Relaunch Veyr after saving.
+
+Do the same for a browser's cookie storage: find its "Safe Storage" key (e.g., "Chrome Safe Storage", "Brave Safe Storage", "Microsoft Edge Safe Storage"), open it, add `Veyr.app` under Access Control. That removes the prompt when Veyr decrypts cookies for that browser.
+
+**Last resort — stop all Keychain reads entirely:** if "Always Allow" doesn't stick (e.g., macOS resets the ACL after a Chromium update or a partition_id reset), open Veyr → Settings → Advanced → Keychain access and enable **Disable Keychain access**. Veyr will no longer touch the Keychain. Browser-cookie-based providers will be skipped, but Claude/Codex OAuth via the CLI still works (it reads `~/.codex` / `~/.claude` config files, not the Keychain).
+
+**Still getting prompted after uninstalling?** Deleting the app prevents a new launch from that bundle, but an already-running Veyr process can keep requesting Keychain access until it quits. Check for that process, a Login Item, another installed copy, or a prompt that names a different requesting binary/path before assuming something is wrong.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
