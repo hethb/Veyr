@@ -17,6 +17,7 @@ import { CopyCodeBlock } from "../components/CopyCodeBlock";
 import { FeaturesSection } from "../components/FeaturesSection";
 import { GraphDemo } from "../components/GraphDemo";
 import { HeroSection } from "../components/HeroSection";
+import { WorksWithSection } from "../components/WorksWithSection";
 import { NavBar } from "@/components/ui/tubelight-navbar";
 
 const LANDING_NAV_ITEMS = [
@@ -40,6 +41,7 @@ export function Landing() {
     <div className="min-h-screen bg-black text-white">
       <Header />
       <HeroSection />
+      <WorksWithSection />
       <HowItWorks />
       <UsageSection />
       <GraphSection />

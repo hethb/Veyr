@@ -61,3 +61,19 @@ released under the MIT license.
 
 DOCX → HTML conversion is delegated to [`mammoth`](https://github.com/mwilliamson/mammoth.js),
 released under the BSD-2-Clause license.
+
+## Landing page logo cloud (`packages/dashboard/public/logos/`)
+
+- `infinite-slider.tsx` and `progressive-blur.tsx` under
+  `packages/dashboard/src/components/ui/` are adapted from
+  [Motion Primitives](https://github.com/ibelick/motion-primitives) by
+  ibelick, MIT licensed.
+- The Claude, OpenAI, Groq, Cursor, Gemini, and GitHub Copilot marks are
+  SVG renderings sourced from [`@lobehub/icons-static-svg`](https://github.com/lobehub/lobe-icons)
+  (MIT-licensed wrapper). The `droid.svg` mark is Factory's official site
+  favicon, fetched directly from factory.ai. Each mark remains the trademark
+  of its respective owner (Anthropic, OpenAI, Groq, Cursor/Anysphere, Google,
+  GitHub/Microsoft, Factory) and is used here only to indicate interoperability,
+  per each brand's nominative-use allowances — not as an endorsement.
+  Per Microsoft's VS Code brand guidelines, which disallow the icon in
+  "works with" listings, VS Code is intentionally omitted from this row.
