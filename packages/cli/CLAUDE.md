@@ -1,27 +1,27 @@
 <!-- veyr:spend-status:begin -->
 ## Veyr spend status
-> Auto-updated by Veyr · 2026-07-14 00:55 · disable in Veyr settings
+> Auto-updated by Veyr · 2026-07-17 00:14 · disable in Veyr settings
 
-**Current session:** claude-fable-5 · $2.1300/session · $0.3790/min
-**Cache hit rate:** 99%
+**Current session:** claude-fable-5 · $16.9400/session · $0.0260/min
+**Cache hit rate:** 100%
 
 **Recommendations:**
-- Run /compact — Session is burning $0.38/minute. Running /compact now reduces per-turn input cost by cutting accumulated context.
+- set budget cap — One project dominating spend is fine on purpose — set a budget cap in Controls so overruns get flagged automatically.
 
-**Agent instructions:** You are currently in a Veyr-monitored session. Session cost so far: $2.13 at $0.379/min on claude-fable-5. Cache hit rate is 99% — good. Keep system prompts stable. This session is long and expensive. Run /compact now to compress context and reduce per-turn cost by ~60%. This is a long conversation. Before your next response, consider running /compact to compress context and reduce per-turn cost.
+**Agent instructions:** You are currently in a Veyr-monitored session. Session cost so far: $16.94 at $0.026/min on claude-fable-5. Cache hit rate is 100% — good. Keep system prompts stable. This is a long conversation. Before your next response, consider running /compact to compress context and reduce per-turn cost.
 <!-- veyr:spend-status:end -->
 
 <!-- veyr:graph-context:begin -->
 ## Veyr codebase graph
-> Powered by Graphify · Full graph · 2026-07-14 00:55
+> Powered by Graphify · Full graph · 2026-07-17 00:14
 
 ### Architecture
-2957 files, 37718 symbols in 1199 communities. Primary languages: Swift, TypeScript, JavaScript. Highest-impact code: .logger(), L(), UsageFetcher.
+2906 files, 37248 symbols in 1233 communities. Primary languages: Swift, TypeScript, C. Highest-impact code: .logger(), L(), UsageFetcher.
 
-### Active context: package.json (package.json:1)
+### Active context: README.md (README.md:1)
 
 ### Critical path (highest-impact files)
-- **.logger()** (packages/desktop-mac/Sources/CodexBarCore/Logging/CodexBarLog.swift) — 251 connections
+- **.logger()** (packages/desktop-mac/Sources/CodexBarCore/Logging/CodexBarLog.swift) — 252 connections
 - **L()** (packages/desktop-mac/Sources/CodexBar/Localization.swift) — 177 connections
 - **UsageFetcher** (packages/desktop-mac/Sources/CodexBarCore/UsageFetcher.swift) — 121 connections
 - **BrowserDetection** (packages/desktop-mac/Sources/CodexBarCore/BrowserDetection.swift) — 114 connections

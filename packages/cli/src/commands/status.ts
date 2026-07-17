@@ -88,6 +88,45 @@ function render(result: VeyrStatusResult, now: Date): void {
     }
   }
 
+  const tools = status.tool_analysis;
+  const quality = status.tool_quality;
+  if (quality?.analyzed) {
+    console.log();
+    console.log(chalk.bold("Tool health"));
+    if (tools) {
+      console.log(
+        `  ${tools.tools_used} of ~${tools.tools_loaded} known tools used this session` +
+          (tools.unused_tool_token_estimate > 0
+            ? chalk.dim(` · unused definitions ≈ ${tools.unused_tool_token_estimate} tokens/turn`)
+            : "")
+      );
+    }
+    if (quality.flagged_tools.length === 0) {
+      console.log(
+        chalk.dim("  No vague tool names detected. (Descriptions aren't visible in local logs, so only names are checked.)")
+      );
+    } else {
+      for (const tool of quality.flagged_tools) {
+        console.log(
+          `  ${chalk.yellow(tool.name)}  ${chalk.dim(`${tool.issue.replace(/_/g, " ")} — ${tool.suggestion}`)}`
+        );
+      }
+    }
+  }
+
+  const complexity = status.complexity;
+  if (complexity?.classifier_enabled) {
+    console.log();
+    console.log(chalk.bold("Complexity"));
+    console.log(
+      `  ${complexity.classified_turns_this_month.toLocaleString()} turns classified this month · ` +
+        `${complexity.simple_on_frontier_pct}% simple tasks on a frontier model` +
+        (complexity.wasted_cost_this_month_usd > 0
+          ? chalk.dim(` (~${fmtUsd(complexity.wasted_cost_this_month_usd)} avoidable)`)
+          : "")
+    );
+  }
+
   const graph = status.graph_context;
   if (graph?.available) {
     console.log();

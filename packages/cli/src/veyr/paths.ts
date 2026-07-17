@@ -23,6 +23,24 @@ export function graphCacheFilePath(): string {
   return path.join(veyrHome(), "cache", "graph.json");
 }
 
+export function sessionsCacheFilePath(): string {
+  return path.join(veyrHome(), "cache", "sessions.json");
+}
+
+export function tagOverridesFilePath(): string {
+  return path.join(veyrHome(), "tag-overrides.json");
+}
+
+/** Savings-tracker totals — top-level, not cache/, mirroring VeyrPaths.savingsStoreFile. */
+export function savingsStoreFilePath(): string {
+  return path.join(veyrHome(), "savings.json");
+}
+
+/** CLI-only state (first-run marker). Written by this CLI, never by the Mac app. */
+export function cliStateFilePath(): string {
+  return path.join(veyrHome(), "cli.json");
+}
+
 export function guidanceRulesFilePath(): string {
   return path.join(veyrHome(), "guidance-rules.json");
 }

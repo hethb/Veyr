@@ -760,5 +760,30 @@ for session in real.prefix(5) {
 check(!real.isEmpty, "real Claude Code sessions found")
 check(real.allSatisfy { $0.usage.costUSD >= 0 }, "no negative costs")
 
+// MARK: - 5. Daemon /sessions wire shape
+
+// The CLI (packages/cli/src/veyr/sessions.ts) decodes the daemon's GET
+// /sessions body by these exact camelCase keys + ISO-8601 dates. Guard the
+// encoding here so a SessionEntry/encoder change can't silently break it.
+print("\n— daemon /sessions encoding —")
+if let sample = real.first {
+    let encoder = JSONEncoder()
+    encoder.dateEncodingStrategy = .iso8601
+    struct SessionsResponse: Encodable { var sessions: [SessionEntry] }
+    let data = (try? encoder.encode(SessionsResponse(sessions: [sample]))) ?? Data()
+    let decoded = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+    let row = (decoded?["sessions"] as? [[String: Any]])?.first
+    check(row != nil, "sessions array encodes")
+    for key in ["timestamp", "startedAt", "provider", "modelId", "featureTag", "usage", "entryCount"] {
+        check(row?[key] != nil, "row has \(key)")
+    }
+    let usage = row?["usage"] as? [String: Any]
+    for key in ["inputTokens", "outputTokens", "cacheReadTokens", "cacheWriteTokens", "costUSD"] {
+        check(usage?[key] != nil, "usage has \(key)")
+    }
+    let timestamp = row?["timestamp"] as? String ?? ""
+    check(timestamp.contains("T"), "timestamp is ISO-8601 (\(timestamp))")
+}
+
 print(failures == 0 ? "\nSMOKE PASSED" : "\nSMOKE FAILED (\(failures))")
 exit(failures == 0 ? 0 : 1)

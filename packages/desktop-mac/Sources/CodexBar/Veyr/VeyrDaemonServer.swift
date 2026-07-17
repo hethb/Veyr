@@ -86,7 +86,10 @@ public final class VeyrDaemonServer {
             return Self.handleStyleComplete(queryItems: request.queryItems)
         case ("GET", "/savings"):
             return Self.handleSavings()
-        case (_, "/health"), (_, "/status"), (_, "/graph"), (_, "/style/complete"), (_, "/savings"):
+        case ("GET", "/sessions"):
+            return await self.handleSessions()
+        case (_, "/health"), (_, "/status"), (_, "/graph"), (_, "/style/complete"), (_, "/savings"),
+             (_, "/sessions"):
             return CLILocalHTTPResponse(
                 status: .methodNotAllowed,
                 body: Data(#"{"error":"method not allowed"}"#.utf8))
@@ -141,6 +144,29 @@ public final class VeyrDaemonServer {
             await VeyrGraphService.shared.refreshNow(root: path)
         }
         return Self.json(["ok": true, "status": "refresh_started"])
+    }
+
+    /// Per-session spend rows for `veyr usage` — the same SessionEntry list
+    /// every app surface reads, priced by the app's full pricing pipeline.
+    /// Encoded with SessionEntry's own camelCase keys + ISO dates (like
+    /// `/graph`, unlike `/status`'s snake_case): the CLI decodes the struct
+    /// shape directly rather than a hand-mapped payload.
+    private func handleSessions() async -> CLILocalHTTPResponse {
+        let store = VeyrSpend.shared
+        if store.sessions.isEmpty {
+            await store.refresh()
+        }
+        struct SessionsResponse: Encodable {
+            var sessions: [SessionEntry]
+        }
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        guard let data = try? encoder.encode(SessionsResponse(sessions: store.sessions)) else {
+            return CLILocalHTTPResponse(
+                status: .internalServerError,
+                body: Data(#"{"error":"encoding failed"}"#.utf8))
+        }
+        return CLILocalHTTPResponse(status: .ok, body: data)
     }
 
     private struct StyleCompletionResponse: Encodable {

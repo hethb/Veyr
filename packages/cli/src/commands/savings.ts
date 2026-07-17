@@ -1,14 +1,18 @@
 // `veyr savings` — retrospective token/dollar savings tracker: lifetime +
 // current-project totals, each component confidence-tagged (measured /
 // assumption / correlational — never blended into one opaque figure).
-// There's no flat-file mirror of this data the way there is for
-// status/graph, so daemon-absent genuinely means no data this run, not a
-// fallback to a stale file — the command says so plainly.
+// Prefers the daemon (which also computes the live redundant-read figure);
+// falls back to reading ~/.veyr/savings.json directly — the stored totals
+// are all there, only the current-session redundant-read observation needs
+// the live app. `--projects` lists every project's totals straight from the
+// store (the daemon only reports lifetime + the current project).
 
 import chalk from "chalk";
 import { daemonGet } from "../veyr/daemon.js";
 import { readSavingsTracker, writeConfigKey } from "../veyr/config.js";
-import { fmtCount, fmtUsd } from "../ui.js";
+import { readSavingsStore, totalUsd as storeTotalUsd, type SavingsTotals as StoreTotals } from "../veyr/savingsStore.js";
+import { loadTagInferrer } from "../veyr/tags.js";
+import { fmtCount, fmtUsd, renderColumns } from "../ui.js";
 
 interface SavingsTotals {
   readonly component1MeasuredTokens: number;
@@ -65,10 +69,69 @@ function renderTotals(label: string, totals: SavingsTotals, detail: boolean): vo
   }
 }
 
-export async function savingsCommand(opts: { detail?: boolean }): Promise<void> {
+/** Offline path: totals from ~/.veyr/savings.json, current project inferred
+ * from the cwd the same way the app tags sessions. The one thing this can't
+ * show is the live redundant-read figure — that needs the running app. */
+function renderFromStore(opts: { detail?: boolean }): void {
+  if (!readSavingsTracker()) {
+    console.log(
+      chalk.dim("Savings tracker is off.") +
+        chalk.dim(" Run `veyr savings enable` to start tracking (off by default).")
+    );
+    return;
+  }
+  const store = readSavingsStore();
+  if (store === null) {
+    console.log(chalk.dim("○ tracker is on, but nothing has been recorded yet — totals appear after the Mac app's next active session."));
+    return;
+  }
+  console.log(chalk.yellow("● offline") + chalk.dim(" · app not running — totals read from ~/.veyr/savings.json"));
+  console.log();
+  renderTotals("Lifetime", store.lifetimeTotals, opts.detail ?? false);
+  console.log();
+  const currentTag = loadTagInferrer().inferTag(process.cwd());
+  const projectTotals = store.perProjectTotals[currentTag];
+  if (projectTotals) {
+    renderTotals(`This project (${currentTag})`, projectTotals, opts.detail ?? false);
+  } else {
+    console.log(chalk.dim(`This project (${currentTag}): no data yet.`));
+  }
+  console.log();
+  console.log(chalk.dim("Redundant re-reads (current session) need the running app — skipped."));
+}
+
+function renderProjectsBreakdown(): void {
+  const store = readSavingsStore();
+  const projects = Object.entries(store?.perProjectTotals ?? {}).sort(
+    (a, b) => storeTotalUsd(b[1]) - storeTotalUsd(a[1])
+  );
+  if (store === null || projects.length === 0) {
+    console.log(chalk.dim("○ no per-project savings recorded yet."));
+    return;
+  }
+  console.log(chalk.bold("Savings by project") + chalk.dim("  (all time, all confidence tiers summed)"));
+  const rows = projects.map(([tag, totals]: [string, StoreTotals]) => [
+    tag,
+    chalk.bold(fmtUsd(storeTotalUsd(totals))),
+    chalk.dim(
+      `${fmtUsd(totals.component1MeasuredUSD)} measured · ` +
+        `${fmtUsd(totals.component1AssumptionUSD)} estimated · ` +
+        `${fmtUsd(totals.component3CorrelationalUSD)} correlational`
+    ),
+  ]);
+  for (const line of renderColumns(rows, { rightAlign: [1] })) console.log(line);
+  console.log();
+  console.log(chalk.dim("Run `veyr savings --detail` for what each confidence tier means."));
+}
+
+export async function savingsCommand(opts: { detail?: boolean; projects?: boolean }): Promise<void> {
+  if (opts.projects) {
+    renderProjectsBreakdown();
+    return;
+  }
   const response = await daemonGet<SavingsResponse>("/savings", 1000);
   if (response === null) {
-    console.log(chalk.dim("○ no data — the Veyr menu bar app isn't running (no file fallback for this one)."));
+    renderFromStore(opts);
     return;
   }
   if (!response.enabled) {

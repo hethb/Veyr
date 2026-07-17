@@ -185,7 +185,7 @@ brew install hethb/veyr/veyr          # CLI
 | **Document → Markdown** | Converts PDFs, Word docs, HTML, CSV, JSON, XML into compact LLM-friendly Markdown. 70–90% fewer input tokens than raw files. |
 | **VS Code extension** | Live session cost in status bar, sidebar panel with burn rate and suggestions, one-click model switch commands. |
 | **Browser extension** *(legacy, optional)* | Chrome MV3 overlay for chatgpt.com and claude.ai — live token counts, complexity-aware prompt compression. Not one of Veyr's core three surfaces; see [Repository Layout](#repository-layout). |
-| **Terminal CLI** | `veyr status`, `veyr suggestions` — reads the same local data as the other two surfaces. |
+| **Terminal CLI** | `veyr` dashboard, `veyr status`, `veyr usage`, `veyr graph`, `veyr rules`, `veyr savings` — full parity with the Mac app and VS Code surfaces, reading the same local data. |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -237,11 +237,17 @@ Its source has already been extracted out of this repo (see [Repository Layout](
 ```bash
 npm install -g getcanopy   # or: brew install hethb/veyr/veyr
 
-veyr status                # today/week/month spend, read from local session logs
-veyr suggestions           # optimization tips with ready-to-run commands
+veyr                       # terminal dashboard: session, usage, graph, savings, rules + all commands
+veyr status                # current session cost, budget, alerts, tool health, recommendations
+veyr usage                 # per-agent / per-project spend, today/week/month, session timeline
+veyr graph                 # Graphify graph status + what Veyr understands about the project
+veyr rules                 # view/toggle the CLAUDE.md agent-guidance rule set
+veyr savings               # confidence-tagged savings, lifetime + per project
 ```
 
-`veyr init` walks new users through setup — no account, no key.
+The dashboard renders once automatically on first run as a welcome screen —
+no account, no key, no setup. See [packages/cli/README.md](packages/cli/README.md)
+for the full command table.
 
 ### VS Code Extension + Claude Code
 

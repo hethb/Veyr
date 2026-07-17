@@ -6,7 +6,8 @@
 
 import chalk from "chalk";
 import { readGraphCache, requestGraphRefresh, topNodesByConnections, type GraphCacheResult } from "../veyr/graph.js";
-import { fmtAge } from "../ui.js";
+import { readStatus } from "../veyr/status.js";
+import { fmtAge, fmtTokens } from "../ui.js";
 
 const REFRESH_POLL_INTERVAL_MS = 1000;
 const REFRESH_POLL_TIMEOUT_MS = 5 * 60 * 1000;
@@ -88,5 +89,40 @@ export async function graphCommand(opts: { json?: boolean; top?: string; refresh
       const label = node.label.length > width ? `${node.label.slice(0, width - 1)}…` : node.label.padEnd(width);
       console.log(`  ${label}  ${chalk.dim(node.file)}  ${node.connections}`);
     }
+  }
+
+  await renderUnderstanding();
+}
+
+/** What Veyr currently understands about the project — the graph_context the
+ * agent-status feed carries (same data the VS Code sidebar and the Mac app's
+ * Agent tab show): the architectural overview, the token-savings estimate,
+ * and the file the agent is currently working in, when known. */
+async function renderUnderstanding(): Promise<void> {
+  const status = await readStatus();
+  if (status.kind === "missing") return;
+  const graph = status.status.graph_context;
+  if (!graph?.available) return;
+
+  console.log();
+  console.log(chalk.bold("Current understanding"));
+  console.log(`  ${graph.architectural_overview}`);
+
+  const savings = graph.token_savings_estimate;
+  if (savings && (savings.savings_this_session > 0 || savings.savings_this_month > 0)) {
+    console.log(
+      `  Saves your agent ~${fmtTokens(savings.savings_this_session)} exploration tokens this session` +
+        chalk.dim(` (~${fmtTokens(savings.savings_this_month)}/mo)`) +
+        (graph.is_partial ? chalk.yellow(" — partial graph") : "")
+    );
+  }
+
+  const active = graph.active_file_summary;
+  if (active) {
+    console.log();
+    console.log(chalk.bold("Active context") + `  ${active.name}` + chalk.dim(`  (${active.file})`));
+    if (active.callers.length > 0) console.log(chalk.dim(`  Called by: ${active.callers.join(", ")}`));
+    if (active.callees.length > 0) console.log(chalk.dim(`  Calls: ${active.callees.join(", ")}`));
+    if (active.tests.length > 0) console.log(chalk.dim(`  Tests: ${active.tests.join(", ")}`));
   }
 }

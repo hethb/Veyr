@@ -41,25 +41,48 @@ minutes), the same as before the daemon existed.
 
 ## Commands
 
+Run `veyr` with no arguments for the terminal dashboard — a one-screen
+overview (session, usage, graph, savings, rules) that also lists every
+command below, so you never need this table to discover one. It renders
+once automatically on the CLI's very first run as a welcome/orientation
+screen (marker: `~/.veyr/cli.json`; TTY only, never spliced into `--json`
+or piped output).
+
 | Command | What it does |
 |---|---|
-| `veyr status` | Current session cost, today's spend, budget, alerts, recommendations |
+| `veyr` / `veyr dashboard` | Terminal overview: session, usage, graph, savings, rules, command list |
+| `veyr status` | Current session cost, today's spend, budget, alerts, tool health, recommendations |
 | `veyr status --watch` | Same, polling every 3s and re-rendering on change (not a live stream — see below) |
 | `veyr status --json` | Raw status payload |
-| `veyr graph` | Graphify graph status for whichever workspace Veyr last built |
+| `veyr usage` | Per-agent (provider · model) and per-project spend, today/week/month, 7-day bars, session timeline |
+| `veyr usage --sessions <n>` | Show more/fewer recent sessions (default 8) |
+| `veyr usage --json` | Raw session entries |
+| `veyr graph` | Graphify graph status + current understanding (overview, savings estimate, active file) |
 | `veyr graph --refresh` | Trigger an on-demand rescan of the current directory (launches Veyr headlessly if needed) |
 | `veyr graph --top <n>` | Show more/fewer top-connected nodes (default 10) |
 | `veyr graph --json` | Raw graph cache payload |
-| `veyr rules list` | The agent-guidance rule set and whether injection is on |
+| `veyr rules` / `veyr rules list` | The agent-guidance rule set and whether injection is on |
 | `veyr rules enable <id>` / `disable <id>` | Toggle one rule |
 | `veyr rules on` / `off` | Toggle the whole `## Veyr agent guidance` CLAUDE.md section (default off) |
+| `veyr savings` | Estimated savings, lifetime + current project, every figure confidence-tagged |
+| `veyr savings --projects` | Savings broken down per project (all time) |
+| `veyr savings --detail` | Full per-component breakdown and methodology |
+| `veyr savings enable` / `disable` / `status` | Toggle/inspect the savings tracker (default off) |
+| `veyr compose` | Compose a prompt interactively with style-based suggestions |
+| `veyr style enable` / `disable` / `status` | Toggle/inspect on-device prompt-style learning (default off) |
+
+`veyr usage` prefers the daemon's `/sessions` (rows priced by the app's full
+pricing pipeline, models.dev catalog included). When the daemon is
+unreachable it re-derives sessions from `~/.veyr/cache/sessions.json` and
+prices them with a built-in rate table — the output labels which source
+you're seeing, and locally-priced figures can differ slightly from the
+app's.
 
 ## What this CLI intentionally does not do
 
 - **No `integrate claude-code`, no Cursor/shell integration, no `ANTHROPIC_BASE_URL` swap.** Earlier versions of this CLI routed traffic through a proxy; that mechanism is gone for good, not just moved. Veyr never sits between you and a model provider.
-- **No dashboard, no web view.** Everything above is plain terminal output.
+- **No hosted dashboard, no web view.** Everything above — the `veyr` dashboard included — is plain terminal output; nothing opens a browser or a GUI window.
 - **No `veyr suggestions`.** The full suggestion-engine output only exists in the Mac app's memory and isn't persisted to a file yet — `veyr status`'s recommendations are a narrower, separate feed (budget/model-switch actions) that *is* persisted.
-- **No historical spend breakdown (week/month/per-project).** Only today's running total and the current session are exposed in the shared status feed today.
 
 ## Development
 
