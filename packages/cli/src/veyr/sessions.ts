@@ -8,8 +8,9 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { scanClaudeSessions } from "./claudeSessionScanner.js";
+import { scanCodexSessions } from "./codexSessionScanner.js";
 import { daemonGet } from "./daemon.js";
-import { sessionsCacheFilePath } from "./paths.js";
+import { codexSessionsCacheFilePath, sessionsCacheFilePath } from "./paths.js";
 import { costUsd } from "./pricing.js";
 import { loadTagInferrer } from "./tags.js";
 
@@ -158,14 +159,96 @@ function fromCacheFile(): readonly CliSessionEntry[] | null {
   return sessions.sort((a, b) => b.timestampMs - a.timestampMs);
 }
 
+// ---------------------------------------------------------------------------
+// Codex file fallback — codexSessionScanner's row cache, priced CLI-side
+// ---------------------------------------------------------------------------
+
+interface CodexCachedRow {
+  readonly timestampMs: number;
+  readonly model?: string;
+  readonly input: number;
+  readonly output: number;
+  readonly cacheRead: number;
+}
+
+interface CodexCachedFile {
+  readonly sessionId?: string;
+  readonly cwd?: string;
+  readonly rows?: readonly CodexCachedRow[];
+}
+
+/**
+ * Same shape as fromCacheFile(), for Codex's separate cache file. Pricing
+ * note: pricing.ts has no OpenAI/Codex rate table — every Codex model falls
+ * through costUsd()'s generic unknown-model fallback ($2/$8 per million
+ * tokens), so costUSD here is a rough placeholder, not a real figure, until
+ * pricing.ts gets real Codex rates.
+ */
+function fromCodexCacheFile(): readonly CliSessionEntry[] | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(fs.readFileSync(codexSessionsCacheFilePath(), "utf8"));
+  } catch {
+    return null;
+  }
+  if (typeof parsed !== "object" || parsed === null) return null;
+  const cache = parsed as { version?: number; files?: Record<string, CodexCachedFile> };
+  if (cache.version !== 1 || typeof cache.files !== "object" || cache.files === null) return null;
+
+  const inferrer = loadTagInferrer();
+  const sessions: CliSessionEntry[] = [];
+
+  for (const [filePath, file] of Object.entries(cache.files)) {
+    const rows = file.rows ?? [];
+    if (rows.length === 0) continue;
+
+    let inputTokens = 0;
+    let outputTokens = 0;
+    let cacheReadTokens = 0;
+    let cost = 0;
+    const modelCounts = new Map<string, number>();
+    let minTs = Number.POSITIVE_INFINITY;
+    let maxTs = Number.NEGATIVE_INFINITY;
+
+    for (const row of rows) {
+      const model = row.model ?? "unknown";
+      inputTokens += Math.max(0, row.input);
+      outputTokens += Math.max(0, row.output);
+      cacheReadTokens += Math.max(0, row.cacheRead);
+      cost += costUsd(model, row.input, row.output, row.cacheRead, 0, row.timestampMs);
+      modelCounts.set(model, (modelCounts.get(model) ?? 0) + 1);
+      minTs = Math.min(minTs, row.timestampMs);
+      maxTs = Math.max(maxTs, row.timestampMs);
+    }
+
+    const dominantModel =
+      [...modelCounts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] ?? "unknown";
+
+    sessions.push({
+      timestampMs: maxTs,
+      startedAtMs: minTs,
+      provider: "codex",
+      modelId: dominantModel,
+      featureTag: inferrer.inferTag(file.cwd),
+      usage: { inputTokens, outputTokens, cacheReadTokens, cacheWriteTokens: 0, costUSD: cost },
+      projectPath: file.cwd,
+      sessionId: file.sessionId ?? path.basename(filePath, path.extname(filePath)),
+      entryCount: rows.length,
+    });
+  }
+
+  return sessions;
+}
+
 /**
  * Daemon first (app-priced, fresh) when a Mac app is running one. Otherwise
  * — the permanent case on platforms with no daemon at all, not just a
- * fallback — scans Claude Code's JSONL logs directly (scanClaudeSessions is
- * incremental: unchanged files are skipped, so calling it on every read is
- * cheap) and reads the resulting cache, CLI-priced from the built-in table
- * (close but not guaranteed identical to the app's models.dev-backed
- * figures). "missing" means no Claude Code logs exist on this machine at all.
+ * fallback — scans Claude Code's and Codex CLI's logs directly (both
+ * scanners are incremental: unchanged files are skipped, so calling them on
+ * every read is cheap) and merges both caches, CLI-priced from the built-in
+ * table (close but not guaranteed identical to the app's models.dev-backed
+ * figures, and for Codex, a rough placeholder — see fromCodexCacheFile).
+ * "missing" means no Claude Code or Codex logs exist on this machine at all.
  */
 export async function readSessions(): Promise<SessionsResult> {
   const payload = await daemonGet<unknown>("/sessions", 2000);
@@ -178,9 +261,16 @@ export async function readSessions(): Promise<SessionsResult> {
   } catch {
     // Scanning is best-effort — fall through to whatever's already cached.
   }
-  const sessions = fromCacheFile();
-  if (sessions !== null) return { kind: "cache", sessions };
-  return { kind: "missing" };
+  try {
+    scanCodexSessions();
+  } catch {
+    // Same — Codex logs may not exist on this machine at all, which is fine.
+  }
+  const claude = fromCacheFile();
+  const codex = fromCodexCacheFile();
+  if (claude === null && codex === null) return { kind: "missing" };
+  const merged = [...(claude ?? []), ...(codex ?? [])].sort((a, b) => b.timestampMs - a.timestampMs);
+  return { kind: "cache", sessions: merged };
 }
 
 // ---------------------------------------------------------------------------

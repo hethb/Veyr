@@ -27,6 +27,11 @@ export function sessionsCacheFilePath(): string {
   return path.join(veyrHome(), "cache", "sessions.json");
 }
 
+/** Separate from sessionsCacheFilePath() — no existing Claude/Codex combined cache schema to match. */
+export function codexSessionsCacheFilePath(): string {
+  return path.join(veyrHome(), "cache", "codex-sessions.json");
+}
+
 export function tagOverridesFilePath(): string {
   return path.join(veyrHome(), "tag-overrides.json");
 }
