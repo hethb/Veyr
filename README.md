@@ -298,6 +298,7 @@ The three core surfaces, plus one legacy package still physically in this repo:
 veyr/
 ├── packages/
 │   ├── desktop-mac/        # core: native Swift menu bar app (built on CodexBar)
+│   ├── desktop-windows/    # in progress: native Windows tray app (forked from Win-CodexBar)
 │   ├── vscode-extension/   # core: live session cost + optimization suggestions in VS Code
 │   ├── cli/                # core: veyr terminal CLI (status, suggestions)
 │   ├── dashboard/          # legacy: React dashboard UI for the old proxy-based product — not part of the current product, untouched

@@ -13,6 +13,24 @@ Thank you, Peter, for building and open-sourcing CodexBar.
 
 ---
 
+## Win-CodexBar
+
+Veyr's native Windows app is forked from **Win-CodexBar** by the nesszer team, itself a Tauri + React + Rust port of CodexBar (above) to Windows.
+
+- GitHub: https://github.com/nesszer/Win-CodexBar
+- License: MIT (same terms as upstream CodexBar)
+
+Win-CodexBar provides the Windows-native provider data layer this fork builds
+on — 56 providers, a tray-first UI, an installed local CLI, and Windows
+credential handling via DPAPI. Veyr's fork ([packages/desktop-windows](./packages/desktop-windows))
+extends it with the same Graphify codebase-graph, CLAUDE.md injection,
+prompt autocomplete, and savings-tracking layer the Mac app has, while
+preserving Win-CodexBar's and CodexBar's original license and attribution.
+
+Thank you to the Win-CodexBar maintainers for the Windows port.
+
+---
+
 ## Graphify
 
 Veyr's codebase graph analysis is powered by **Graphify** by Graphify Labs.
