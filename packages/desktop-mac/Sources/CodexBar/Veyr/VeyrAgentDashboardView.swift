@@ -142,6 +142,10 @@ struct VeyrAgentDashboardView: View {
                     .font(.caption)
                     .foregroundStyle(badge.color)
                 Spacer()
+                Button("View graph") {
+                    VeyrGraphWindowController.shared.show()
+                }
+                .controlSize(.small)
                 Button("Open graph view ↗") {
                     if let url = URL(string: VeyrConfig.load().graphPageUrl) {
                         NSWorkspace.shared.open(url)
