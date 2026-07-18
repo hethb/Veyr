@@ -19,6 +19,7 @@ import {
   type VeyrStatusResult,
 } from "./agentStatus";
 import { composePromptCommand, copyComposedPromptCommand } from "./composePrompt";
+import { GraphPanel } from "./graphPanel";
 import { showSavingsDetailCommand, VeyrSavingsStatusBar } from "./savingsStatusBar";
 import { VeyrStatusBar } from "./statusBar";
 import { veyrComposeLanguageSelector, VeyrStyleCompletionProvider } from "./styleCompletionProvider";
@@ -116,8 +117,10 @@ class VeyrViewProvider implements vscode.WebviewViewProvider {
       const message = msg as Record<string, unknown>;
       if (message["type"] === "openDashboard") {
         void vscode.env.openExternal(vscode.Uri.parse(dashboardUrl()));
-      } else if (message["type"] === "openGraph") {
+      } else if (message["type"] === "openGraphExternal") {
         void vscode.env.openExternal(vscode.Uri.parse(graphPageUrl()));
+      } else if (message["type"] === "openGraphPanel") {
+        void vscode.commands.executeCommand("veyr.openGraph");
       } else if (message["type"] === "copyCommand" && typeof message["command"] === "string") {
         void vscode.env.clipboard.writeText(message["command"]).then(() => {
           void vscode.window.showInformationMessage(
@@ -263,7 +266,8 @@ function renderGraphSection(agent: VeyrStatusResult): string {
       ${activeHtml}
       <div class="row"><span class="muted">Saved this session</span>
         <b>~${formatTokens(savings.savings_this_session)} tokens (partial)</b></div>
-      <button onclick="openGraph()">Open graph visualization ↗</button>`;
+      <button onclick="openGraphPanel()">Open codebase graph</button>
+      <button onclick="openGraphExternal()">Open in browser ↗</button>`;
   }
 
   return `
@@ -275,7 +279,8 @@ function renderGraphSection(agent: VeyrStatusResult): string {
       <b class="save">~${formatTokens(savings.savings_this_session)} tokens</b></div>
     <div class="row"><span class="muted">Saved this month</span>
       <b class="save">~${formatTokens(savings.savings_this_month)} tokens</b></div>
-    <button onclick="openGraph()">Open graph visualization ↗</button>`;
+    <button onclick="openGraphPanel()">Open codebase graph</button>
+    <button onclick="openGraphExternal()">Open in browser ↗</button>`;
 }
 
 function rectitle(action: string, suggestedModel: string | undefined): string {
@@ -372,7 +377,8 @@ function render(state: PanelState): string {
   <script>
     const vscodeApi = acquireVsCodeApi();
     function openDash(){ vscodeApi.postMessage({ type: 'openDashboard' }); }
-    function openGraph(){ vscodeApi.postMessage({ type: 'openGraph' }); }
+    function openGraphPanel(){ vscodeApi.postMessage({ type: 'openGraphPanel' }); }
+    function openGraphExternal(){ vscodeApi.postMessage({ type: 'openGraphExternal' }); }
     function copyCommand(cmd){ vscodeApi.postMessage({ type: 'copyCommand', command: cmd }); }
   </script>
   </body></html>`;
@@ -454,9 +460,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("veyr.openDashboard", () =>
       vscode.env.openExternal(vscode.Uri.parse(dashboardUrl())),
     ),
-    vscode.commands.registerCommand("veyr.openGraph", () =>
-      vscode.env.openExternal(vscode.Uri.parse(graphPageUrl())),
-    ),
+    vscode.commands.registerCommand("veyr.openGraph", () => GraphPanel.show(context)),
     vscode.commands.registerCommand("veyr.composePrompt", () => void composePromptCommand()),
     vscode.commands.registerCommand("veyr.copyComposedPrompt", () => void copyComposedPromptCommand()),
     vscode.commands.registerCommand("veyr.showSavingsDetail", () => void showSavingsDetailCommand(savingsStatusBar)),
