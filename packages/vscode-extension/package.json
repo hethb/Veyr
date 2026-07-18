@@ -149,7 +149,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -p ./",
+    "build": "node scripts/copy-graph-embed.mjs && tsc -p ./",
     "watch": "tsc -w -p ./",
     "vscode:prepublish": "npm run build"
   },
