@@ -6,6 +6,7 @@
 // app itself read, never a separate computation.
 
 import * as fs from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
 import * as vscode from "vscode";
 import { daemonGet } from "./daemonClient";
@@ -77,14 +78,33 @@ export class GraphPanel {
     }
   }
 
+  /**
+   * Prefers the live daemon (freshest — reflects whichever workspace the Mac
+   * app is tracking right now) but falls back to the flat
+   * ~/.veyr/cache/graph.json the same way packages/cli/src/veyr/graph.ts
+   * does — the app not running is a normal, expected state, not an error.
+   */
   private async refresh(): Promise<void> {
-    const payload = await daemonGet<GraphCachePayload>("/graph");
+    const payload = (await daemonGet<GraphCachePayload>("/graph")) ?? GraphPanel.readGraphCacheFile();
     void this.panel.webview.postMessage({
       type: "graphData",
       payload: payload
         ? { nodes: payload.nodes, links: payload.links, workspaceRoot: payload.workspaceRoot }
         : { nodes: [], links: [] },
     });
+  }
+
+  private static readGraphCacheFile(): GraphCachePayload | null {
+    try {
+      const raw = fs.readFileSync(path.join(os.homedir(), ".veyr", "cache", "graph.json"), "utf8");
+      const parsed: unknown = JSON.parse(raw);
+      if (typeof parsed !== "object" || parsed === null || !Array.isArray((parsed as GraphCachePayload).nodes)) {
+        return null;
+      }
+      return parsed as GraphCachePayload;
+    } catch {
+      return null;
+    }
   }
 
   private handleMessage(message: unknown): void {
