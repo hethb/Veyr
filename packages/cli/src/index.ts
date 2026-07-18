@@ -13,6 +13,7 @@ import { run } from "./cliError.js";
 import { composeCommand } from "./commands/compose.js";
 import { dashboardCommand } from "./commands/dashboard.js";
 import { graphCommand } from "./commands/graph.js";
+import { graphExploreCommand } from "./commands/graphExplore.js";
 import {
   rulesDisableCommand,
   rulesEnableCommand,
@@ -71,13 +72,18 @@ program
   .option("--json", "Print the raw session entries")
   .action((opts) => run(() => usageCommand(opts)));
 
-program
+const graph = program
   .command("graph")
   .description("Graphify codebase graph status for the workspace Veyr last built")
   .option("--json", "Print the raw graph cache payload")
   .option("--top <n>", "Number of top-connected nodes to show", "10")
   .option("--refresh", "Trigger an on-demand rescan of the current directory via the daemon")
   .action((opts) => run(() => graphCommand(opts)));
+
+graph
+  .command("explore")
+  .description("Interactively drill into the graph: pick a node, then follow its callers/callees/imports/tests")
+  .action(() => run(graphExploreCommand));
 
 const rules = program
   .command("rules")
