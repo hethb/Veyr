@@ -4,7 +4,8 @@
 
 @layer base {
   :root {
-    --background: #0a0b10;
+    /* HSL channels (≈ #0a0b10) so Tailwind's hsl(var(--background) / alpha) works. */
+    --background: 230 23% 5%;
     --foreground: 0 0% 96%;
     --primary: 217 80% 62%;
     --primary-foreground: 0 0% 100%;

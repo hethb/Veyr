@@ -1,16 +1,12 @@
 import { type ReactNode } from "react";
-import VeyrMark, { VeyrWordmark } from "../components/VeyrMark";
+import VeyrMark from "../components/VeyrMark";
 import {
   ArrowRight,
-  BarChart3,
   CheckCircle2,
   Code2,
-  Gauge,
-  Home,
   Layers,
   Monitor,
   Terminal,
-  Waypoints,
   Zap,
 } from "lucide-react";
 import { CopyCodeBlock } from "../components/CopyCodeBlock";
@@ -18,18 +14,17 @@ import { FeaturesSection } from "../components/FeaturesSection";
 import { GraphDemo } from "../components/GraphDemo";
 import { HeroSection } from "../components/HeroSection";
 import { WorksWithSection } from "../components/WorksWithSection";
-import { NavBar } from "@/components/ui/tubelight-navbar";
+import { AnimatedNav, type AnimatedNavItem } from "@/components/ui/animated-nav";
 
-const LANDING_NAV_ITEMS = [
-  { name: "Home", url: "#top", icon: Home },
-  { name: "How it works", url: "#how", icon: Zap },
-  { name: "Usage", url: "#usage", icon: Gauge },
-  { name: "Graph", url: "#graph", icon: Waypoints },
-  { name: "Setup", url: "#setup", icon: Terminal },
-  { name: "Features", url: "#features", icon: Layers },
-  { name: "Compare", url: "#compare", icon: BarChart3 },
-  { name: "Download", url: "#download", icon: Monitor },
-] as const;
+const LANDING_NAV_ITEMS: AnimatedNavItem[] = [
+  { name: "How it works", href: "#how" },
+  { name: "Usage", href: "#usage", mobileHidden: true },
+  { name: "Graph", href: "#graph", mobileHidden: true },
+  { name: "Setup", href: "#setup" },
+  { name: "Features", href: "#features", mobileHidden: true },
+  { name: "Compare", href: "#compare", mobileHidden: true },
+  { name: "Download", href: "#download" },
+];
 
 const ACCENTS = ["#076EFF", "#4FABFF", "#B1C5FF"] as const;
 const VEYR_VERSION = "0.2.2";
@@ -57,31 +52,7 @@ export function Landing() {
 }
 
 function Header() {
-  return (
-    <>
-      <div className="pointer-events-none fixed inset-x-0 top-0 z-50">
-        <div className="pointer-events-auto absolute left-6 top-6">
-          <a href="#top" className="flex items-center gap-3">
-            <VeyrMark className="h-8 w-8" />
-            <span className="hidden sm:inline">
-              <VeyrWordmark className="text-base" />
-            </span>
-          </a>
-        </div>
-
-        <div className="pointer-events-auto absolute right-6 top-6 flex items-center gap-2">
-          <a
-            href="#download"
-            className="border border-white bg-white px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
-          >
-            Download
-          </a>
-        </div>
-      </div>
-
-      <NavBar items={[...LANDING_NAV_ITEMS]} />
-    </>
-  );
+  return <AnimatedNav items={LANDING_NAV_ITEMS} />;
 }
 
 function HowItWorks() {
