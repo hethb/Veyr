@@ -302,12 +302,12 @@ export function LiquidCTA({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        "group relative inline-block h-11 rounded-lg border-2 border-white bg-black",
+        "group relative inline-block h-11 rounded-lg border border-white/40 bg-black",
         className
       )}
     >
       {/* Outer bloom that leaks the liquid colors past the button edge. */}
-      <div className="absolute left-1/2 top-[8.57%] h-[128.57%] w-[112.81%] -translate-x-1/2 opacity-70 blur-[19px]">
+      <div className="absolute left-1/2 top-[8.57%] h-[128.57%] w-[112.81%] -translate-x-1/2 opacity-30 blur-[19px]">
         <span className="absolute inset-0 rounded-lg bg-[#d9d9d9] blur-[6.5px]" />
         <div className="relative h-full w-full overflow-hidden rounded-lg">
           <Liquid isHovered={isHovered} colors={LIQUID_COLORS} />
@@ -319,6 +319,8 @@ export function LiquidCTA({
         <span className="absolute inset-0 rounded-lg bg-[#d9d9d9]" />
         <span className="absolute inset-0 rounded-lg bg-black" />
         <Liquid isHovered={isHovered} colors={LIQUID_COLORS} />
+        {/* Scrim that mutes the liquid so it reads as a tint, not a light show. */}
+        <span className="absolute inset-0 rounded-lg bg-black/60" />
         {[1, 2, 3, 4, 5].map((i) => (
           <span
             key={i}
