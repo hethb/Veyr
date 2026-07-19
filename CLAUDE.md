@@ -1,19 +1,24 @@
 <!-- veyr:spend-status:begin -->
 ## Veyr spend status
-> Auto-updated by Veyr · 2026-07-17 18:34 · disable in Veyr settings
+> Auto-updated by Veyr · 2026-07-19 01:31 · disable in Veyr settings
 
-**Current session:** claude-fable-5 · $7.4100/session · $0.1800/min
+**Current session:** claude-fable-5 · $22.2600/session · $0.0120/min
 **Cache hit rate:** 100%
 
-**Agent instructions:** You are currently in a Veyr-monitored session. Session cost so far: $7.41 at $0.180/min on claude-fable-5. Cache hit rate is 100% — good. Keep system prompts stable. This is a long conversation. Before your next response, consider running /compact to compress context and reduce per-turn cost. Spend profile looks healthy — no changes recommended right now.
+**Recommendations:**
+- Run /compact — Session has cost $22.26 so far. Running /compact trims accumulated context before it grows further.
+
+**Agent instructions:** You are currently in a Veyr-monitored session. Session cost so far: $22.26 at $0.012/min on claude-fable-5. Cache hit rate is 100% — good. Keep system prompts stable. This session is long and expensive. Run /compact now to compress context and reduce per-turn cost by ~60%. This is a long conversation. Before your next response, consider running /compact to compress context and reduce per-turn cost.
 <!-- veyr:spend-status:end -->
 
 <!-- veyr:graph-context:begin -->
 ## Veyr codebase graph
-> Powered by Graphify · Full graph · 2026-07-17 18:34
+> Powered by Graphify · Full graph · 2026-07-19 01:31
 
 ### Architecture
-3265 files, 45403 symbols in 1421 communities. Primary languages: Swift, Rust, TypeScript. Highest-impact code: .logger(), L(), tauri.ts.
+3280 files, 45507 symbols in 1417 communities. Primary languages: Swift, Rust, TypeScript. Highest-impact code: .logger(), L(), tauri.ts.
+
+### Active context: README.md (README.md:1)
 
 ### Critical path (highest-impact files)
 - **.logger()** (packages/desktop-mac/Sources/CodexBarCore/Logging/CodexBarLog.swift) — 252 connections

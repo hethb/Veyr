@@ -55,9 +55,7 @@ function Header() {
   return (
     <AnimatedNav
       items={LANDING_NAV_ITEMS}
-      // The 400vh hero pins its content while its scroll animation plays;
-      // keep the nav expanded until that sticky phase ends and the page
-      // itself starts moving.
+      // Keep the nav expanded while the full-viewport hero is on screen.
       collapseAfter={() => {
         const hero = document.getElementById("top");
         return hero
