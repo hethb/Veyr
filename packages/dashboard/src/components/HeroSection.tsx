@@ -10,6 +10,7 @@ import {
 } from "framer-motion";
 import { ArrowRight, Code2, Terminal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LiquidCTA } from "@/components/ui/liquid-button";
 
 function ElegantShape({
   className,
@@ -245,28 +246,19 @@ export function HeroSection() {
             animate="visible"
             className="mx-auto flex flex-col items-center gap-3"
           >
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <a
-                href="#setup"
-                className="inline-flex items-center gap-2 border border-white bg-white px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-neutral-200"
-              >
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <LiquidCTA href="#setup">
                 Download for Mac
                 <ArrowRight className="h-4 w-4" />
-              </a>
-              <a
-                href="#setup"
-                className="inline-flex items-center gap-2 border border-white/20 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:border-[#4FABFF]/50 hover:bg-[#076EFF]/10"
-              >
-                <Code2 className="h-4 w-4" />
-                Install VS Code extension
-              </a>
-              <a
-                href="#setup"
-                className="inline-flex items-center gap-2 border border-white/20 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:border-[#4FABFF]/50 hover:bg-[#076EFF]/10"
-              >
+              </LiquidCTA>
+              <LiquidCTA href="#setup">
                 <Terminal className="h-4 w-4" />
                 Install the CLI
-              </a>
+              </LiquidCTA>
+              <LiquidCTA href="#setup">
+                <Code2 className="h-4 w-4" />
+                Install VS Code extension
+              </LiquidCTA>
             </div>
             <p className="text-xs text-neutral-500">
               No proxy. No account. No traffic interception. ·{" "}
