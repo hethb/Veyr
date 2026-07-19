@@ -235,6 +235,11 @@ function GetRunning() {
     { title: "Or via Homebrew", code: "brew install hethb/veyr/veyr" },
     { title: "Check your spend", code: "veyr status" },
     { title: "See the codebase graph", code: "veyr graph" },
+    {
+      title: "Update anytime",
+      detail: "The CLI checks npm once a day and prints this command when you're behind.",
+      code: "npm install -g getcanopy@latest",
+    },
   ];
 
   return (
@@ -568,7 +573,10 @@ function DownloadSection() {
             <p className="mt-4 text-xs leading-relaxed text-neutral-600">
               Requires Node 20+. Package name is{" "}
               <code className="text-neutral-400">getcanopy</code> on npm; the
-              binary is <code className="text-neutral-400">veyr</code>.
+              binary is <code className="text-neutral-400">veyr</code>. Already
+              installed?{" "}
+              <code className="text-neutral-400">npm install -g getcanopy@latest</code>{" "}
+              updates it — the CLI nudges you when a newer version is out.
             </p>
           </div>
         </div>

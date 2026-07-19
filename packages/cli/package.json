@@ -1,6 +1,6 @@
 {
   "name": "getcanopy",
-  "version": "0.2.0",
+  "version": "0.2.3",
   "description": "Veyr terminal CLI — usage/cost, Graphify graph status, and agent guidance rules, read from local Veyr data. No proxy, no account.",
   "license": "MIT",
   "repository": {

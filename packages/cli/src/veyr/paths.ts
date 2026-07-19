@@ -32,6 +32,11 @@ export function codexSessionsCacheFilePath(): string {
   return path.join(veyrHome(), "cache", "codex-sessions.json");
 }
 
+/** Written only by this CLI's background update worker (updateCheck.ts). */
+export function updateCheckCacheFilePath(): string {
+  return path.join(veyrHome(), "cache", "cli-update-check.json");
+}
+
 export function tagOverridesFilePath(): string {
   return path.join(veyrHome(), "tag-overrides.json");
 }

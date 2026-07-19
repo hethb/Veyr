@@ -236,7 +236,8 @@ Its source has already been extracted out of this repo (see [Repository Layout](
 ### Terminal CLI
 
 ```bash
-npm install -g getcanopy   # or: brew install hethb/veyr/veyr
+npm install -g getcanopy          # or: brew install hethb/veyr/veyr
+npm install -g getcanopy@latest   # update — the CLI nudges you with this command when a newer version is out
 
 veyr                       # terminal dashboard: session, usage, graph, savings, rules + all commands
 veyr status                # current session cost, budget, alerts, tool health, recommendations

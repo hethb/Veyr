@@ -32,6 +32,7 @@ import { statusCommand } from "./commands/status.js";
 import { styleDisableCommand, styleEnableCommand, styleStatusCommand } from "./commands/style.js";
 import { usageCommand } from "./commands/usage.js";
 import { hasShownFirstRun, markFirstRunShown } from "./veyr/cliState.js";
+import { maybeNudgeUpdate } from "./veyr/updateCheck.js";
 import { divider } from "./ui.js";
 
 const require = createRequire(import.meta.url);
@@ -191,5 +192,6 @@ async function maybeShowFirstRunWelcome(argv: readonly string[]): Promise<void> 
   console.log(divider(70));
 }
 
+await maybeNudgeUpdate(version);
 await maybeShowFirstRunWelcome(process.argv.slice(2));
 program.parseAsync(process.argv);

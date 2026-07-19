@@ -5,14 +5,26 @@ agent-guidance rule set. A thin client of the daemon the Veyr menu bar app
 hosts on `127.0.0.1` while it's running, falling back to the same local
 `~/.veyr/` files it writes when the daemon isn't reachable. No proxy, no
 account — the only network calls this CLI makes are loopback, to a process
-on this machine; it never sends or intercepts a request/response with a
-model provider.
+on this machine, plus one deliberate exception: at most once a day it asks
+`registry.npmjs.org` which getcanopy version is latest, so it can tell you
+when yours is behind (set `VEYR_NO_UPDATE_CHECK=1` to turn that off). It
+never sends or intercepts a request/response with a model provider.
 
 ## Install
 
 ```bash
 npm install -g getcanopy
 ```
+
+## Update
+
+```bash
+npm install -g getcanopy@latest
+```
+
+You don't need to remember this: when a newer version is on npm, the CLI
+prints a one-line nudge with that exact command (checked in the background
+once a day, never blocking your command, silent when offline).
 
 ## How it works
 
