@@ -14,6 +14,7 @@ import { composeCommand } from "./commands/compose.js";
 import { dashboardCommand } from "./commands/dashboard.js";
 import { graphCommand } from "./commands/graph.js";
 import { graphExploreCommand } from "./commands/graphExplore.js";
+import { graphOpenCommand } from "./commands/graphOpen.js";
 import {
   rulesDisableCommand,
   rulesEnableCommand,
@@ -84,6 +85,11 @@ graph
   .command("explore")
   .description("Interactively drill into the graph: pick a node, then follow its callers/callees/imports/tests")
   .action(() => run(graphExploreCommand));
+
+graph
+  .command("open")
+  .description("Open the interactive graph view (same renderer as the dashboard) in your browser")
+  .action(() => run(graphOpenCommand));
 
 const rules = program
   .command("rules")

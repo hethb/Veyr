@@ -24,10 +24,10 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/copy-graph-embed.mjs",
     "dev": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "tsc"
+    "prepublishOnly": "tsc && node scripts/copy-graph-embed.mjs"
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0",
