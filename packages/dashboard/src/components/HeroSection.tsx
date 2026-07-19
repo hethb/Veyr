@@ -1,4 +1,13 @@
-import { motion, type Variants } from "framer-motion";
+import {
+  motion,
+  useMotionTemplate,
+  useMotionValue,
+  useReducedMotion,
+  useSpring,
+  useTransform,
+  type MotionValue,
+  type Variants,
+} from "framer-motion";
 import { ArrowRight, Code2, Terminal } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +18,12 @@ function ElegantShape({
   height = 100,
   rotate = 0,
   gradient = "from-white/[0.08]",
+  drift = 12,
+  // How far (px) the shape shifts at full cursor deflection; bigger shapes
+  // sit "closer" and move more, which is what sells the depth.
+  depth = 20,
+  mouseX,
+  mouseY,
 }: {
   className?: string;
   delay?: number;
@@ -16,7 +31,15 @@ function ElegantShape({
   height?: number;
   rotate?: number;
   gradient?: string;
+  drift?: number;
+  depth?: number;
+  mouseX: MotionValue<number>;
+  mouseY: MotionValue<number>;
 }) {
+  const parallaxX = useTransform(mouseX, (v) => v * depth);
+  const parallaxY = useTransform(mouseY, (v) => v * depth);
+  const parallaxTilt = useTransform(mouseX, (v) => v * depth * 0.08);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -150, rotate: rotate - 15 }}
@@ -29,27 +52,29 @@ function ElegantShape({
       }}
       className={cn("absolute", className)}
     >
-      <motion.div
-        animate={{ y: [0, 15, 0] }}
-        transition={{
-          duration: 12,
-          repeat: Number.POSITIVE_INFINITY,
-          ease: "easeInOut",
-        }}
-        style={{ width, height }}
-        className="relative"
-      >
-        <div
-          className={cn(
-            "absolute inset-0 rounded-full",
-            "bg-gradient-to-r to-transparent",
-            gradient,
-            "backdrop-blur-[2px] border-2 border-white/[0.25]",
-            "shadow-[0_8px_32px_0_rgba(255,255,255,0.15)]",
-            "after:absolute after:inset-0 after:rounded-full",
-            "after:bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.3),transparent_70%)]"
-          )}
-        />
+      <motion.div style={{ x: parallaxX, y: parallaxY, rotate: parallaxTilt }}>
+        <motion.div
+          animate={{ y: [0, drift, 0], x: [0, -drift / 3, 0] }}
+          transition={{
+            duration: 9 + drift * 0.4,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: "easeInOut",
+          }}
+          style={{ width, height }}
+          className="relative"
+        >
+          <div
+            className={cn(
+              "absolute inset-0 rounded-full",
+              "bg-gradient-to-r to-transparent",
+              gradient,
+              "backdrop-blur-[2px] border-2 border-white/[0.25]",
+              "shadow-[0_8px_32px_0_rgba(255,255,255,0.15)]",
+              "after:absolute after:inset-0 after:rounded-full",
+              "after:bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.3),transparent_70%)]"
+            )}
+          />
+        </motion.div>
       </motion.div>
     </motion.div>
   );
@@ -69,9 +94,44 @@ const fadeUpVariants: Variants = {
 };
 
 export function HeroSection() {
+  const reduceMotion = useReducedMotion();
+
+  // Cursor deflection from hero center, normalized to [-1, 1] on both axes.
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const smoothX = useSpring(mouseX, { stiffness: 45, damping: 18, mass: 0.6 });
+  const smoothY = useSpring(mouseY, { stiffness: 45, damping: 18, mass: 0.6 });
+
+  // Cursor position in % of the hero, for the light that follows the mouse.
+  const spotX = useMotionValue(50);
+  const spotY = useMotionValue(40);
+  const smoothSpotX = useSpring(spotX, { stiffness: 55, damping: 20 });
+  const smoothSpotY = useSpring(spotY, { stiffness: 55, damping: 20 });
+  const spotlight = useMotionTemplate`radial-gradient(640px circle at ${smoothSpotX}% ${smoothSpotY}%, rgba(79,171,255,0.09), rgba(255,255,255,0.03) 45%, transparent 70%)`;
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (reduceMotion) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width;
+    const py = (e.clientY - rect.top) / rect.height;
+    mouseX.set(px * 2 - 1);
+    mouseY.set(py * 2 - 1);
+    spotX.set(px * 100);
+    spotY.set(py * 100);
+  };
+
+  const handleMouseLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+    spotX.set(50);
+    spotY.set(40);
+  };
+
   return (
     <div
       id="top"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       className="font-hero relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-[#030303]"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/[0.05] via-transparent to-rose-500/[0.05] blur-3xl" />
@@ -83,6 +143,10 @@ export function HeroSection() {
           height={140}
           rotate={12}
           gradient="from-indigo-500/[0.3]"
+          drift={15}
+          depth={36}
+          mouseX={smoothX}
+          mouseY={smoothY}
           className="left-[-10%] top-[15%] md:left-[-5%] md:top-[20%]"
         />
         <ElegantShape
@@ -91,6 +155,10 @@ export function HeroSection() {
           height={120}
           rotate={-15}
           gradient="from-rose-500/[0.3]"
+          drift={12}
+          depth={28}
+          mouseX={smoothX}
+          mouseY={smoothY}
           className="right-[-5%] top-[70%] md:right-[0%] md:top-[75%]"
         />
         <ElegantShape
@@ -99,6 +167,10 @@ export function HeroSection() {
           height={80}
           rotate={-8}
           gradient="from-violet-500/[0.3]"
+          drift={10}
+          depth={-18}
+          mouseX={smoothX}
+          mouseY={smoothY}
           className="bottom-[5%] left-[5%] md:bottom-[10%] md:left-[10%]"
         />
         <ElegantShape
@@ -107,6 +179,10 @@ export function HeroSection() {
           height={60}
           rotate={20}
           gradient="from-amber-500/[0.3]"
+          drift={8}
+          depth={-12}
+          mouseX={smoothX}
+          mouseY={smoothY}
           className="right-[15%] top-[10%] md:right-[20%] md:top-[15%]"
         />
         <ElegantShape
@@ -115,9 +191,20 @@ export function HeroSection() {
           height={40}
           rotate={-25}
           gradient="from-cyan-500/[0.3]"
+          drift={7}
+          depth={-8}
+          mouseX={smoothX}
+          mouseY={smoothY}
           className="left-[20%] top-[5%] md:left-[25%] md:top-[10%]"
         />
       </div>
+
+      {/* Soft light that trails the cursor, shading whatever it passes over. */}
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ background: spotlight }}
+      />
 
       <div className="container relative z-10 mx-auto px-4 md:px-6">
         <div className="mx-auto text-center">
