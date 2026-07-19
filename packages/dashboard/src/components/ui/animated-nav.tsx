@@ -77,7 +77,17 @@ const collapsedIconVariants: Variants = {
   },
 };
 
-export function AnimatedNav({ items }: { items: AnimatedNavItem[] }) {
+interface AnimatedNavProps {
+  items: AnimatedNavItem[];
+  /**
+   * Scroll depth (px) below which the nav never collapses. Evaluated per
+   * scroll event so it can measure the live layout — e.g. the end of a
+   * sticky hero's pinned phase. Defaults to 150.
+   */
+  collapseAfter?: () => number;
+}
+
+export function AnimatedNav({ items, collapseAfter }: AnimatedNavProps) {
   const [isExpanded, setExpanded] = React.useState(true);
 
   const { scrollY } = useScroll();
@@ -86,8 +96,9 @@ export function AnimatedNav({ items }: { items: AnimatedNavItem[] }) {
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     const previous = lastScrollY.current;
+    const collapseThreshold = collapseAfter ? collapseAfter() : 150;
 
-    if (isExpanded && latest > previous && latest > 150) {
+    if (isExpanded && latest > previous && latest > collapseThreshold) {
       setExpanded(false);
       scrollPositionOnCollapse.current = latest;
     } else if (!isExpanded) {

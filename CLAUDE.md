@@ -1,34 +1,26 @@
 <!-- veyr:spend-status:begin -->
 ## Veyr spend status
-> Auto-updated by Veyr · 2026-07-16 23:58 · disable in Veyr settings
+> Auto-updated by Veyr · 2026-07-17 18:34 · disable in Veyr settings
 
-**Current session:** claude-fable-5 · $5.7700/session · $0.0090/min
+**Current session:** claude-fable-5 · $7.4100/session · $0.1800/min
 **Cache hit rate:** 100%
 
-**Recommendations:**
-- Run /compact — Session has cost $5.77 so far. Running /compact trims accumulated context before it grows further.
-- set budget cap — One project dominating spend is fine on purpose — set a budget cap in Controls so overruns get flagged automatically.
-
-**Agent instructions:** You are currently in a Veyr-monitored session. Session cost so far: $5.77 at $0.009/min on claude-fable-5. Cache hit rate is 100% — good. Keep system prompts stable. This session is long and expensive. Run /compact now to compress context and reduce per-turn cost by ~60%. This is a long conversation. Before your next response, consider running /compact to compress context and reduce per-turn cost.
+**Agent instructions:** You are currently in a Veyr-monitored session. Session cost so far: $7.41 at $0.180/min on claude-fable-5. Cache hit rate is 100% — good. Keep system prompts stable. This is a long conversation. Before your next response, consider running /compact to compress context and reduce per-turn cost. Spend profile looks healthy — no changes recommended right now.
 <!-- veyr:spend-status:end -->
 
 <!-- veyr:graph-context:begin -->
 ## Veyr codebase graph
-> Powered by Graphify · Full graph · 2026-07-16 23:58
+> Powered by Graphify · Full graph · 2026-07-17 18:34
 
 ### Architecture
-2900 files, 37190 symbols in 1138 communities. Primary languages: Swift, TypeScript, C. Highest-impact code: .logger(), L(), UsageFetcher.
-
-### Active context: graph.ts (packages/cli/src/veyr/graph.ts:1)
-**Imports:** daemon.ts, daemonGet(), daemonPost(), EnsureDaemonResult, ensureDaemonRunning()
-**Imported by:** graph.ts
+3265 files, 45403 symbols in 1421 communities. Primary languages: Swift, Rust, TypeScript. Highest-impact code: .logger(), L(), tauri.ts.
 
 ### Critical path (highest-impact files)
 - **.logger()** (packages/desktop-mac/Sources/CodexBarCore/Logging/CodexBarLog.swift) — 252 connections
 - **L()** (packages/desktop-mac/Sources/CodexBar/Localization.swift) — 177 connections
+- **tauri.ts** (packages/desktop-windows/apps/desktop-tauri/src/lib/tauri.ts) — 157 connections
+- **bridge.ts** (packages/desktop-windows/apps/desktop-tauri/src/types/bridge.ts) — 138 connections
 - **UsageFetcher** (packages/desktop-mac/Sources/CodexBarCore/UsageFetcher.swift) — 121 connections
-- **BrowserDetection** (packages/desktop-mac/Sources/CodexBarCore/BrowserDetection.swift) — 114 connections
-- **RateWindow** (packages/desktop-mac/Sources/CodexBarCore/UsageFetcher.swift) — 108 connections
 
 ### Token savings
 Reading this summary saves ~7600 tokens vs. exploring files manually.

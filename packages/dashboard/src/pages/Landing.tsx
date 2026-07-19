@@ -52,7 +52,20 @@ export function Landing() {
 }
 
 function Header() {
-  return <AnimatedNav items={LANDING_NAV_ITEMS} />;
+  return (
+    <AnimatedNav
+      items={LANDING_NAV_ITEMS}
+      // The 400vh hero pins its content while its scroll animation plays;
+      // keep the nav expanded until that sticky phase ends and the page
+      // itself starts moving.
+      collapseAfter={() => {
+        const hero = document.getElementById("top");
+        return hero
+          ? Math.max(hero.offsetHeight - window.innerHeight, 150)
+          : 150;
+      }}
+    />
+  );
 }
 
 function HowItWorks() {
