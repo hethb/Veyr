@@ -8,9 +8,12 @@ import {
   type MotionValue,
   type Variants,
 } from "framer-motion";
-import { ArrowRight, Code2, Terminal } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { LiquidCTA } from "@/components/ui/liquid-button";
+
+// The five hue families of the floating background shapes, as a conic ring.
+const RING_GRADIENT =
+  "conic-gradient(from 0deg, #6366f1, #22d3ee, #8b5cf6, #f43f5e, #f59e0b, #6366f1)";
 
 function ElegantShape({
   className,
@@ -246,20 +249,42 @@ export function HeroSection() {
             animate="visible"
             className="mx-auto flex flex-col items-center gap-3"
           >
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <LiquidCTA href="#setup">
-                Download for Mac
-                <ArrowRight className="h-4 w-4" />
-              </LiquidCTA>
-              <LiquidCTA href="#setup">
-                <Terminal className="h-4 w-4" />
-                Install the CLI
-              </LiquidCTA>
-              <LiquidCTA href="#setup">
-                <Code2 className="h-4 w-4" />
-                Install VS Code extension
-              </LiquidCTA>
-            </div>
+            <a href="#setup" className="group relative inline-flex">
+              {/* Soft moving halo behind the ring. */}
+              <span
+                aria-hidden
+                className="absolute -inset-1 overflow-hidden rounded-full opacity-40 blur-md transition-opacity duration-300 group-hover:opacity-70"
+              >
+                <motion.span
+                  className="absolute inset-[-200%]"
+                  style={{ background: RING_GRADIENT }}
+                  animate={reduceMotion ? undefined : { rotate: 360 }}
+                  transition={{
+                    duration: 6,
+                    repeat: Number.POSITIVE_INFINITY,
+                    ease: "linear",
+                  }}
+                />
+              </span>
+              {/* 1px multicolor ring: rotating conic gradient clipped to a pill. */}
+              <span className="relative overflow-hidden rounded-full p-px">
+                <motion.span
+                  aria-hidden
+                  className="absolute inset-[-200%]"
+                  style={{ background: RING_GRADIENT }}
+                  animate={reduceMotion ? undefined : { rotate: 360 }}
+                  transition={{
+                    duration: 6,
+                    repeat: Number.POSITIVE_INFINITY,
+                    ease: "linear",
+                  }}
+                />
+                <span className="relative z-10 inline-flex items-center gap-2 rounded-full bg-[#050506] px-8 py-3 text-sm font-semibold text-white transition-colors duration-300 group-hover:bg-[#0d0d10]">
+                  Get started
+                  <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                </span>
+              </span>
+            </a>
             <p className="text-xs text-neutral-500">
               No proxy. No account. No traffic interception. ·{" "}
               <a
