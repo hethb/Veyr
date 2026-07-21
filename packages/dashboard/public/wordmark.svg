@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 96" role="img" aria-label="Veyr">
-  <!-- Veyr full-name logo: spaced caps with a blue accent on the V.
-       Letter glyphs use the viewer's sans stack; pairs with the arcs+dots mark. -->
-  <g font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="62" font-weight="600" letter-spacing="8" text-anchor="middle">
-    <text x="158" y="69" fill="#3E7BFF">V</text>
-    <text x="255" y="69" fill="#F2F4F8">E</text>
-    <text x="352" y="69" fill="#F2F4F8">Y</text>
-    <text x="449" y="69" fill="#F2F4F8">R</text>
+  <!-- Veyr full-name logo: spaced caps, monochrome (matches the ball-and-stick
+       mark — no color accent). Letter glyphs use the viewer's sans stack. -->
+  <g font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="62" font-weight="600" letter-spacing="8" text-anchor="middle" fill="#F2F4F8">
+    <text x="158" y="69">V</text>
+    <text x="255" y="69">E</text>
+    <text x="352" y="69">Y</text>
+    <text x="449" y="69">R</text>
   </g>
 </svg>

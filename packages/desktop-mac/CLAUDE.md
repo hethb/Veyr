@@ -1,12 +1,27 @@
 <!-- veyr:spend-status:begin -->
 ## Veyr spend status
-> Auto-updated by Veyr · 2026-07-10 00:28 · disable in Veyr settings
+> Auto-updated by Veyr · 2026-07-21 00:59 · disable in Veyr settings
 
-**Current session:** claude-fable-5 · $35.2000/session · $0.0590/min
+**Current session:** claude-sonnet-5 · $1.2400/session · $0.0550/min
 **Cache hit rate:** 100%
 
-**Recommendations:**
-- Run /compact — Session has cost $35.20 so far. Running /compact trims accumulated context before it grows further.
-
-**Agent instructions:** You are currently in a Veyr-monitored session. Session cost so far: $35.20 at $0.059/min on claude-fable-5. Cache hit rate is 100% — good. Keep system prompts stable. This session is long and expensive. Run /compact now to compress context and reduce per-turn cost by ~60%. This is a long conversation. Before your next response, consider running /compact to compress context and reduce per-turn cost.
+**Agent instructions:** You are currently in a Veyr-monitored session. Session cost so far: $1.24 at $0.055/min on claude-sonnet-5. Cache hit rate is 100% — good. Keep system prompts stable. This is a long conversation. Before your next response, consider running /compact to compress context and reduce per-turn cost. Spend profile looks healthy — no changes recommended right now.
 <!-- veyr:spend-status:end -->
+
+<!-- veyr:graph-context:begin -->
+## Veyr codebase graph
+> Powered by Graphify · Full graph · 2026-07-21 00:59
+
+### Architecture
+3280 files, 45507 symbols in 1434 communities. Primary languages: Swift, Rust, TypeScript. Highest-impact code: .logger(), L(), tauri.ts.
+
+### Critical path (highest-impact files)
+- **.logger()** (packages/desktop-mac/Sources/CodexBarCore/Logging/CodexBarLog.swift) — 252 connections
+- **L()** (packages/desktop-mac/Sources/CodexBar/Localization.swift) — 177 connections
+- **tauri.ts** (packages/desktop-windows/apps/desktop-tauri/src/lib/tauri.ts) — 157 connections
+- **bridge.ts** (packages/desktop-windows/apps/desktop-tauri/src/types/bridge.ts) — 138 connections
+- **UsageFetcher** (packages/desktop-mac/Sources/CodexBarCore/UsageFetcher.swift) — 121 connections
+
+### Token savings
+Reading this summary saves ~7600 tokens vs. exploring files manually.
+<!-- veyr:graph-context:end -->
