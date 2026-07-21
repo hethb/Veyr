@@ -1,14 +1,15 @@
 <!-- veyr:spend-status:begin -->
 ## Veyr spend status
-> Auto-updated by Veyr · 2026-07-21 01:10 · disable in Veyr settings
+> Auto-updated by Veyr · 2026-07-21 11:22 · disable in Veyr settings
 
-**Current session:** claude-sonnet-5 · $3.0500/session · $0.0930/min
+**Current session:** claude-opus-4-8 · $9.9500/session · $0.0150/min
 **Cache hit rate:** 100%
 
 **Recommendations:**
-- Run /compact — Session has cost $3.05 so far. Running /compact trims accumulated context before it grows further.
+- Run /compact — Session has cost $9.95 so far. Running /compact trims accumulated context before it grows further.
+- set budget cap — One project dominating spend is fine on purpose — set a budget cap in Controls so overruns get flagged automatically.
 
-**Agent instructions:** You are currently in a Veyr-monitored session. Session cost so far: $3.05 at $0.093/min on claude-sonnet-5. Cache hit rate is 100% — good. Keep system prompts stable. This session is long and expensive. Run /compact now to compress context and reduce per-turn cost by ~60%. This is a long conversation. Before your next response, consider running /compact to compress context and reduce per-turn cost.
+**Agent instructions:** You are currently in a Veyr-monitored session. Session cost so far: $9.95 at $0.015/min on claude-opus-4-8. Cache hit rate is 100% — good. Keep system prompts stable. This session is long and expensive. Run /compact now to compress context and reduce per-turn cost by ~60%. This is a long conversation. Before your next response, consider running /compact to compress context and reduce per-turn cost.
 <!-- veyr:spend-status:end -->
 
 <!-- veyr:graph-context:begin -->

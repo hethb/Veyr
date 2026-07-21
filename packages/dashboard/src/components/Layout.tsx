@@ -83,7 +83,7 @@ export function Layout({ children }: LayoutProps) {
             <Link to="/" className="flex items-center gap-3">
               <VeyrMark className="h-8 w-8" />
               <div>
-                <VeyrWordmark className="text-sm" />
+                <VeyrWordmark className="h-4 w-auto" />
                 <div className="text-xs text-neutral-500">v0.1</div>
               </div>
             </Link>

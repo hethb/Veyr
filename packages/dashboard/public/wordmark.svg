@@ -1,10 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 96" role="img" aria-label="Veyr">
-  <!-- Veyr full-name logo: spaced caps, monochrome (matches the ball-and-stick
-       mark — no color accent). Letter glyphs use the viewer's sans stack. -->
-  <g font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="62" font-weight="600" letter-spacing="8" text-anchor="middle" fill="#F2F4F8">
-    <text x="158" y="69">V</text>
-    <text x="255" y="69">E</text>
-    <text x="352" y="69">Y</text>
-    <text x="449" y="69">R</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 282 84" role="img" aria-label="Veyr" fill="#2E2E33">
+  <g transform="translate(0,6)">
+  <path d="M 6.00,0.00 L 19.50,0.00 L 37.00,52.00 L 54.50,0.00 L 68.00,0.00 L 37.00,72.00 Z"/>
+  <rect x="88.00" y="0.00" width="13.50" height="72.00"/><rect x="88.00" y="0.00" width="50.00" height="13.50"/><rect x="88.00" y="29.25" width="50.00" height="13.50"/><rect x="88.00" y="58.50" width="50.00" height="13.50"/>
+  <path d="M 164.75,0 C 164.75,31.68 188.00,26.40 188.00,44.00 L 188.00,72.00" fill="none" stroke="#2E2E33" stroke-width="13.5" stroke-linecap="butt" stroke-linejoin="round"/><path d="M 211.25,0 C 211.25,31.68 188.00,26.40 188.00,44.00" fill="none" stroke="#2E2E33" stroke-width="13.5" stroke-linecap="butt" stroke-linejoin="round"/>
+  <rect x="238.00" y="0.00" width="13.50" height="72.00"/><path d="M 251.50,0 L 255.50,0 A 20.00,20.00 0 0 1 255.50,40.00 L 251.50,40.00 L 251.50,26.50 L 255.50,26.50 A 6.50,6.50 0 0 0 255.50,13.50 L 251.50,13.50 Z"/><path d="M 251.50,26.50 L 265.00,26.50 L 275.50,72.00 L 262.00,72.00 Z"/>
   </g>
 </svg>

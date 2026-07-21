@@ -1,6 +1,6 @@
-// The Veyr brand mark: a ring of 12 ball-and-stick "bonds" in rotational
-// symmetry — monochrome, currentColor. Transparent background — place it on
-// any surface (the favicon variant in public/favicon.svg adds the dark tile).
+// The Veyr brand mark: a flower of nine molecular bonds (two balls joined by a
+// concave waist) in a pinwheel. Monochrome, currentColor — place it on any
+// surface. The favicon variant in public/favicon.svg adds the dark tile.
 
 interface VeyrMarkProps {
   className?: string;
@@ -9,71 +9,39 @@ interface VeyrMarkProps {
 export default function VeyrMark({ className = "h-8 w-8" }: VeyrMarkProps) {
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
-      <circle cx="50.000" cy="34.000" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="50.000" cy="19.000" r="4.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="52.577" y1="34.347" x2="54.559" y2="19.613" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="47.423" y1="34.347" x2="45.441" y2="19.613" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="58.000" cy="36.144" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="65.500" cy="23.153" r="4.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="60.058" y1="37.732" x2="69.141" y2="25.964" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="55.595" y1="35.155" x2="61.245" y2="21.405" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="63.856" cy="42.000" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="76.847" cy="34.500" r="4.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="64.845" y1="44.405" x2="78.595" y2="38.755" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="62.268" y1="39.942" x2="74.036" y2="30.859" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="66.000" cy="50.000" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="81.000" cy="50.000" r="4.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="65.653" y1="52.577" x2="80.387" y2="54.559" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="65.653" y1="47.423" x2="80.387" y2="45.441" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="63.856" cy="58.000" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="76.847" cy="65.500" r="4.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="62.268" y1="60.058" x2="74.036" y2="69.141" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="64.845" y1="55.595" x2="78.595" y2="61.245" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="58.000" cy="63.856" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="65.500" cy="76.847" r="4.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="55.595" y1="64.845" x2="61.245" y2="78.595" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="60.058" y1="62.268" x2="69.141" y2="74.036" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="50.000" cy="66.000" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="50.000" cy="81.000" r="4.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="47.423" y1="65.653" x2="45.441" y2="80.387" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="52.577" y1="65.653" x2="54.559" y2="80.387" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="42.000" cy="63.856" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="34.500" cy="76.847" r="4.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="39.942" y1="62.268" x2="30.859" y2="74.036" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="44.405" y1="64.845" x2="38.755" y2="78.595" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="36.144" cy="58.000" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="23.153" cy="65.500" r="4.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="35.155" y1="55.595" x2="21.405" y2="61.245" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="37.732" y1="60.058" x2="25.964" y2="69.141" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="34.000" cy="50.000" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="19.000" cy="50.000" r="4.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="34.347" y1="47.423" x2="19.613" y2="45.441" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="34.347" y1="52.577" x2="19.613" y2="54.559" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="36.144" cy="42.000" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="23.153" cy="34.500" r="4.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="37.732" y1="39.942" x2="25.964" y2="30.859" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="35.155" y1="44.405" x2="21.405" y2="38.755" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="42.000" cy="36.144" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="34.500" cy="23.153" r="4.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="44.405" y1="35.155" x2="38.755" y2="21.405" stroke="currentColor" strokeWidth="1.6" />
-      <line x1="39.942" y1="37.732" x2="30.859" y2="25.964" stroke="currentColor" strokeWidth="1.6" />
+      <g fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round">
+        <g transform="translate(50.000,31.000) rotate(-60.000) scale(0.6)"><path d="M 7.458,4.877 A 16.133,16.133 0 0 0 -7.458,4.877 A 5.500,5.500 0 1 1 -7.458,-4.877 A 16.133,16.133 0 0 0 7.458,-4.877 A 5.500,5.500 0 1 1 7.458,4.877 Z"/></g>
+        <g transform="translate(62.213,35.445) rotate(-20.000) scale(0.6)"><path d="M 7.458,4.877 A 16.133,16.133 0 0 0 -7.458,4.877 A 5.500,5.500 0 1 1 -7.458,-4.877 A 16.133,16.133 0 0 0 7.458,-4.877 A 5.500,5.500 0 1 1 7.458,4.877 Z"/></g>
+        <g transform="translate(68.711,46.701) rotate(20.000) scale(0.6)"><path d="M 7.458,4.877 A 16.133,16.133 0 0 0 -7.458,4.877 A 5.500,5.500 0 1 1 -7.458,-4.877 A 16.133,16.133 0 0 0 7.458,-4.877 A 5.500,5.500 0 1 1 7.458,4.877 Z"/></g>
+        <g transform="translate(66.454,59.500) rotate(60.000) scale(0.6)"><path d="M 7.458,4.877 A 16.133,16.133 0 0 0 -7.458,4.877 A 5.500,5.500 0 1 1 -7.458,-4.877 A 16.133,16.133 0 0 0 7.458,-4.877 A 5.500,5.500 0 1 1 7.458,4.877 Z"/></g>
+        <g transform="translate(56.498,67.854) rotate(100.000) scale(0.6)"><path d="M 7.458,4.877 A 16.133,16.133 0 0 0 -7.458,4.877 A 5.500,5.500 0 1 1 -7.458,-4.877 A 16.133,16.133 0 0 0 7.458,-4.877 A 5.500,5.500 0 1 1 7.458,4.877 Z"/></g>
+        <g transform="translate(43.502,67.854) rotate(140.000) scale(0.6)"><path d="M 7.458,4.877 A 16.133,16.133 0 0 0 -7.458,4.877 A 5.500,5.500 0 1 1 -7.458,-4.877 A 16.133,16.133 0 0 0 7.458,-4.877 A 5.500,5.500 0 1 1 7.458,4.877 Z"/></g>
+        <g transform="translate(33.546,59.500) rotate(180.000) scale(0.6)"><path d="M 7.458,4.877 A 16.133,16.133 0 0 0 -7.458,4.877 A 5.500,5.500 0 1 1 -7.458,-4.877 A 16.133,16.133 0 0 0 7.458,-4.877 A 5.500,5.500 0 1 1 7.458,4.877 Z"/></g>
+        <g transform="translate(31.289,46.701) rotate(220.000) scale(0.6)"><path d="M 7.458,4.877 A 16.133,16.133 0 0 0 -7.458,4.877 A 5.500,5.500 0 1 1 -7.458,-4.877 A 16.133,16.133 0 0 0 7.458,-4.877 A 5.500,5.500 0 1 1 7.458,4.877 Z"/></g>
+        <g transform="translate(37.787,35.445) rotate(260.000) scale(0.6)"><path d="M 7.458,4.877 A 16.133,16.133 0 0 0 -7.458,4.877 A 5.500,5.500 0 1 1 -7.458,-4.877 A 16.133,16.133 0 0 0 7.458,-4.877 A 5.500,5.500 0 1 1 7.458,4.877 Z"/></g>
+      </g>
     </svg>
   );
 }
 
 /**
- * The full-name logo: spaced caps "VEYR", monochrome (matches the mark —
- * no color accent). Pairs with the arcs+dots mark (above) in headers; use
- * plain "Veyr" in running text.
+ * The full-name logo: the geometric "VEYR" wordmark, monochrome (currentColor).
+ * Pairs with the bond-flower mark (above) in headers; use plain "Veyr" in
+ * running text.
  */
-export function VeyrWordmark({ className = "text-base" }: VeyrMarkProps) {
+export function VeyrWordmark({ className = "h-4" }: VeyrMarkProps) {
   return (
-    <span
+    <svg
+      viewBox="0 0 282 84"
+      className={className}
       role="img"
       aria-label="Veyr"
-      className={`font-semibold uppercase tracking-[0.35em] text-current ${className}`}
+      fill="currentColor"
     >
-      VEYR
-    </span>
+      <path d="M 6.00,0.00 L 19.50,0.00 L 37.00,52.00 L 54.50,0.00 L 68.00,0.00 L 37.00,72.00 Z"/>
+      <rect x="88.00" y="0.00" width="13.50" height="72.00"/><rect x="88.00" y="0.00" width="50.00" height="13.50"/><rect x="88.00" y="29.25" width="50.00" height="13.50"/><rect x="88.00" y="58.50" width="50.00" height="13.50"/>
+      <path d="M 164.75,0 C 164.75,31.68 188.00,26.40 188.00,44.00 L 188.00,72.00" fill="none" stroke="currentColor" strokeWidth="13.5" strokeLinecap="butt" strokeLinejoin="round"/><path d="M 211.25,0 C 211.25,31.68 188.00,26.40 188.00,44.00" fill="none" stroke="currentColor" strokeWidth="13.5" strokeLinecap="butt" strokeLinejoin="round"/>
+      <rect x="238.00" y="0.00" width="13.50" height="72.00"/><path d="M 251.50,0 L 255.50,0 A 20.00,20.00 0 0 1 255.50,40.00 L 251.50,40.00 L 251.50,26.50 L 255.50,26.50 A 6.50,6.50 0 0 0 255.50,13.50 L 251.50,13.50 Z"/><path d="M 251.50,26.50 L 265.00,26.50 L 275.50,72.00 L 262.00,72.00 Z"/>
+    </svg>
   );
 }
