@@ -22,8 +22,8 @@ import { bar, fmtSessionStamp, fmtTokens, fmtUsd, plural, renderColumns, section
 function sourceLine(kind: "daemon" | "cache"): string {
   return kind === "daemon"
     ? chalk.green("● live") + chalk.dim(" · sessions priced by the Veyr app")
-    : chalk.yellow("● local") +
-        chalk.dim(" · daemon unreachable — priced from the local session cache with built-in rates");
+    : chalk.cyan("● local") +
+        chalk.dim(" · scanned your agent logs directly, priced with built-in rates");
 }
 
 function cacheHitPct(bucket: SpendBucket): string {
@@ -116,7 +116,7 @@ export async function usageCommand(opts: { json?: boolean; sessions?: string }):
   }
 
   if (result.kind === "missing") {
-    console.log(chalk.dim("○ no session data yet — run the Veyr menu bar app once so it scans your Claude Code logs."));
+    console.log(chalk.dim("○ no session data yet — no Claude Code or Codex logs found on this machine."));
     return;
   }
 

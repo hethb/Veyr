@@ -6,6 +6,7 @@
 
 import * as fs from "node:fs";
 import { daemonGet } from "./daemon.js";
+import { computeLocalStatus } from "./localStatus.js";
 import { statusFilePath } from "./paths.js";
 
 export interface VeyrCurrentSession {
@@ -129,6 +130,9 @@ export interface VeyrStatus {
 export type VeyrStatusResult =
   | { readonly kind: "ok"; readonly status: VeyrStatus; readonly generatedAt: Date }
   | { readonly kind: "stale"; readonly status: VeyrStatus; readonly generatedAt: Date }
+  /** Computed by this CLI from local session logs — the desktop app has never
+   * written a status feed on this machine. App-only sections are empty. */
+  | { readonly kind: "local"; readonly status: VeyrStatus; readonly generatedAt: Date }
   | { readonly kind: "missing" };
 
 // The Mac app rewrites the feed every 30s while a session is active but only
@@ -176,7 +180,9 @@ function readStatusFromFile(now: Date): VeyrStatusResult {
  * on the tick right before the file is rewritten) but never requires it —
  * the menu bar app not running is a normal state, not an error, so any
  * daemon failure (absent, unreachable, timed out) falls straight back to
- * VEYR_STATUS.json.
+ * VEYR_STATUS.json. When that file has never been written either (CLI-only
+ * install, no desktop app), the CLI computes a snapshot from local session
+ * logs itself; "missing" now means no logs exist on this machine at all.
  */
 export async function readStatus(now: Date = new Date()): Promise<VeyrStatusResult> {
   const fromDaemon = await daemonGet<unknown>("/status");
@@ -184,5 +190,9 @@ export async function readStatus(now: Date = new Date()): Promise<VeyrStatusResu
     const result = resultFor(fromDaemon, now);
     if (result.kind !== "missing") return result;
   }
-  return readStatusFromFile(now);
+  const fromFile = readStatusFromFile(now);
+  if (fromFile.kind !== "missing") return fromFile;
+  const local = await computeLocalStatus(now);
+  if (local !== null) return { kind: "local", status: local, generatedAt: now };
+  return { kind: "missing" };
 }

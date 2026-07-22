@@ -82,7 +82,7 @@ function renderFromStore(opts: { detail?: boolean }): void {
   }
   const store = readSavingsStore();
   if (store === null) {
-    console.log(chalk.dim("○ tracker is on, but nothing has been recorded yet — totals appear after the Mac app's next active session."));
+    console.log(chalk.dim("○ tracker is on, but nothing has been recorded yet — recording runs in the Veyr desktop app, so totals appear after its next active session."));
     return;
   }
   console.log(chalk.yellow("● offline") + chalk.dim(" · app not running — totals read from ~/.veyr/savings.json"));
@@ -174,7 +174,8 @@ export async function savingsCommand(opts: { detail?: boolean; projects?: boolea
 export async function savingsEnableCommand(): Promise<void> {
   writeConfigKey("savingsTracker", true);
   console.log(chalk.green("✓ savingsTracker ON"));
-  console.log(chalk.dim("  The Mac app's next tick starts accumulating baselines. Numbers build up over time."));
+  console.log(chalk.dim("  Recording runs in the Veyr desktop app — its next tick starts accumulating baselines."));
+  console.log(chalk.dim("  (CLI-only install? This toggle is shared; totals appear once the app runs.)"));
 }
 
 export async function savingsDisableCommand(): Promise<void> {

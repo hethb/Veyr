@@ -1,12 +1,12 @@
 # Veyr — 2-minute quickstart
 
-Veyr is local: it reads your coding agent's session logs and your codebase from disk, on your machine. No signup, no API key, no base-URL swap. Pick a surface below — or use more than one, they share the same local data.
+Veyr is local: it reads your coding agent's session logs and your codebase from disk, on your machine. No signup, no API key, no base-URL swap. Pick a surface below — each installs and works on its own (the CLI is the fastest way to try Veyr; no app download needed), and if you use more than one they share the same local data.
 
 ---
 
 ## Path A — macOS menu bar app (recommended)
 
-1. **Download** `Veyr-0.2.1.dmg` from the [Veyr download page](https://veyr.dev#download)
+1. **Download** the latest `Veyr-x.y.z.dmg` from the [Veyr download page](https://veyr.dev#download)
 2. **Install** — open the DMG, drag Veyr to Applications, open it
 3. **Bypass Gatekeeper** (required — builds are not yet notarized):
    ```bash
@@ -24,7 +24,7 @@ cd packages/desktop-mac
 
 ## Path B — VS Code extension
 
-1. **Download** `veyr-vscode-0.2.1.vsix` from the [Veyr download page](https://veyr.dev#download)
+1. **Download** the latest `veyr-vscode-x.y.z.vsix` from the [Veyr download page](https://veyr.dev#download)
 2. **Install** — VS Code → Extensions panel (`Cmd+Shift+X`) → `···` → **Install from VSIX…** → select the file
 3. The extension activates automatically. Live session cost shows in the status bar; the Veyr sidebar panel shows burn rate, cache hit rate, codebase graph status, and one-click optimization commands
 
@@ -32,16 +32,20 @@ cd packages/desktop-mac
 
 ---
 
-## Path C — CLI
+## Path C — CLI (zero friction — nothing else to download)
 
 ```bash
-npm install -g getcanopy   # or: npx getcanopy init
+npm install -g getcanopy   # requires Node 20+
 
-veyr status                # today/week/month spend, read from local session logs
-veyr suggestions           # optimization tips with ready-to-run commands
+veyr                       # one-screen dashboard: session, usage, graph, rules
+veyr status                # current session cost + today's spend, from local logs
+veyr usage                 # per-agent / per-project breakdown, session timeline
+veyr graph --refresh       # build the codebase graph for the current directory
 ```
 
-`veyr init` walks you through setup — no account to create, no key to copy.
+Fully standalone: the CLI scans your agent logs, prices sessions, and builds
+the codebase graph itself — the Mac app and VS Code extension are optional
+companions, not prerequisites. No account to create, no key to copy.
 
 ---
 

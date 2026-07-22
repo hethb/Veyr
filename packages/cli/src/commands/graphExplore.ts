@@ -21,7 +21,7 @@ type Choice = string | typeof QUIT | typeof BACK;
 export async function graphExploreCommand(): Promise<void> {
   const result = await readGraphCache();
   if (result.kind === "missing") {
-    console.log(chalk.dim("○ no graph yet — run the Veyr menu bar app in a workspace to build one"));
+    console.log(chalk.dim("○ no graph yet — run `veyr graph --refresh` in your project to build one"));
     return;
   }
   const { payload, generatedAt } = result;

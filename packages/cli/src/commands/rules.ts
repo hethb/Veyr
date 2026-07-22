@@ -42,7 +42,7 @@ function setRuleEnabled(id: string, enabled: boolean): void {
   rule.enabled = enabled;
   writeRules(ruleSet);
   console.log(chalk.green(`✓ ${id} ${enabled ? "enabled" : "disabled"}`));
-  console.log(chalk.dim("  Takes effect on the Mac app's next tick (≤5 min)."));
+  console.log(chalk.dim("  Injection is applied by the Veyr desktop app — takes effect on its next tick (≤5 min) while it's running."));
 }
 
 export async function rulesEnableCommand(id: string): Promise<void> {
@@ -56,7 +56,7 @@ export async function rulesDisableCommand(id: string): Promise<void> {
 function setGate(enabled: boolean): void {
   writeConfigKey("autoUpdateGuidance", enabled);
   console.log(chalk.green(`✓ autoUpdateGuidance ${enabled ? "ON" : "OFF"}`));
-  console.log(chalk.dim("  Takes effect on the Mac app's next tick (≤5 min)."));
+  console.log(chalk.dim("  Injection is applied by the Veyr desktop app — takes effect on its next tick (≤5 min) while it's running."));
 }
 
 export async function rulesOnCommand(): Promise<void> {

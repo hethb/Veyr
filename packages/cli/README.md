@@ -1,14 +1,19 @@
 # getcanopy — the Veyr CLI
 
 Veyr's terminal surface: usage/cost, Graphify graph status, and the CLAUDE.md
-agent-guidance rule set. A thin client of the daemon the Veyr menu bar app
-hosts on `127.0.0.1` while it's running, falling back to the same local
-`~/.veyr/` files it writes when the daemon isn't reachable. No proxy, no
-account — the only network calls this CLI makes are loopback, to a process
-on this machine, plus one deliberate exception: at most once a day it asks
+agent-guidance rule set. **Fully standalone** — the CLI scans your
+coding-agent session logs, prices sessions, and builds the codebase graph
+itself, so you can `npm install -g getcanopy` and never touch the desktop
+app. When the Veyr desktop app *is* installed and running, the CLI prefers
+the small daemon it hosts on `127.0.0.1` (slightly fresher data, the app's
+fuller pricing pipeline) and both surfaces share the same `~/.veyr/` data.
+No proxy, no account — the only routine network calls this CLI makes are
+loopback, plus two deliberate exceptions: at most once a day it asks
 `registry.npmjs.org` which getcanopy version is latest, so it can tell you
-when yours is behind (set `VEYR_NO_UPDATE_CHECK=1` to turn that off). It
-never sends or intercepts a request/response with a model provider.
+when yours is behind (set `VEYR_NO_UPDATE_CHECK=1` to turn that off), and
+the first `veyr graph --refresh` installs Graphify from a pinned, audited
+GitHub commit if it isn't already present. It never sends or intercepts a
+request/response with a model provider.
 
 ## Install
 
@@ -28,28 +33,33 @@ once a day, never blocking your command, silent when offline).
 
 ## How it works
 
-The Veyr menu bar app is the only thing that keeps Veyr's data fresh — it
-scans your coding-agent session logs, builds the Graphify graph, and (while
-running) hosts a small local HTTP server on an OS-assigned port, publishing
-that port via `~/.veyr/daemon.json`. It also still rewrites the flat files
+The CLI is self-sufficient. Every read has a local computation behind it:
+
+- **Sessions/spend** — the CLI scans Claude Code's and Codex CLI's logs
+  directly (incrementally — unchanged files are skipped) and prices them
+  with a built-in rate table.
+- **Status** — `veyr status` derives a snapshot (current session, today's
+  spend, cache hit rate) from those same scans.
+- **Graph** — `veyr graph --refresh` runs Graphify itself (pure AST, no LLM
+  calls, nothing leaves your machine), installing it on first use from a
+  pinned commit — `pip --user`, or a private venv at `~/.veyr/graphify-venv`
+  when your Python is externally managed. Needs Python 3.10+.
+
+When the Veyr desktop app is installed, it keeps the same data fresh
+continuously: it hosts a small local HTTP server on an OS-assigned port
+(published via `~/.veyr/daemon.json`) and rewrites the flat files
 (`~/.veyr/agent-status/VEYR_STATUS.json`, `~/.veyr/cache/graph.json`) every
-30s while a session is active (every 5 minutes when idle).
-
-`veyr status` and `veyr graph` prefer the daemon — it reflects state a tick
-or two fresher than the file cache — and transparently fall back to reading
-the flat files when the daemon isn't running. **You don't need to do
-anything for this fallback**; the CLI tells you plainly when data is stale
-or missing rather than showing stale numbers silently.
-
-`veyr graph --refresh` is the one command that *requires* the daemon: an
-on-demand Graphify rescan needs live computation, not just a read. If the
-menu bar app isn't already running, this launches it headlessly (no window,
-no Dock icon) and waits for it to come up before requesting the rescan.
+30s while a session is active. The CLI prefers that daemon when reachable —
+fresher data, the app's fuller pricing pipeline (models.dev catalog),
+app-computed alerts/recommendations — and computes locally otherwise. **You
+don't need to do anything for this**; every command labels which source
+you're seeing. The CLI never launches the app.
 
 `veyr rules` is deliberately file-only, not daemon-backed: rule/gate changes
 are just config, so they write straight to `~/.veyr/guidance-rules.json` and
-`~/.veyr/config.json` and take effect on the Mac app's next tick (≤5
-minutes), the same as before the daemon existed.
+`~/.veyr/config.json`. Note the CLAUDE.md injection itself is performed by
+the desktop app's background tick — the CLI edits the shared config either
+way, and changes apply within ≤5 minutes while the app runs.
 
 ## Commands
 
@@ -70,7 +80,7 @@ or piped output).
 | `veyr usage --sessions <n>` | Show more/fewer recent sessions (default 8) |
 | `veyr usage --json` | Raw session entries |
 | `veyr graph` | Graphify graph status + current understanding (overview, savings estimate, active file) |
-| `veyr graph --refresh` | Trigger an on-demand rescan of the current directory (launches Veyr headlessly if needed) |
+| `veyr graph --refresh` | Rescan the current directory — via the app when it's running, otherwise built locally |
 | `veyr graph --top <n>` | Show more/fewer top-connected nodes (default 10) |
 | `veyr graph --json` | Raw graph cache payload |
 | `veyr rules` / `veyr rules list` | The agent-guidance rule set and whether injection is on |
@@ -85,10 +95,9 @@ or piped output).
 
 `veyr usage` prefers the daemon's `/sessions` (rows priced by the app's full
 pricing pipeline, models.dev catalog included). When the daemon is
-unreachable it re-derives sessions from `~/.veyr/cache/sessions.json` and
-prices them with a built-in rate table — the output labels which source
-you're seeing, and locally-priced figures can differ slightly from the
-app's.
+unreachable it scans your agent logs itself and prices them with a built-in
+rate table — the output labels which source you're seeing, and
+locally-priced figures can differ slightly from the app's.
 
 ## What this CLI intentionally does not do
 

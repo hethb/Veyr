@@ -38,8 +38,9 @@ const COMMANDS: ReadonlyArray<readonly [string, string]> = [
 function renderWelcomeBanner(version: string): void {
   console.log(chalk.bold.cyan(`Veyr CLI v${version}`) + chalk.dim(" — first run, so here's the lay of the land."));
   console.log(
-    chalk.dim("Everything below reads local ~/.veyr/ data written by the Veyr menu bar app —\n") +
-      chalk.dim("no proxy, no account, no traffic interception. Reach this screen anytime with `veyr`.")
+    chalk.dim("Everything below is computed from local data — your agent logs and ~/.veyr/ —\n") +
+      chalk.dim("no proxy, no account, no traffic interception, no app install required.\n") +
+      chalk.dim("Reach this screen anytime with `veyr`.")
   );
   console.log(divider(70));
 }
@@ -57,7 +58,7 @@ export async function dashboardCommand(opts: { welcome?: boolean; version: strin
   // --- Session ---
   console.log(sectionTitle("Session"));
   if (status.kind === "missing") {
-    console.log(chalk.dim("  No agent feed yet — run the Veyr menu bar app once."));
+    console.log(chalk.dim("  No session data yet — start a Claude Code or Codex session and re-run."));
   } else {
     const session = status.status.current_session;
     if (session?.is_active) {
@@ -108,7 +109,7 @@ export async function dashboardCommand(opts: { welcome?: boolean; version: strin
   // --- Graph ---
   console.log(sectionTitle("Graph"));
   if (graph.kind === "missing") {
-    console.log(chalk.dim("  No graph yet — builds automatically while a coding session is active (needs Python 3.10+)."));
+    console.log(chalk.dim("  No graph yet — `veyr graph --refresh` builds one for the current directory (needs Python 3.10+)."));
   } else {
     const payload = graph.payload;
     console.log(

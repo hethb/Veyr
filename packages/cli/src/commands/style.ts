@@ -12,7 +12,7 @@ export async function styleStatusCommand(): Promise<void> {
   console.log(
     enabled
       ? chalk.green("promptStyleLearning: ON") +
-          chalk.dim("  — the Mac app learns from local prompt history and `veyr compose` shows suggestions")
+          chalk.dim("  — the Veyr desktop app learns from local prompt history and `veyr compose` shows suggestions")
       : chalk.dim("promptStyleLearning: OFF") + chalk.dim("  — run `veyr style enable` to turn it on")
   );
 }
@@ -23,8 +23,8 @@ function setEnabled(enabled: boolean): void {
   console.log(
     chalk.dim(
       enabled
-        ? "  The Mac app's next tick starts building a local corpus from your prompt history."
-        : "  The Mac app's next tick stops scanning; `veyr compose` still works, just without suggestions."
+        ? "  Corpus building runs in the Veyr desktop app — its next tick starts learning from your prompt history. `veyr compose` works either way, with suggestions once the app has run."
+        : "  The desktop app's next tick stops scanning; `veyr compose` still works, just without suggestions."
     )
   );
 }

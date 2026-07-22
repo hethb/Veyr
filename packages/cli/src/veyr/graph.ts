@@ -5,7 +5,7 @@
 // workspace the Mac app most recently built a graph for, not the CLI's cwd.
 
 import * as fs from "node:fs";
-import { daemonGet, daemonPost, ensureDaemonRunning, type EnsureDaemonResult } from "./daemon.js";
+import { daemonGet, daemonPost } from "./daemon.js";
 import { graphCacheFilePath } from "./paths.js";
 
 export interface GraphNode {
@@ -62,7 +62,9 @@ function resultFor(parsed: unknown): GraphCacheResult {
   return { kind: "ok", payload: parsed, generatedAt };
 }
 
-function readGraphCacheFromFile(): GraphCacheResult {
+/** File-only read, bypassing the daemon — used right after a local build so
+ * a running-but-unrefreshed daemon can't mask the newly written cache. */
+export function readGraphCacheFromFile(): GraphCacheResult {
   let raw: string;
   try {
     raw = fs.readFileSync(graphCacheFilePath(), "utf8");
@@ -93,21 +95,17 @@ export async function readGraphCache(): Promise<GraphCacheResult> {
 }
 
 /**
- * Triggers an on-demand Graphify rescan of `path` — live computation, so
- * unlike a plain read this needs the daemon and will launch the Veyr menu
- * bar app headlessly (no window, no Dock icon) if it isn't already running.
- * Returns immediately once the rescan has started; the build itself can take
- * anywhere from under a second to several minutes on a large repo, so the
- * caller is expected to poll `readGraphCache()` afterward.
+ * Asks a running daemon (i.e. the desktop app, when installed and open) to
+ * rescan `path`. Returns false when no daemon is reachable or it declines —
+ * the caller then runs the build itself via graphify.ts's buildGraphLocally,
+ * so a CLI-only install never needs the app. Returns immediately once the
+ * rescan has started; the build can take seconds to minutes on a large repo,
+ * so the caller is expected to poll `readGraphCache()` afterward.
  */
-export async function requestGraphRefresh(path: string): Promise<{ readonly ok: true } | { readonly ok: false; readonly reason: string }> {
-  const ensured: EnsureDaemonResult = await ensureDaemonRunning();
-  if (!ensured.ok) return ensured;
+export async function requestDaemonGraphRefresh(path: string): Promise<boolean> {
+  if (!(await daemonGet("/health"))) return false;
   const response = await daemonPost<{ ok?: boolean }>(`/graph/refresh?path=${encodeURIComponent(path)}`, 5000);
-  if (!response?.ok) {
-    return { ok: false, reason: "Veyr is running but didn't accept the rescan request." };
-  }
-  return { ok: true };
+  return response?.ok === true;
 }
 
 /** Top-N nodes by total degree (in + out), descending. */

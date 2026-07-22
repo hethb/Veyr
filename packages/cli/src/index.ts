@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 // Veyr terminal CLI — usage/cost, Graphify graph status, and agent-guidance
-// rules. A thin client of the daemon the Veyr menu bar app hosts on
-// 127.0.0.1 while it's running, falling back to the same local ~/.veyr/
-// files it writes when the daemon isn't reachable. No proxy, no traffic
-// interception — the only network calls this makes are loopback, to a
-// process on this machine.
+// rules. Fully standalone: it scans local agent logs, prices sessions, and
+// builds the codebase graph itself, so no desktop app install is required.
+// When the Veyr desktop app IS running, its 127.0.0.1 daemon is preferred
+// for freshness — but every read falls back to local computation. No proxy,
+// no traffic interception — the only network calls this makes are loopback
+// (and Graphify's one-time pinned install when a graph build asks for it).
 
 import { createRequire } from "node:module";
 import chalk from "chalk";
@@ -79,7 +80,7 @@ const graph = program
   .description("Graphify codebase graph status for the workspace Veyr last built")
   .option("--json", "Print the raw graph cache payload")
   .option("--top <n>", "Number of top-connected nodes to show", "10")
-  .option("--refresh", "Trigger an on-demand rescan of the current directory via the daemon")
+  .option("--refresh", "Rescan the current directory (via the app when running, otherwise built locally)")
   .action((opts) => run(() => graphCommand(opts)));
 
 graph

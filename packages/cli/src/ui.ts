@@ -134,17 +134,20 @@ export function fmtAge(date: Date, now: Date = new Date()): string {
 
 /** The shared freshness line every daemon-backed command opens with. */
 export function freshnessLine(
-  kind: "ok" | "stale" | "missing",
+  kind: "ok" | "stale" | "local" | "missing",
   generatedAt?: Date,
   now: Date = new Date()
 ): string {
   if (kind === "missing") {
-    return chalk.dim("○ no data yet — run the Veyr menu bar app once");
+    return chalk.dim("○ no data yet — no local agent session logs found on this machine");
+  }
+  if (kind === "local") {
+    return chalk.cyan("● local") + chalk.dim(" · computed just now from local session logs");
   }
   if (kind === "stale") {
     return (
       chalk.yellow("● stale") +
-      chalk.dim(` · updated ${fmtAge(generatedAt!, now)} — is the Veyr menu bar app running?`)
+      chalk.dim(` · updated ${fmtAge(generatedAt!, now)} — is the Veyr desktop app still running?`)
     );
   }
   return chalk.green("● live") + chalk.dim(` · updated ${fmtAge(generatedAt!, now)}`);

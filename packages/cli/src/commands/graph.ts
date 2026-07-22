@@ -1,11 +1,19 @@
-// `veyr graph` — Graphify graph status. Prefers the live daemon the menu bar
+// `veyr graph` — Graphify graph status. Prefers the live daemon the desktop
 // app hosts while running, falling back to ~/.veyr/cache/graph.json — a
-// single global file reflecting whichever workspace the app most recently
-// built a graph for, not necessarily the CLI's current working directory.
-// `--refresh` targets the CLI's cwd explicitly via the daemon.
+// single global file reflecting whichever workspace was most recently
+// built, not necessarily the CLI's current working directory. `--refresh`
+// targets the CLI's cwd explicitly: via the daemon when the app is running,
+// otherwise by running Graphify directly (graphify.ts) — no app required.
 
 import chalk from "chalk";
-import { readGraphCache, requestGraphRefresh, topNodesByConnections, type GraphCacheResult } from "../veyr/graph.js";
+import {
+  readGraphCache,
+  readGraphCacheFromFile,
+  requestDaemonGraphRefresh,
+  topNodesByConnections,
+  type GraphCacheResult,
+} from "../veyr/graph.js";
+import { buildGraphLocally } from "../veyr/graphify.js";
 import { readStatus } from "../veyr/status.js";
 import { fmtAge, fmtTokens } from "../ui.js";
 
@@ -27,18 +35,27 @@ export async function graphCommand(opts: { json?: boolean; top?: string; refresh
 
   if (opts.refresh) {
     const startedAt = new Date();
-    console.log(chalk.dim("requesting an on-demand rescan…"));
-    const requested = await requestGraphRefresh(process.cwd());
-    if (!requested.ok) {
-      console.log(chalk.red(`✗ ${requested.reason}`));
-      process.exitCode = 1;
-      return;
-    }
-    console.log(chalk.dim("rescan started — this can take a few seconds to a few minutes on a large repo"));
-    result = await waitForFreshGraph(startedAt);
-    if (result.kind === "missing" || result.generatedAt <= startedAt) {
-      console.log(chalk.yellow("still building — run `veyr graph` again shortly to check."));
-      return;
+    if (await requestDaemonGraphRefresh(process.cwd())) {
+      console.log(chalk.dim("rescan started via the Veyr app — this can take a few seconds to a few minutes on a large repo"));
+      result = await waitForFreshGraph(startedAt);
+      if (result.kind === "missing" || result.generatedAt <= startedAt) {
+        console.log(chalk.yellow("still building — run `veyr graph` again shortly to check."));
+        return;
+      }
+    } else {
+      console.log(chalk.dim("building locally — this can take a few seconds to a few minutes on a large repo"));
+      const built = await buildGraphLocally(process.cwd(), (line) => console.log(chalk.dim(line)));
+      if (!built.ok) {
+        console.log(chalk.red(`✗ ${built.reason}`));
+        process.exitCode = 1;
+        return;
+      }
+      result = readGraphCacheFromFile();
+      if (result.kind === "missing") {
+        console.log(chalk.red("✗ build finished but the graph cache is unreadable."));
+        process.exitCode = 1;
+        return;
+      }
     }
   } else {
     result = await readGraphCache();
@@ -50,7 +67,7 @@ export async function graphCommand(opts: { json?: boolean; top?: string; refresh
   }
 
   if (result.kind === "missing") {
-    console.log(chalk.dim("○ no graph yet — run the Veyr menu bar app in a workspace to build one"));
+    console.log(chalk.dim("○ no graph yet — run `veyr graph --refresh` in your project to build one (needs Python 3.10+)"));
     return;
   }
 

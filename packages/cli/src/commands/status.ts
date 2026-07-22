@@ -23,7 +23,7 @@ function render(result: VeyrStatusResult, now: Date): void {
   console.log(freshnessLine(result.kind, "generatedAt" in result ? result.generatedAt : undefined, now));
 
   if (result.kind === "missing") {
-    console.log(chalk.dim("  It writes ~/.veyr/agent-status/VEYR_STATUS.json every 30s during a session."));
+    console.log(chalk.dim("  Start a Claude Code or Codex session and run this again — no app install needed."));
     return;
   }
 

@@ -248,8 +248,12 @@ veyr savings               # confidence-tagged savings, lifetime + per project
 ```
 
 The dashboard renders once automatically on first run as a welcome screen —
-no account, no key, no setup. See [packages/cli/README.md](packages/cli/README.md)
-for the full command table.
+no account, no key, no setup. The CLI is fully standalone: it scans your
+agent logs, prices sessions, and builds the codebase graph itself
+(`veyr graph --refresh`), so it never requires the Mac app — when the app
+is running it just gets fresher, app-priced data from it automatically.
+See [packages/cli/README.md](packages/cli/README.md) for the full command
+table.
 
 ### VS Code Extension + Claude Code
 
