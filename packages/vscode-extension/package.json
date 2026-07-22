@@ -2,7 +2,7 @@
   "name": "veyr-vscode",
   "displayName": "Veyr",
   "description": "LLM cost attribution and optimization suggestions in your editor, plus one-click routing of Claude Code through the Veyr proxy.",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "private": true,
   "publisher": "veyr",
   "engines": {
@@ -156,6 +156,7 @@
     "build": "node scripts/copy-graph-embed.mjs && tsc -p ./ --noEmit && node scripts/build.mjs",
     "typecheck": "tsc -p ./ --noEmit",
     "watch": "node scripts/build.mjs --watch",
+    "package": "vsce package --no-dependencies",
     "vscode:prepublish": "npm run build"
   },
   "devDependencies": {

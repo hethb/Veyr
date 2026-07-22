@@ -29,7 +29,8 @@ const LANDING_NAV_ITEMS: AnimatedNavItem[] = [
 const ACCENTS = ["#076EFF", "#4FABFF", "#B1C5FF"] as const;
 const VEYR_VERSION = "0.2.2";
 const MAC_DMG_URL = `/downloads/Veyr-${VEYR_VERSION}.dmg`;
-const VSIX_URL = "/downloads/veyr-vscode-0.2.1.vsix";
+const VSIX_VERSION = "0.3.0";
+const VSIX_URL = `/downloads/veyr-vscode-${VSIX_VERSION}.vsix`;
 
 export function Landing() {
   return (
@@ -216,7 +217,7 @@ function GetRunning() {
   ];
 
   const vscodeSteps: SetupStep[] = [
-    { title: "Download the extension", detail: "Grab veyr-vscode-0.2.1.vsix with the button below." },
+    { title: "Download the extension", detail: `Grab veyr-vscode-${VSIX_VERSION}.vsix with the button below.` },
     {
       title: "Install from VSIX",
       detail:
@@ -273,7 +274,7 @@ function GetRunning() {
             label="VS Code extension"
             title="Veyr for VS Code"
             steps={vscodeSteps}
-            cta={{ href: VSIX_URL, label: "Download veyr-vscode-0.2.1.vsix", download: true }}
+            cta={{ href: VSIX_URL, label: `Download veyr-vscode-${VSIX_VERSION}.vsix`, download: true }}
             accent={ACCENTS[1]}
           />
           <InstallCard
