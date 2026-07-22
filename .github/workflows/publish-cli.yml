@@ -1,0 +1,59 @@
+# Publishes getcanopy to npm when a cli-v* tag is pushed. Separate from
+# release.yml's v* namespace on purpose: the Mac app and the CLI version
+# independently (version.env vs packages/cli/package.json), so a shared tag
+# either couples the bumps in lockstep or force-overwrites one side's
+# version — the old release.yml publish step did the latter, which after the
+# versions diverged could publish a downgrade and repoint npm's `latest` at
+# it. Here the tag must EQUAL the committed package.json version, or the run
+# fails before touching npm.
+#
+# Release flow:
+#     1. bump "version" in packages/cli/package.json, commit, push
+#     2. git tag cli-v<that version> && git push --tags
+#
+# Needs an NPM_TOKEN repo secret (npmjs.com → Access Tokens → Granular, with
+# read/write on getcanopy — an automation token, so 2FA doesn't block CI).
+
+name: Publish CLI
+
+on:
+  push:
+    tags:
+      - "cli-v*"
+
+permissions:
+  contents: read
+  id-token: write # npm --provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Verify tag matches packages/cli/package.json
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#cli-v}"
+          PKG_VERSION="$(node -p "require('./packages/cli/package.json').version")"
+          if [[ "$TAG_VERSION" != "$PKG_VERSION" ]]; then
+            echo "::error::Tag $GITHUB_REF_NAME (version $TAG_VERSION) doesn't match packages/cli/package.json ($PKG_VERSION). Bump the version, commit, then re-tag." >&2
+            exit 1
+          fi
+
+      # Root install, not packages/cli: the workspace lockfile lives at the
+      # root, and the build needs sibling workspaces (@veyr/core is bundled
+      # in; the dashboard's embed target produces dist/embed.html).
+      - name: Install workspace
+        run: npm ci
+
+      # prepublishOnly runs the esbuild bundle + embed copy automatically.
+      - name: Publish to npm
+        working-directory: packages/cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public

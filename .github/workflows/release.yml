@@ -3,11 +3,16 @@
 # shape (letting each job publish itself raced to create duplicate release
 # drafts there — same fix applies here).
 #
-# What this does NOT do: bump packages/homebrew-veyr's formula/cask
-# version+sha256. That's a manual step for now — see
-# scripts/bump-homebrew-tap.sh. Also does not sign/notarize the Mac app —
-# CODEXBAR_SIGNING defaults to "adhoc" (see Scripts/package_app.sh); this
-# project has no Apple Developer Program membership of its own yet.
+# What this does NOT do: publish the CLI to npm — that moved to
+# publish-cli.yml (cli-v* tags), because the Mac app and CLI version
+# independently and this workflow's old tag-overrides-version approach could
+# publish a CLI downgrade once the two diverged. The CLI tarball attached to
+# the release here is built at whatever version packages/cli/package.json
+# says. Also not done here: bumping packages/homebrew-veyr's formula/cask
+# version+sha256 (manual — see scripts/bump-homebrew-tap.sh), and
+# signing/notarizing the Mac app — CODEXBAR_SIGNING defaults to "adhoc" (see
+# Scripts/package_app.sh); this project has no Apple Developer Program
+# membership of its own yet.
 #
 # Trigger: push a tag matching v* whose number equals
 # packages/desktop-mac/version.env's MARKETING_VERSION, e.g.
@@ -70,19 +75,10 @@ jobs:
           node-version: 20
           registry-url: "https://registry.npmjs.org"
 
+      # Root install: the lockfile lives at the workspace root, and the CLI
+      # build bundles the @veyr/core workspace + the dashboard's embed target.
       - name: Install
-        working-directory: packages/cli
         run: npm ci
-
-      # The Mac app and CLI version independently (packages/desktop-mac's
-      # version.env vs packages/cli/package.json) — rather than requiring
-      # both bumped in lockstep before every tag, the release tag IS the
-      # CLI's published version. No-op on a manual workflow_dispatch run
-      # (no tag).
-      - name: Set CLI version from tag
-        if: startsWith(github.ref, 'refs/tags/v')
-        working-directory: packages/cli
-        run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version
 
       - name: Build
         working-directory: packages/cli
@@ -97,16 +93,6 @@ jobs:
         with:
           name: cli-tarball
           path: ${{ runner.temp }}/getcanopy-*.tgz
-
-      # Only runs once NPM_TOKEN is added as a repo secret — until then this
-      # step is silently skipped rather than failing the whole workflow.
-      - name: Publish to npm
-        if: ${{ startsWith(github.ref, 'refs/tags/v') && env.NPM_TOKEN != '' }}
-        working-directory: packages/cli
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish
 
   release:
     needs: [build-mac-app, build-cli]

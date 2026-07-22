@@ -110,5 +110,18 @@ locally-priced figures can differ slightly from the app's.
 ```bash
 npm run dev -- status   # run from source with tsx
 npm run typecheck
-npm run build            # compile to dist/
+npm run build            # esbuild bundle → dist/ (inlines @veyr/core + deps)
 ```
+
+## Releasing
+
+Publishing to npm is automated by `.github/workflows/publish-cli.yml`:
+
+```bash
+# 1. bump "version" in package.json, commit, push
+# 2. tag it — the workflow verifies tag == package.json version, then publishes
+git tag cli-v0.3.1 && git push --tags
+```
+
+Manual `npm publish` from this directory still works too (`prepublishOnly`
+rebuilds the bundle).
