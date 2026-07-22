@@ -7,8 +7,8 @@
 
 import * as clack from "@clack/prompts";
 import chalk from "chalk";
-import { readGraphCache, topNodesByConnections, type GraphCachePayload, type GraphNode } from "../veyr/graph.js";
-import { relationsFor, type NodeRelations } from "../veyr/graphRelations.js";
+import { readGraphCache, topNodesByConnections, type GraphCachePayload, type GraphNode } from "@veyr/core";
+import { relationsFor, type NodeRelations } from "@veyr/core";
 import { fmtAge } from "../ui.js";
 
 const TOP_N = 20;

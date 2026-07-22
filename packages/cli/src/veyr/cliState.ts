@@ -4,7 +4,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { cliStateFilePath } from "./paths.js";
+import { cliStateFilePath } from "@veyr/core";
 
 interface CliState {
   firstRunShownAt?: string;

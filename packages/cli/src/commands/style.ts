@@ -5,7 +5,7 @@
 // involvement needed to flip the toggle itself.
 
 import chalk from "chalk";
-import { readPromptStyleLearning, writeConfigKey } from "../veyr/config.js";
+import { readPromptStyleLearning, writeConfigKey } from "@veyr/core";
 
 export async function styleStatusCommand(): Promise<void> {
   const enabled = readPromptStyleLearning();

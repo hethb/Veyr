@@ -7,6 +7,7 @@
 //  - Command to route Claude Code through the Veyr proxy via ANTHROPIC_BASE_URL.
 
 import * as vscode from "vscode";
+import { buildGraphLocally } from "@veyr/core";
 import {
   commandFor,
   formatTokens,
@@ -146,7 +147,7 @@ class VeyrViewProvider implements vscode.WebviewViewProvider {
 
   async refresh(): Promise<void> {
     if (!this.view) return;
-    const agent = readStatus();
+    const agent = await readStatus();
     try {
       const [overview, suggestions] = await Promise.all([
         fetchJson("/api/stats/overview"),
@@ -178,9 +179,9 @@ function renderLiveSession(agent: VeyrStatusResult): string {
   if (agent.kind === "missing") {
     return `
       <h3>Live session</h3>
-      <p class="muted">No Veyr agent feed found. Launch the <b>Veyr menu bar app</b> —
-      it reads your local Claude Code logs and writes
-      <code>~/.veyr/agent-status/VEYR_STATUS.json</code>. Nothing leaves your machine.</p>`;
+      <p class="muted">No session data found. Start a Claude Code or Codex session —
+      Veyr reads the local logs directly, no app install required.
+      Nothing leaves your machine.</p>`;
   }
 
   const session = agent.status.current_session;
@@ -195,6 +196,7 @@ function renderLiveSession(agent: VeyrStatusResult): string {
     : session.is_active
       ? '<span class="badge live">● active</span>'
       : '<span class="badge">idle</span>';
+  const localNote = agent.kind === "local" ? ' <span class="badge">local scan</span>' : "";
 
   const top = agent.status.recommendations[0];
   const topCommand = top ? commandFor(top) : undefined;
@@ -213,7 +215,7 @@ function renderLiveSession(agent: VeyrStatusResult): string {
     : "";
 
   return `
-    <h3>Live session ${state}</h3>
+    <h3>Live session ${state}${localNote}</h3>
     <table class="kv">
       <tr><td>Model</td><td><b>${escapeHtml(session.model)}</b></td></tr>
       <tr><td>Project</td><td>${escapeHtml(session.project)}</td></tr>
@@ -239,12 +241,13 @@ function renderGraphSection(agent: VeyrStatusResult): string {
   if (agent.kind === "missing") return "";
   const graph = agent.status.graph_context;
   if (!graph || !graph.available) {
-    // The Mac app omits graph_context when Python/Graphify are unavailable
-    // or the first build hasn't finished — one muted line, no section chrome.
+    // graph_context is only present in the app's feed; a local-scan status
+    // never carries it, and the app omits it before the first build finishes.
     return `
       <h3>Codebase graph</h3>
-      <p class="muted">No graph yet — the Veyr menu bar app builds it automatically
-      (needs Python 3.10+).</p>`;
+      <p class="muted">No graph yet — run <b>Veyr: Build codebase graph</b> from the
+      command palette (needs Python 3.10+), or let the Veyr desktop app build it
+      automatically.</p>`;
   }
 
   const savings = graph.token_savings_estimate;
@@ -432,6 +435,35 @@ async function unrouteClaudeCode(): Promise<void> {
   );
 }
 
+/**
+ * `Veyr: Build codebase graph` — runs Graphify on the first workspace folder
+ * via @veyr/core (same local build path as `veyr graph --refresh`), so the
+ * graph works with no desktop app installed. First run may install Graphify
+ * itself (pinned commit, pip --user or a private ~/.veyr venv, 1–2 min).
+ */
+async function buildGraphCommand(): Promise<void> {
+  const folder = vscode.workspace.workspaceFolders?.[0];
+  if (!folder) {
+    void vscode.window.showWarningMessage("Veyr: open a folder to build its codebase graph.");
+    return;
+  }
+  await vscode.window.withProgress(
+    { location: vscode.ProgressLocation.Notification, title: "Veyr: building codebase graph" },
+    async (progress) => {
+      const result = await buildGraphLocally(folder.uri.fsPath, (line) =>
+        progress.report({ message: line }),
+      );
+      if (result.ok) {
+        const open = "Open graph";
+        const choice = await vscode.window.showInformationMessage("Veyr: codebase graph built.", open);
+        if (choice === open) void vscode.commands.executeCommand("veyr.openGraph");
+      } else {
+        void vscode.window.showErrorMessage(`Veyr: graph build failed — ${result.reason}`);
+      }
+    },
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Activation
 // ---------------------------------------------------------------------------
@@ -449,7 +481,7 @@ export function activate(context: vscode.ExtensionContext): void {
     savingsStatusBar,
     vscode.window.registerWebviewViewProvider("veyr.panel", provider),
     vscode.commands.registerCommand("veyr.refresh", () => {
-      statusBar.refresh();
+      void statusBar.refresh();
       void provider.refresh();
     }),
     vscode.commands.registerCommand("veyr.showPanel", () => {
@@ -461,6 +493,7 @@ export function activate(context: vscode.ExtensionContext): void {
       vscode.env.openExternal(vscode.Uri.parse(dashboardUrl())),
     ),
     vscode.commands.registerCommand("veyr.openGraph", () => GraphPanel.show(context)),
+    vscode.commands.registerCommand("veyr.buildGraph", () => void buildGraphCommand()),
     vscode.commands.registerCommand("veyr.composePrompt", () => void composePromptCommand()),
     vscode.commands.registerCommand("veyr.copyComposedPrompt", () => void copyComposedPromptCommand()),
     vscode.commands.registerCommand("veyr.showSavingsDetail", () => void showSavingsDetailCommand(savingsStatusBar)),

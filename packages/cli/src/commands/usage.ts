@@ -16,7 +16,7 @@ import {
   type CliSessionEntry,
   type SessionsResult,
   type SpendBucket,
-} from "../veyr/sessions.js";
+} from "@veyr/core";
 import { bar, fmtSessionStamp, fmtTokens, fmtUsd, plural, renderColumns, sectionTitle } from "../ui.js";
 
 function sourceLine(kind: "daemon" | "cache"): string {

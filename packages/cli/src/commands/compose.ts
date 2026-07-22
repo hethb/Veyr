@@ -16,8 +16,8 @@
 import { spawn } from "node:child_process";
 import * as readline from "node:readline";
 import chalk from "chalk";
-import { daemonGet } from "../veyr/daemon.js";
-import { readPromptStyleLearning } from "../veyr/config.js";
+import { daemonGet } from "@veyr/core";
+import { readPromptStyleLearning } from "@veyr/core";
 
 interface StyleSuggestion {
   readonly text: string;

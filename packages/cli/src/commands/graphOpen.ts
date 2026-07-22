@@ -12,11 +12,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import chalk from "chalk";
-import { readGraphCache } from "../veyr/graph.js";
+import { readGraphCache } from "@veyr/core";
 import { fmtAge } from "../ui.js";
 
-// dist/commands/graphOpen.js -> dist/embed.html (placed by scripts/copy-graph-embed.mjs).
-const EMBED_BUNDLE_URL = new URL("../embed.html", import.meta.url);
+// The CLI ships as one bundled dist/index.js, with embed.html placed next to
+// it by scripts/copy-graph-embed.mjs — so this resolves dist/embed.html.
+const EMBED_BUNDLE_URL = new URL("./embed.html", import.meta.url);
 
 export async function graphOpenCommand(): Promise<void> {
   const result = await readGraphCache();

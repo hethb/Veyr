@@ -8,8 +8,8 @@
 
 import chalk from "chalk";
 import { CliError } from "../cliError.js";
-import { readAutoUpdateGuidance, writeConfigKey } from "../veyr/config.js";
-import { readRules, writeRules } from "../veyr/guidanceRules.js";
+import { readAutoUpdateGuidance, writeConfigKey } from "@veyr/core";
+import { readRules, writeRules } from "@veyr/core";
 
 export async function rulesListCommand(): Promise<void> {
   const gateOn = readAutoUpdateGuidance();

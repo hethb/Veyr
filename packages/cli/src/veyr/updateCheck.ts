@@ -9,7 +9,7 @@ import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import chalk from "chalk";
-import { updateCheckCacheFilePath } from "./paths.js";
+import { updateCheckCacheFilePath } from "@veyr/core";
 
 const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
 

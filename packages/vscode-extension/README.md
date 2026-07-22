@@ -55,30 +55,41 @@ For editor type hints, install VSCode types in this folder:
 npm install -D @types/vscode
 ```
 
-## Live session from the Veyr agent feed (no proxy needed)
+## Live session cost (no proxy, no app required)
 
-When the Veyr menu bar app is running, the extension reads
-`~/.veyr/agent-status/VEYR_STATUS.json` (local file, nothing leaves your
-machine) and shows:
+The extension is standalone: it bundles `@veyr/core` (the same local-data
+engine the CLI uses), so it scans your Claude Code / Codex session logs and
+prices them itself. When the Veyr desktop app *is* running, its richer feed
+(`~/.veyr/agent-status/VEYR_STATUS.json` — adds alerts, recommendations, and
+graph context) is preferred automatically. Either way, everything is a local
+file read — nothing leaves your machine. You get:
 
 - **Status bar** (right side): `$(graph-line) $0.84 · 14k↓ 3k↑` — live session
   cost and tokens, with a ● dot while the session is active. Shows
-  `Veyr: inactive` when the feed is missing or stale (>2 min). Click to open
-  the Veyr panel.
-- **Panel → Live session**: model, cost, burn rate, cache hit rate, tokens, and
-  the top optimization recommendation with a one-click copy button
-  (`/model …`, `/compact`).
+  `Veyr: inactive` only when there are no session logs on the machine at all.
+  Click to open the Veyr panel.
+- **Panel → Live session**: model, cost, burn rate, cache hit rate, tokens —
+  plus the top optimization recommendation (with one-click `/model …` /
+  `/compact` copy buttons) when the app's feed is available.
+- **Veyr: Build codebase graph** (command palette): builds the Graphify graph
+  for the current workspace locally (needs Python 3.10+; first run installs
+  Graphify from a pinned commit). View it with **Veyr: Open graph
+  visualization** — no app needed.
 
 Settings: `veyr.agentStatusPath`, `veyr.showCostInStatusBar`,
-`veyr.pollIntervalSeconds`, and `veyr.autoInjectClaudeMd` (shared with the Mac
-app via `~/.veyr/config.json`; the Mac app performs the CLAUDE.md updates).
+`veyr.pollIntervalSeconds`, and `veyr.autoInjectClaudeMd` (shared with the
+desktop app via `~/.veyr/config.json`; the desktop app performs the CLAUDE.md
+updates).
 
 ## Development
 
 ```bash
-npm install
-npm run build     # tsc → out/
+npm install       # from the repo root — links the @veyr/core workspace package
+npm run build     # embed copy + tsc --noEmit + esbuild bundle → out/extension.js
+npm run watch     # esbuild --watch for the F5 debug loop
 ```
 
-Open this folder in VS Code and press **F5**. Package with `vsce package`
-(runs the build via `vscode:prepublish`).
+The build bundles `@veyr/core` (a private, source-only workspace package)
+into `out/extension.js`, so the .vsix stays self-contained with node_modules
+excluded. Open this folder in VS Code and press **F5**. Package with
+`vsce package` (runs the build via `vscode:prepublish`).

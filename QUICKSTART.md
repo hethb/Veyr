@@ -28,7 +28,7 @@ cd packages/desktop-mac
 2. **Install** — VS Code → Extensions panel (`Cmd+Shift+X`) → `···` → **Install from VSIX…** → select the file
 3. The extension activates automatically. Live session cost shows in the status bar; the Veyr sidebar panel shows burn rate, cache hit rate, codebase graph status, and one-click optimization commands
 
-> The Mac app must be running — it writes the local agent feed the VS Code extension reads.
+> Fully standalone — the extension scans your local session logs itself, and **Veyr: Build codebase graph** builds the graph on demand (Python 3.10+). If the Mac app is also installed, its richer feed (alerts, recommendations) is used automatically.
 
 ---
 

@@ -9,12 +9,12 @@
 // run (see the first-run hook in index.ts and veyr/cliState.ts).
 
 import chalk from "chalk";
-import { readAutoUpdateGuidance, readSavingsTracker } from "../veyr/config.js";
-import { readGraphCache } from "../veyr/graph.js";
-import { readRules } from "../veyr/guidanceRules.js";
-import { readSavingsStore, totalUsd } from "../veyr/savingsStore.js";
-import { readSessions, startOfMonth, startOfToday, startOfWeek, totalSince, groupBy } from "../veyr/sessions.js";
-import { readStatus } from "../veyr/status.js";
+import { readAutoUpdateGuidance, readSavingsTracker } from "@veyr/core";
+import { readGraphCache } from "@veyr/core";
+import { readRules } from "@veyr/core";
+import { readSavingsStore, totalUsd } from "@veyr/core";
+import { readSessions, startOfMonth, startOfToday, startOfWeek, totalSince, groupBy } from "@veyr/core";
+import { readStatus } from "@veyr/core";
 import { divider, fmtAge, fmtTokens, fmtUsd, plural, renderColumns, sectionTitle } from "../ui.js";
 
 const COMMANDS: ReadonlyArray<readonly [string, string]> = [

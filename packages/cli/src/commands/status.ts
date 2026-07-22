@@ -3,7 +3,7 @@
 // when it isn't reachable. Replaces the old proxy-backed `status`/`logs` commands.
 
 import chalk from "chalk";
-import { readStatus, type VeyrRecommendation, type VeyrStatusResult } from "../veyr/status.js";
+import { readStatus, type VeyrRecommendation, type VeyrStatusResult } from "@veyr/core";
 import { alertBadge, divider, fmtUsd, freshnessLine, plural } from "../ui.js";
 
 function renderRecommendation(rec: VeyrRecommendation): string {

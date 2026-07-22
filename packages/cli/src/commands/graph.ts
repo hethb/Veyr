@@ -12,9 +12,9 @@ import {
   requestDaemonGraphRefresh,
   topNodesByConnections,
   type GraphCacheResult,
-} from "../veyr/graph.js";
-import { buildGraphLocally } from "../veyr/graphify.js";
-import { readStatus } from "../veyr/status.js";
+} from "@veyr/core";
+import { buildGraphLocally } from "@veyr/core";
+import { readStatus } from "@veyr/core";
 import { fmtAge, fmtTokens } from "../ui.js";
 
 const REFRESH_POLL_INTERVAL_MS = 1000;

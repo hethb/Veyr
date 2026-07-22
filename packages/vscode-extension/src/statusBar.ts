@@ -44,8 +44,8 @@ export class VeyrStatusBar implements vscode.Disposable {
     this.restartTimer();
   }
 
-  refresh(): void {
-    const result = readStatus();
+  async refresh(): Promise<void> {
+    const result = await readStatus();
     this.render(result);
     maybeNotifyModelSuggestion(result);
   }
@@ -55,7 +55,7 @@ export class VeyrStatusBar implements vscode.Disposable {
       .getConfiguration("veyr")
       .get<boolean>("showCostInStatusBar", true);
     if (show) {
-      this.refresh();
+      void this.refresh();
       this.item.show();
     } else {
       this.item.hide();
@@ -64,17 +64,18 @@ export class VeyrStatusBar implements vscode.Disposable {
 
   private restartTimer(): void {
     if (this.timer !== undefined) clearInterval(this.timer);
-    this.timer = setInterval(() => this.refresh(), pollIntervalMs());
+    this.timer = setInterval(() => void this.refresh(), pollIntervalMs());
   }
 
   private render(result: VeyrStatusResult): void {
+    // "missing"/"stale" only survive readStatus() when the local-log fallback
+    // found nothing to compute from either — i.e. no agent logs on this machine.
     if (result.kind === "missing" || result.kind === "stale") {
       this.item.text = "$(graph-line) Veyr: inactive";
       this.item.tooltip =
         result.kind === "missing"
-          ? "No Veyr agent feed found. Launch the Veyr menu bar app to start tracking " +
-            "(it writes ~/.veyr/agent-status/VEYR_STATUS.json)."
-          : "Veyr feed is stale — the menu bar app may not be running. Launch Veyr to resume tracking.";
+          ? "No session data found. Start a Claude Code or Codex session — Veyr reads local logs directly, no app required."
+          : "Veyr feed is stale and no local session logs were found to compute from.";
       return;
     }
 
@@ -97,6 +98,7 @@ export class VeyrStatusBar implements vscode.Disposable {
       this.item.text = `$(graph-line) ${formatUsd(today)} today${savings}`;
       this.item.tooltip =
         "Veyr — no active session. Today's total spend across Claude Code sessions. " +
+        (result.kind === "local" ? "Computed locally from session logs. " : "") +
         "Click to open the Veyr panel.";
       return;
     }
@@ -118,6 +120,9 @@ export class VeyrStatusBar implements vscode.Disposable {
         `- Graph savings: ~${formatTokens(graphTokens)} tokens this session` +
           `${graph?.is_partial ? " (partial graph)" : ""}\n`,
       );
+    }
+    if (result.kind === "local") {
+      tooltip.appendMarkdown(`\n_Computed locally from session logs (Veyr app not running)._\n`);
     }
     tooltip.appendMarkdown(`\n_Click to open the Veyr panel._`);
     this.item.tooltip = tooltip;

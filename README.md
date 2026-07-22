@@ -257,7 +257,7 @@ table.
 
 ### VS Code Extension + Claude Code
 
-The **Veyr** VS Code panel shows live spend and optimization suggestions for the active Claude Code session, read from the same local agent feed the menu bar app writes — no proxy, no `ANTHROPIC_BASE_URL` change.
+The **Veyr** VS Code panel shows live spend and optimization suggestions for the active Claude Code session — no proxy, no `ANTHROPIC_BASE_URL` change. Fully standalone: the extension bundles `@veyr/core` and scans your local session logs itself (and can build the codebase graph via **Veyr: Build codebase graph**); when the menu bar app is also running, its richer feed is preferred automatically.
 
 ### Native macOS Menu Bar App
 
@@ -306,6 +306,7 @@ veyr/
 │   ├── desktop-windows/    # in progress: native Windows tray app (forked from Win-CodexBar)
 │   ├── vscode-extension/   # core: live session cost + optimization suggestions in VS Code
 │   ├── cli/                # core: veyr terminal CLI (status, suggestions)
+│   ├── core/               # core: @veyr/core — shared local-data engine (scanners, pricing, graph build), bundled into cli + vscode-extension
 │   ├── dashboard/          # legacy: React dashboard UI for the old proxy-based product — not part of the current product, untouched
 │   ├── browser-extension/  # legacy remnant: only a packaged build artifact (dist-zip/), no source
 │   └── ml/                 # dev-side Python: classifier training on local session data

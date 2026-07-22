@@ -57,6 +57,10 @@
         "title": "Veyr: Open graph visualization"
       },
       {
+        "command": "veyr.buildGraph",
+        "title": "Veyr: Build codebase graph"
+      },
+      {
         "command": "veyr.showPanel",
         "title": "Veyr: Show panel"
       },
@@ -112,7 +116,7 @@
         "veyr.agentStatusPath": {
           "type": "string",
           "default": "~/.veyr/agent-status/VEYR_STATUS.json",
-          "description": "Path to the Veyr agent status feed written by the Veyr menu bar app."
+          "description": "Path to the Veyr agent status feed written by the Veyr desktop app. When it's missing or stale, the extension computes status from local session logs itself."
         },
         "veyr.showCostInStatusBar": {
           "type": "boolean",
@@ -149,13 +153,16 @@
     }
   },
   "scripts": {
-    "build": "node scripts/copy-graph-embed.mjs && tsc -p ./",
-    "watch": "tsc -w -p ./",
+    "build": "node scripts/copy-graph-embed.mjs && tsc -p ./ --noEmit && node scripts/build.mjs",
+    "typecheck": "tsc -p ./ --noEmit",
+    "watch": "node scripts/build.mjs --watch",
     "vscode:prepublish": "npm run build"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
     "@types/vscode": "^1.85.0",
+    "@veyr/core": "*",
+    "esbuild": "^0.28.0",
     "typescript": "^5.4.0"
   }
 }

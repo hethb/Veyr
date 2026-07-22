@@ -1,104 +1,28 @@
-// Reader for the Veyr native app's agent feed (~/.veyr/agent-status/VEYR_STATUS.json).
-// Pure file access — no network. The Mac app rewrites the file every 30s while a
-// session is active.
+// Status feed for the extension. Prefers the Veyr desktop app's agent feed
+// (~/.veyr/agent-status/VEYR_STATUS.json, rewritten every 30s while a session
+// is active) but no longer requires it: when the feed is missing or stale,
+// the extension computes a snapshot from local session logs itself via
+// @veyr/core — the same scanners the CLI uses — so an extension-only install
+// still gets a live status bar. Status types come from @veyr/core too; this
+// file keeps only the vscode-configurable file path and the config writers.
 
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as vscode from "vscode";
+import { computeLocalStatus } from "@veyr/core";
 
-export interface VeyrCurrentSession {
-  readonly provider: string;
-  readonly model: string;
-  readonly project: string;
-  readonly session_cost_usd: number;
-  readonly input_tokens: number;
-  readonly output_tokens: number;
-  readonly cache_read_tokens: number;
-  readonly cache_hit_rate: number;
-  readonly session_duration_minutes: number;
-  readonly cost_per_minute: number;
-  readonly is_active: boolean;
-}
-
-export interface VeyrBudget {
-  readonly project_monthly_cap_usd?: number;
-  readonly project_spent_this_month_usd: number;
-  readonly project_remaining_usd?: number;
-  readonly project_pct_used?: number;
-  readonly global_monthly_cap_usd?: number;
-  readonly global_spent_this_month_usd: number;
-  readonly global_remaining_usd?: number;
-  readonly global_pct_used?: number;
-}
-
-export interface VeyrRecommendation {
-  readonly id: string;
-  readonly priority: string;
-  readonly action: string;
-  readonly suggested_model?: string;
-  readonly reason: string;
-  readonly estimated_savings_per_hour_usd: number;
-}
-
-export interface VeyrAlert {
-  readonly level: string;
-  readonly message: string;
-}
-
-export interface VeyrGraphActiveFile {
-  readonly name: string;
-  readonly file: string;
-  readonly line?: number;
-  readonly kind: string;
-  readonly connections: number;
-  readonly callers: readonly string[];
-  readonly callees: readonly string[];
-  readonly imports: readonly string[];
-  readonly imported_by: readonly string[];
-  readonly tests: readonly string[];
-}
-
-export interface VeyrGraphContext {
-  readonly available: boolean;
-  readonly is_partial: boolean;
-  readonly partial_note?: string;
-  readonly graphify_version: string;
-  readonly file_count: number;
-  readonly node_count: number;
-  readonly edge_count: number;
-  readonly last_built_at: string;
-  readonly primary_languages: readonly string[];
-  readonly architectural_overview: string;
-  readonly active_file_summary?: VeyrGraphActiveFile;
-  readonly critical_path: ReadonlyArray<{
-    readonly name: string;
-    readonly file: string;
-    readonly connections: number;
-  }>;
-  readonly token_savings_estimate: {
-    readonly without_graph: number;
-    readonly with_graph: number;
-    readonly savings_this_session: number;
-    readonly savings_this_month: number;
-  };
-}
-
-export interface VeyrStatus {
-  readonly generated_at: string;
-  readonly today_spent_usd?: number;
-  readonly current_session?: VeyrCurrentSession;
-  readonly budget: VeyrBudget;
-  readonly alerts: readonly VeyrAlert[];
-  readonly recommendations: readonly VeyrRecommendation[];
-  readonly agent_instructions: string;
-  readonly graph_context?: VeyrGraphContext;
-}
-
-export type VeyrStatusResult =
-  | { readonly kind: "ok"; readonly status: VeyrStatus; readonly generatedAt: Date }
-  | { readonly kind: "stale"; readonly status: VeyrStatus; readonly generatedAt: Date }
-  | { readonly kind: "missing" };
+export type {
+  VeyrAlert,
+  VeyrBudget,
+  VeyrCurrentSession,
+  VeyrGraphActiveFile,
+  VeyrGraphContext,
+  VeyrRecommendation,
+  VeyrStatus,
+  VeyrStatusResult,
+} from "@veyr/core";
+import type { VeyrRecommendation, VeyrStatus, VeyrStatusResult } from "@veyr/core";
 
 // The Mac app rewrites the feed every 30s while a session is active but only
 // every 5 minutes when idle — so "stale" must mean older than the idle
@@ -128,7 +52,7 @@ function isVeyrStatus(value: unknown): value is VeyrStatus {
   );
 }
 
-export function readStatus(now: Date = new Date()): VeyrStatusResult {
+function readStatusFile(now: Date): VeyrStatusResult {
   const file = statusFilePath();
   let raw: string;
   try {
@@ -148,6 +72,26 @@ export function readStatus(now: Date = new Date()): VeyrStatusResult {
   if (Number.isNaN(generatedAt.getTime())) return { kind: "missing" };
   const stale = now.getTime() - generatedAt.getTime() > STALE_AFTER_MS;
   return { kind: stale ? "stale" : "ok", status: parsed, generatedAt };
+}
+
+/**
+ * A fresh app feed wins (it carries alerts, recommendations, and graph
+ * context the local computation can't produce). Missing or stale, the
+ * extension scans local session logs itself — kind "local" — so cost stays
+ * live with no desktop app installed. The original file result only comes
+ * back when there are no agent logs on the machine at all.
+ */
+export async function readStatus(now: Date = new Date()): Promise<VeyrStatusResult> {
+  const fromFile = readStatusFile(now);
+  if (fromFile.kind === "ok") return fromFile;
+  let local: VeyrStatus | null = null;
+  try {
+    local = await computeLocalStatus(now);
+  } catch {
+    // Scanning is best-effort — fall back to whatever the file gave us.
+  }
+  if (local !== null) return { kind: "local", status: local, generatedAt: now };
+  return fromFile;
 }
 
 export function pollIntervalMs(): number {

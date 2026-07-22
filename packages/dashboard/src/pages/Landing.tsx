@@ -224,7 +224,8 @@ function GetRunning() {
     },
     {
       title: "Done — it activates automatically",
-      detail: "Status bar shows spend the next time a session is active (the Mac app must be running — it writes the local feed the extension reads).",
+      detail:
+        "Status bar shows live spend the next time a session is active — the extension reads your local session logs itself, no app required.",
     },
   ];
 
@@ -254,7 +255,7 @@ function GetRunning() {
         <SectionHeader
           eyebrow="Get started"
           title="Three ways in — pick one, or use all three"
-          subtitle="Each installs independently — the app and the CLI are fully standalone (the extension's live status bar pairs with the app). If you use more than one, they share the same local data under ~/.veyr/, so spend is consistent no matter which surface you open."
+          subtitle="Each installs independently and works fully standalone — none requires the others. If you use more than one, they share the same local data under ~/.veyr/, so spend is consistent no matter which surface you open."
         />
 
         <div className="mt-14 grid gap-6 lg:grid-cols-3">

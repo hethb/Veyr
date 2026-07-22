@@ -8,10 +8,10 @@
 // store (the daemon only reports lifetime + the current project).
 
 import chalk from "chalk";
-import { daemonGet } from "../veyr/daemon.js";
-import { readSavingsTracker, writeConfigKey } from "../veyr/config.js";
-import { readSavingsStore, totalUsd as storeTotalUsd, type SavingsTotals as StoreTotals } from "../veyr/savingsStore.js";
-import { loadTagInferrer } from "../veyr/tags.js";
+import { daemonGet } from "@veyr/core";
+import { readSavingsTracker, writeConfigKey } from "@veyr/core";
+import { readSavingsStore, totalUsd as storeTotalUsd, type SavingsTotals as StoreTotals } from "@veyr/core";
+import { loadTagInferrer } from "@veyr/core";
 import { fmtCount, fmtUsd, renderColumns } from "../ui.js";
 
 interface SavingsTotals {

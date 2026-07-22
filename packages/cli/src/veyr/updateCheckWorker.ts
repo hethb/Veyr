@@ -5,7 +5,7 @@
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { updateCheckCacheFilePath } from "./paths.js";
+import { updateCheckCacheFilePath } from "@veyr/core";
 
 const REGISTRY_URL = "https://registry.npmjs.org/getcanopy/latest";
 const TIMEOUT_MS = 10_000;
