@@ -13,6 +13,7 @@ import { CopyCodeBlock } from "../components/CopyCodeBlock";
 import { FeaturesSection } from "../components/FeaturesSection";
 import { GraphDemo } from "../components/GraphDemo";
 import { HeroSection } from "../components/HeroSection";
+import { LogoReveal } from "../components/LogoReveal";
 import { WorksWithSection } from "../components/WorksWithSection";
 import { AnimatedNav, type AnimatedNavItem } from "@/components/ui/animated-nav";
 
@@ -37,6 +38,7 @@ export function Landing() {
     <div className="min-h-screen bg-black text-white">
       <Header />
       <HeroSection />
+      <LogoReveal />
       <WorksWithSection />
       <HowItWorks />
       <UsageSection />
