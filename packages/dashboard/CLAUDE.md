@@ -1,35 +1,31 @@
 <!-- veyr:spend-status:begin -->
 ## Veyr spend status
-> Auto-updated by Veyr · 2026-07-21 11:20 · disable in Veyr settings
+> Auto-updated by Veyr · 2026-07-23 13:24 · disable in Veyr settings
 
-**Current session:** claude-sonnet-5 · $9.2300/session · $0.0140/min
+**Current session:** claude-opus-4-8 · $4.4200/session · $0.0220/min
 **Cache hit rate:** 100%
 
 **Recommendations:**
-- Run /compact — Session has cost $9.23 so far. Running /compact trims accumulated context before it grows further.
+- Run /compact — Session has cost $4.42 so far. Running /compact trims accumulated context before it grows further.
 - set budget cap — One project dominating spend is fine on purpose — set a budget cap in Controls so overruns get flagged automatically.
 
-**Agent instructions:** You are currently in a Veyr-monitored session. Session cost so far: $9.23 at $0.014/min on claude-sonnet-5. Cache hit rate is 100% — good. Keep system prompts stable. This session is long and expensive. Run /compact now to compress context and reduce per-turn cost by ~60%. This is a long conversation. Before your next response, consider running /compact to compress context and reduce per-turn cost.
+**Agent instructions:** You are currently in a Veyr-monitored session. Session cost so far: $4.42 at $0.022/min on claude-opus-4-8. Cache hit rate is 100% — good. Keep system prompts stable. This session is long and expensive. Run /compact now to compress context and reduce per-turn cost by ~60%. This is a long conversation. Before your next response, consider running /compact to compress context and reduce per-turn cost.
 <!-- veyr:spend-status:end -->
 
 <!-- veyr:graph-context:begin -->
 ## Veyr codebase graph
-> Powered by Graphify · Full graph · 2026-07-21 11:20
+> Powered by Graphify · Full graph · 2026-07-23 13:24
 
 ### Architecture
-58 files, 425 symbols in 27 communities. Primary languages: TypeScript, JavaScript. Highest-impact code: api.ts, Landing.tsx, Dashboard.tsx.
-
-### Active context: Layout.tsx (src/components/Layout.tsx:1)
-**Imports:** VeyrMark.tsx, VeyrMark(), VeyrWordmark(), auth.ts, signOut()
-**Imported by:** App.tsx
+3287 files, 45578 symbols in 1440 communities. Primary languages: Swift, Rust, TypeScript. Highest-impact code: .logger(), L(), tauri.ts.
 
 ### Critical path (highest-impact files)
-- **api.ts** (src/lib/api.ts) — 64 connections
-- **Landing.tsx** (src/pages/Landing.tsx) — 32 connections
-- **Dashboard.tsx** (src/pages/Dashboard.tsx) — 31 connections
-- **CachePanel.tsx** (src/components/CachePanel.tsx) — 25 connections
-- **Graph.tsx** (src/pages/Graph.tsx) — 23 connections
+- **.logger()** (packages/desktop-mac/Sources/CodexBarCore/Logging/CodexBarLog.swift) — 252 connections
+- **L()** (packages/desktop-mac/Sources/CodexBar/Localization.swift) — 177 connections
+- **tauri.ts** (packages/desktop-windows/apps/desktop-tauri/src/lib/tauri.ts) — 157 connections
+- **bridge.ts** (packages/desktop-windows/apps/desktop-tauri/src/types/bridge.ts) — 138 connections
+- **UsageFetcher** (packages/desktop-mac/Sources/CodexBarCore/UsageFetcher.swift) — 121 connections
 
 ### Token savings
-Reading this summary saves ~3600 tokens vs. exploring files manually.
+Reading this summary saves ~7600 tokens vs. exploring files manually.
 <!-- veyr:graph-context:end -->
