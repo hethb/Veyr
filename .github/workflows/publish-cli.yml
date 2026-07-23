@@ -20,6 +20,9 @@ on:
   push:
     tags:
       - "cli-v*"
+  # Manual dry run: validates NPM_TOKEN (npm whoami) and the full build +
+  # pack without publishing. Use after rotating the token.
+  workflow_dispatch: {}
 
 permissions:
   contents: read
@@ -37,6 +40,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Verify tag matches packages/cli/package.json
+        if: startsWith(github.ref, 'refs/tags/cli-v')
         run: |
           TAG_VERSION="${GITHUB_REF_NAME#cli-v}"
           PKG_VERSION="$(node -p "require('./packages/cli/package.json').version")"
@@ -51,9 +55,22 @@ jobs:
       - name: Install workspace
         run: npm ci
 
+      - name: Verify npm token
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm whoami
+
       # prepublishOnly runs the esbuild bundle + embed copy automatically.
       - name: Publish to npm
+        if: startsWith(github.ref, 'refs/tags/cli-v')
         working-directory: packages/cli
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --provenance --access public
+
+      - name: Dry run (manual dispatch only)
+        if: ${{ !startsWith(github.ref, 'refs/tags/cli-v') }}
+        working-directory: packages/cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --dry-run
