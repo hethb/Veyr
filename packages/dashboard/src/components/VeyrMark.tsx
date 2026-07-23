@@ -1,8 +1,8 @@
-// The Veyr brand mark (bond-flower symbol) and wordmark. The supplied artwork is
-// dark ink on white; every placement in this app sits on a dark surface, so the
-// assets here are the exact artwork lifted onto transparency and recolored white
-// (see scripts) — no runtime tinting needed. The combined lockup (veyr-full.png)
-// backs the social/OG card.
+// The Veyr brand mark (rounded blob symbol) and wordmark (the "VEYR" lettering
+// with a teal→blue gradient R). The supplied artwork is light/colored on a dark
+// background; the assets here are that exact artwork lifted onto transparency
+// (color preserved), so it drops onto the app's dark surfaces with no tinting.
+// The combined lockup (veyr-full.png) backs the social/OG card.
 import markSrc from "../assets/veyr-mark.png";
 import wordmarkSrc from "../assets/veyr-wordmark.png";
 
