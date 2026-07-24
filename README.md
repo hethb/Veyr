@@ -20,7 +20,7 @@
   <p align="center">
     Stop paying for wasted tokens. See exactly where your AI spend goes — and automatically cut what you don't need.
     <br />
-    <a href="[https://github.com/hethb/Veyr](https://veyr-app.vercel.app/)"><strong>Try it out here! »</strong></a>
+    <a href="https://veyr-app.vercel.app"><strong>Try it out here! »</strong></a>
     <br />
     <br />
     <a href="#download--get-started">Download</a>
