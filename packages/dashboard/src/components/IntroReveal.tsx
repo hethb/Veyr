@@ -21,6 +21,7 @@ interface IntroRevealProps {
 export function IntroReveal({ onFadeStart, onDone }: IntroRevealProps) {
   const reduceMotion = useReducedMotion();
   const pathRef = useRef<SVGPathElement>(null);
+  const colorPathRef = useRef<SVGPathElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
   const [fading, setFading] = useState(false);
 
@@ -50,6 +51,7 @@ export function IntroReveal({ onFadeStart, onDone }: IntroRevealProps) {
     const timers = [
       window.setTimeout(() => {
         glow.style.opacity = "1";
+        if (colorPathRef.current) colorPathRef.current.style.opacity = "1";
       }, DRAW_MS - 250),
       window.setTimeout(() => {
         setFading(true);
@@ -86,13 +88,27 @@ export function IntroReveal({ onFadeStart, onDone }: IntroRevealProps) {
           className="absolute -inset-[30%] rounded-full opacity-0 transition-opacity duration-1000 ease-out"
           style={{
             background:
-              "radial-gradient(circle, rgba(245,245,244,0.16) 0%, transparent 68%)",
+              "radial-gradient(circle at 32% 30%, rgba(99,102,241,0.28) 0%, transparent 58%), radial-gradient(circle at 68% 72%, rgba(244,63,94,0.22) 0%, transparent 58%)",
           }}
         />
         <svg
           className="absolute inset-0 h-full w-full overflow-visible"
           viewBox="0 0 100 100"
         >
+          <defs>
+            {/* Indigo→rose sweep matching the hero's shape/headline tones. */}
+            <linearGradient
+              id="veyr-intro-stroke"
+              x1="0"
+              y1="0"
+              x2="1"
+              y2="1"
+            >
+              <stop offset="0%" stopColor="#6366f1" />
+              <stop offset="50%" stopColor="#a5b4fc" />
+              <stop offset="100%" stopColor="#f43f5e" />
+            </linearGradient>
+          </defs>
           <path
             ref={pathRef}
             d={MARK_PATH}
@@ -101,6 +117,18 @@ export function IntroReveal({ onFadeStart, onDone }: IntroRevealProps) {
             strokeWidth={4.6}
             strokeLinecap="round"
             strokeLinejoin="round"
+          />
+          {/* Sits on top of the white line and fades in once the draw
+              completes, tinting the mark without a second draw pass. */}
+          <path
+            ref={colorPathRef}
+            d={MARK_PATH}
+            fill="none"
+            stroke="url(#veyr-intro-stroke)"
+            strokeWidth={4.6}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="opacity-0 transition-opacity duration-1000 ease-out"
           />
         </svg>
       </div>
