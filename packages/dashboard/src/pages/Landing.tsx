@@ -25,13 +25,14 @@ const LANDING_NAV_ITEMS: AnimatedNavItem[] = [
   { name: "Features", href: "#features", mobileHidden: true },
   { name: "Compare", href: "#compare", mobileHidden: true },
   { name: "Download", href: "#download" },
+  { name: "Waitlist", href: "#waitlist" },
 ];
 
 const ACCENTS = ["#076EFF", "#4FABFF", "#B1C5FF"] as const;
 const VEYR_VERSION = "0.2.2";
-const MAC_DMG_URL = `/downloads/Veyr-${VEYR_VERSION}.dmg`;
-const VSIX_VERSION = "0.3.0";
-const VSIX_URL = `/downloads/veyr-vscode-${VSIX_VERSION}.vsix`;
+// Formspree form that collects waiting-list emails for the Mac app and the
+// VS Code extension. Create the form at formspree.io and paste its ID here.
+const WAITLIST_ENDPOINT = "https://formspree.io/f/REPLACE_WITH_FORM_ID";
 
 export function Landing() {
   // "intro": only the logo animation is on screen. "reveal": the overlay is
@@ -60,6 +61,7 @@ export function Landing() {
           <ComparisonSection />
           <FeaturesSection />
           <DownloadSection />
+          <WaitlistSection />
           <FinalCta />
           <Footer />
         </>
@@ -88,9 +90,9 @@ function HowItWorks() {
     {
       icon: Monitor,
       accent: ACCENTS[0],
-      title: "Install a surface",
-      body: "Menu bar app, VS Code extension, or CLI: pick one, or use all three, they read the same local data. No account, no API key, no configuration needed to get started.",
-      code: "npm install -g getcanopy   # or download the .dmg / .vsix",
+      title: "Install the CLI",
+      body: "One command, no account, no API key, no configuration. The menu bar app and VS Code extension are coming next and will read the same local data. Join the waiting list to get them first.",
+      code: "npm install -g getcanopy",
     },
     {
       icon: Terminal,
@@ -221,38 +223,121 @@ function InstallCard({ icon: Icon, label, title, steps, cta, accent, footnote, h
   );
 }
 
+interface WaitlistCardProps {
+  icon: typeof Monitor;
+  label: string;
+  title: string;
+  body: string;
+  accent: string;
+}
+
+// Teaser card for a surface that hasn't shipped yet: no download, just a
+// pointer to the waiting-list form.
+function WaitlistCard({ icon: Icon, label, title, body, accent }: WaitlistCardProps) {
+  return (
+    <div className="flex flex-col border border-white/10 bg-black p-6">
+      <div className="flex items-center gap-3">
+        <div
+          className="grid h-10 w-10 place-items-center border"
+          style={{ borderColor: `${accent}40`, backgroundColor: `${accent}10`, color: accent }}
+        >
+          <Icon className="h-5 w-5" />
+        </div>
+        <div>
+          <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#4FABFF]">
+            {label}
+          </p>
+          <h3 className="text-lg font-semibold text-white">{title}</h3>
+        </div>
+      </div>
+      <p className="mt-2 w-fit border border-white/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-400">
+        Coming soon
+      </p>
+      <p className="mt-4 flex-1 text-sm leading-relaxed text-neutral-500">{body}</p>
+      <a
+        href="#waitlist"
+        className="mt-6 inline-flex w-fit items-center gap-2 border border-white/20 px-3 py-2 text-sm font-medium text-white transition-colors hover:border-[#4FABFF]/50 hover:bg-[#076EFF]/10"
+      >
+        Join the waiting list
+        <ArrowRight className="h-4 w-4" />
+      </a>
+    </div>
+  );
+}
+
+function WaitlistForm() {
+  const [email, setEmail] = useState("");
+  const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
+
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setState("sending");
+    try {
+      const res = await fetch(WAITLIST_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      setState(res.ok ? "done" : "error");
+    } catch {
+      setState("error");
+    }
+  };
+
+  if (state === "done") {
+    return (
+      <p className="mx-auto mt-8 max-w-md border border-[#4FABFF]/40 bg-[#076EFF]/10 px-5 py-4 text-center text-sm text-[#B1C5FF]">
+        You&apos;re on the list. We&apos;ll email you the day the app and
+        extension ship.
+      </p>
+    );
+  }
+
+  return (
+    <div className="mx-auto mt-8 max-w-md">
+      <form onSubmit={submit} className="flex flex-col gap-3 sm:flex-row">
+        <input
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@company.com"
+          aria-label="Email address"
+          className="min-w-0 flex-1 border border-white/15 bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-neutral-600 focus:border-[#4FABFF]/60 focus:outline-none"
+        />
+        <button
+          type="submit"
+          disabled={state === "sending"}
+          className="inline-flex items-center justify-center gap-2 border border-white bg-white px-5 py-3 text-sm font-semibold text-black transition-colors hover:bg-neutral-200 disabled:opacity-60"
+        >
+          {state === "sending" ? "Joining…" : "Join the waiting list"}
+        </button>
+      </form>
+      {state === "error" && (
+        <p className="mt-3 text-center text-xs text-rose-300">
+          Something went wrong. Please try again in a moment.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function WaitlistSection() {
+  return (
+    <section id="waitlist" className="border-t border-white/10 bg-black">
+      <div className="mx-auto max-w-6xl px-6 py-24">
+        <SectionHeader
+          eyebrow="Waiting list"
+          title="The Mac app and VS Code extension are coming"
+          subtitle="The CLI is available today. Leave your email and you'll be first in line when the menu bar app and the VS Code extension ship. One email when they land, nothing else."
+        />
+        <WaitlistForm />
+      </div>
+    </section>
+  );
+}
+
 function GetRunning() {
-  const macSteps: SetupStep[] = [
-    { title: "Download Veyr", detail: `Grab Veyr-${VEYR_VERSION}.dmg with the button below.` },
-    {
-      title: "Install",
-      detail: "Open the DMG, drag Veyr to your Applications folder, then open Veyr from Applications.",
-    },
-    {
-      title: "Bypass Gatekeeper (required for unsigned builds)",
-      detail: "Removes the quarantine flag so macOS allows it to run. Safe: only affects the Veyr app.",
-      code: "xattr -cr /Applications/Veyr.app",
-    },
-    {
-      title: "Start a Claude Code session",
-      detail: "Veyr detects it automatically and begins tracking cost. No configuration needed.",
-    },
-  ];
-
-  const vscodeSteps: SetupStep[] = [
-    { title: "Download the extension", detail: `Grab veyr-vscode-${VSIX_VERSION}.vsix with the button below.` },
-    {
-      title: "Install from VSIX",
-      detail:
-        "VS Code → Extensions panel (Cmd+Shift+X) → ··· (top right) → \"Install from VSIX…\" → choose the downloaded file.",
-    },
-    {
-      title: "Done, it activates automatically",
-      detail:
-        "Status bar shows live spend the next time a session is active. The extension reads your local session logs itself, no app required.",
-    },
-  ];
-
   const cliSteps: SetupStep[] = [
     { title: "Install", detail: "Requires Node 20+. Nothing else to download. No app, no extension.", code: "npm install -g getcanopy" },
     { title: "Or via Homebrew", code: "brew install hethb/veyr/veyr" },
@@ -278,19 +363,17 @@ function GetRunning() {
       <div className="mx-auto max-w-6xl px-6 py-24">
         <SectionHeader
           eyebrow="Get started"
-          title="Three ways in: pick one, or use all three"
-          subtitle="Each installs independently and works fully standalone. None requires the others. If you use more than one, they share the same local data under ~/.veyr/, so spend is consistent no matter which surface you open."
+          title="Start with the CLI"
+          subtitle="The CLI installs in one command and works fully standalone. The Mac app and the VS Code extension are next, and they'll read the same local data under ~/.veyr/."
         />
 
         <div className="mt-14 grid gap-6 lg:grid-cols-3">
-          <InstallCard
+          <WaitlistCard
             icon={Monitor}
             label="macOS menu bar app"
             title="Veyr for macOS"
-            steps={macSteps}
-            cta={{ href: MAC_DMG_URL, label: `Download Veyr-${VEYR_VERSION}.dmg`, download: true }}
+            body="Live spend in your menu bar, budget caps with notifications, the Graphify codebase graph, and the agent feed. In preview now."
             accent={ACCENTS[0]}
-            footnote={<CopyCodeBlock code="brew install --cask hethb/veyr/veyr" />}
           />
           <InstallCard
             icon={Terminal}
@@ -301,12 +384,11 @@ function GetRunning() {
             accent={ACCENTS[2]}
             highlight
           />
-          <InstallCard
+          <WaitlistCard
             icon={Code2}
             label="VS Code extension"
             title="Veyr for VS Code"
-            steps={vscodeSteps}
-            cta={{ href: VSIX_URL, label: `Download veyr-vscode-${VSIX_VERSION}.vsix`, download: true }}
+            body="Live session cost in your status bar and a panel with burn rate, cache hit rate, and graph status. In preview now."
             accent={ACCENTS[1]}
           />
         </div>
@@ -529,7 +611,7 @@ function DownloadSection() {
         <SectionHeader
           eyebrow="Download"
           title="Veyr on your machine"
-          subtitle="Three surfaces, one local data store under ~/.veyr/. No proxy required, no server-side component."
+          subtitle="One local data store under ~/.veyr/, no proxy, no server-side component. The CLI is available now. The app and extension ship to the waiting list first."
         />
         <div className="mt-12 grid gap-6 lg:grid-cols-3">
           <div className="flex flex-col border border-white/10 p-8">
@@ -542,18 +624,15 @@ function DownloadSection() {
               feed your coding agents can read to self-optimize.
             </p>
             <a
-              href={MAC_DMG_URL}
-              download
-              className="mt-6 inline-flex w-fit items-center gap-2 border border-white bg-white px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
+              href="#waitlist"
+              className="mt-6 inline-flex w-fit items-center gap-2 border border-white/20 px-4 py-2 text-sm font-medium text-white transition-colors hover:border-[#4FABFF]/50 hover:bg-[#076EFF]/10"
             >
               <Monitor className="h-4 w-4" />
-              Download for macOS (.dmg)
+              Join the waiting list
             </a>
             <p className="mt-4 text-xs leading-relaxed text-neutral-600">
-              macOS 14+ · Apple Silicon &amp; Intel · v{VEYR_VERSION} · unsigned
-              preview build. After installing, run{" "}
-              <code className="text-neutral-400">xattr -cr /Applications/Veyr.app</code>{" "}
-              once to pass Gatekeeper.
+              macOS 14+ · Apple Silicon &amp; Intel · in preview. Waiting-list
+              members get it first.
             </p>
           </div>
 
@@ -589,17 +668,15 @@ function DownloadSection() {
               app&apos;s local agent feed.
             </p>
             <a
-              href={VSIX_URL}
-              download
-              className="mt-6 inline-flex w-fit items-center gap-2 border border-white bg-white px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
+              href="#waitlist"
+              className="mt-6 inline-flex w-fit items-center gap-2 border border-white/20 px-4 py-2 text-sm font-medium text-white transition-colors hover:border-[#4FABFF]/50 hover:bg-[#076EFF]/10"
             >
               <Code2 className="h-4 w-4" />
-              Download the extension (.vsix)
+              Join the waiting list
             </a>
             <p className="mt-4 text-xs leading-relaxed text-neutral-600">
-              Install from file: Extensions panel → ··· → Install from VSIX. Or
-              build from source in{" "}
-              <code className="text-neutral-400">packages/vscode-extension</code>.
+              Works with VS Code and Cursor · in preview. Waiting-list members
+              get it first.
             </p>
           </div>
         </div>
@@ -629,17 +706,23 @@ function FinalCta() {
           Stop guessing what you&apos;re spending on.
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-base text-neutral-500">
-          Download the app, install the extension, or run the CLI. All three
-          read the same local data. No account, no seed command, nothing to
-          configure.
+          Install the CLI today. No account, no seed command, nothing to
+          configure. The Mac app and VS Code extension are next, and the
+          waiting list gets them first.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <a
             href="#setup"
             className="inline-flex items-center gap-2 border border-white bg-white px-5 py-3 text-sm font-semibold text-black transition-colors hover:bg-neutral-200"
           >
-            Jump to setup
+            Install the CLI
             <ArrowRight className="h-4 w-4" />
+          </a>
+          <a
+            href="#waitlist"
+            className="border border-white/20 px-5 py-3 text-sm font-semibold text-white transition-colors hover:border-[#4FABFF]/50 hover:bg-[#076EFF]/10"
+          >
+            Join the waiting list
           </a>
         </div>
       </div>
