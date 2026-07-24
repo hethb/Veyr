@@ -374,10 +374,10 @@ export function Hero({ trustBadge, headline, subtitle, buttons, className = "" }
         <div className="text-center space-y-6 max-w-5xl mx-auto px-4">
           {/* Main Heading with Animation */}
           <div className="space-y-2">
-            <h1 className="font-hero text-5xl md:text-7xl lg:text-8xl font-bold bg-gradient-to-r from-[#B1C5FF] via-[#4FABFF] to-[#076EFF] bg-clip-text text-transparent shader-hero-fade-in-up shader-hero-delay-200">
+            <h1 className="font-hero text-3xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-[#B1C5FF] via-[#4FABFF] to-[#076EFF] bg-clip-text text-transparent shader-hero-fade-in-up shader-hero-delay-200">
               {headline.line1}
             </h1>
-            <h1 className="font-hero text-5xl md:text-7xl lg:text-8xl font-bold bg-gradient-to-r from-[#076EFF] via-[#4FABFF] to-[#B1C5FF] bg-clip-text text-transparent shader-hero-fade-in-up shader-hero-delay-400">
+            <h1 className="font-hero text-3xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-[#076EFF] via-[#4FABFF] to-[#B1C5FF] bg-clip-text text-transparent shader-hero-fade-in-up shader-hero-delay-400">
               {headline.line2}
             </h1>
           </div>
