@@ -35,13 +35,34 @@ const COMMANDS: ReadonlyArray<readonly [string, string]> = [
   ["veyr <command> --json", "Raw payload for status / usage / graph"],
 ];
 
+// The Veyr blob mark, five rows tall, tinted top-to-bottom through the brand
+// blues. Rows are exactly 15 chars wide so banner text columns line up.
+const MARK: ReadonlyArray<string> = [
+  "   ▄▄▄███▄▄▄   ",
+  " ▄█▀       ▀█▄ ",
+  "▐█           █▌",
+  " ▀█▄       ▄█▀ ",
+  "   ▀▀▀███▀▀▀   ",
+];
+const MARK_COLORS: ReadonlyArray<string> = ["#B1C5FF", "#7FB0FF", "#4FABFF", "#2E8FFF", "#076EFF"];
+
+/** Prints the mark with `textLines` alongside, vertically offset one row. */
+function renderLogo(textLines: ReadonlyArray<string>): void {
+  const rows = Math.max(MARK.length, textLines.length + 1);
+  for (let i = 0; i < rows; i++) {
+    const mark = i < MARK.length ? chalk.hex(MARK_COLORS[i])(MARK[i]) : " ".repeat(15);
+    const text = i >= 1 ? (textLines[i - 1] ?? "") : "";
+    console.log(text ? `${mark}  ${text}` : mark);
+  }
+}
+
 function renderWelcomeBanner(version: string): void {
-  console.log(chalk.bold.cyan(`Veyr CLI v${version}`) + chalk.dim(" — first run, so here's the lay of the land."));
-  console.log(
-    chalk.dim("Everything below is computed from local data — your agent logs and ~/.veyr/ —\n") +
-      chalk.dim("no proxy, no account, no traffic interception, no app install required.\n") +
-      chalk.dim("Reach this screen anytime with `veyr`.")
-  );
+  renderLogo([
+    chalk.bold.cyan(`Veyr CLI v${version}`) + chalk.dim(" — first run, so here's the lay of the land."),
+    chalk.dim("Everything below is computed from local data — your agent"),
+    chalk.dim("logs and ~/.veyr/ — no proxy, no account, no traffic"),
+    chalk.dim("interception. Reach this screen anytime with `veyr`."),
+  ]);
   console.log(divider(70));
 }
 
@@ -52,7 +73,10 @@ export async function dashboardCommand(opts: { welcome?: boolean; version: strin
   if (opts.welcome) {
     renderWelcomeBanner(opts.version);
   } else {
-    console.log(chalk.bold.cyan(`Veyr v${opts.version}`) + chalk.dim(" — terminal overview. Everything local."));
+    renderLogo([
+      chalk.bold.cyan(`Veyr v${opts.version}`),
+      chalk.dim("Terminal overview. Everything local."),
+    ]);
   }
 
   // --- Session ---
