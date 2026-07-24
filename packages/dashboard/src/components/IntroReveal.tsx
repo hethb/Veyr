@@ -85,10 +85,11 @@ export function IntroReveal({ onFadeStart, onDone }: IntroRevealProps) {
       <div className="relative h-44 w-44">
         <div
           ref={glowRef}
-          className="absolute -inset-[30%] rounded-full opacity-0 transition-opacity duration-1000 ease-out"
+          className="absolute -inset-[60%] opacity-0 transition-opacity duration-1000 ease-out"
           style={{
             background:
-              "radial-gradient(circle at 32% 30%, rgba(99,102,241,0.28) 0%, transparent 58%), radial-gradient(circle at 68% 72%, rgba(244,63,94,0.22) 0%, transparent 58%)",
+              "radial-gradient(45% 45% at 38% 34%, rgba(99,102,241,0.32) 0%, rgba(99,102,241,0.10) 45%, transparent 75%), radial-gradient(45% 45% at 62% 66%, rgba(244,63,94,0.26) 0%, rgba(244,63,94,0.08) 45%, transparent 75%)",
+            filter: "blur(28px)",
           }}
         />
         <svg
