@@ -88,7 +88,7 @@ export function IntroReveal({ onFadeStart, onDone }: IntroRevealProps) {
           className="absolute -inset-[60%] opacity-0 transition-opacity duration-1000 ease-out"
           style={{
             background:
-              "radial-gradient(45% 45% at 38% 34%, rgba(99,102,241,0.32) 0%, rgba(99,102,241,0.10) 45%, transparent 75%), radial-gradient(45% 45% at 62% 66%, rgba(244,63,94,0.26) 0%, rgba(244,63,94,0.08) 45%, transparent 75%)",
+              "radial-gradient(45% 45% at 38% 34%, rgba(7,110,255,0.32) 0%, rgba(7,110,255,0.10) 45%, transparent 75%), radial-gradient(45% 45% at 62% 66%, rgba(177,197,255,0.30) 0%, rgba(177,197,255,0.09) 45%, transparent 75%)",
             filter: "blur(28px)",
           }}
         />
@@ -97,7 +97,7 @@ export function IntroReveal({ onFadeStart, onDone }: IntroRevealProps) {
           viewBox="0 0 100 100"
         >
           <defs>
-            {/* Indigo→rose sweep matching the hero's shape/headline tones. */}
+            {/* Blue sweep matching the hero's accent scale, fading light toward the tail. */}
             <linearGradient
               id="veyr-intro-stroke"
               x1="0"
@@ -105,9 +105,9 @@ export function IntroReveal({ onFadeStart, onDone }: IntroRevealProps) {
               x2="1"
               y2="1"
             >
-              <stop offset="0%" stopColor="#6366f1" />
-              <stop offset="50%" stopColor="#a5b4fc" />
-              <stop offset="100%" stopColor="#f43f5e" />
+              <stop offset="0%" stopColor="#076EFF" />
+              <stop offset="50%" stopColor="#4FABFF" />
+              <stop offset="100%" stopColor="#B1C5FF" />
             </linearGradient>
           </defs>
           <path

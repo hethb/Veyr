@@ -1,25 +1,24 @@
 <!-- veyr:spend-status:begin -->
 ## Veyr spend status
-> Auto-updated by Veyr · 2026-07-23 17:54 · disable in Veyr settings
+> Auto-updated by Veyr · 2026-07-24 15:49 · disable in Veyr settings
 
-**Current session:** claude-fable-5 · $8.3200/session · $0.0170/min
+**Current session:** claude-sonnet-5 · $0.8500/session · $0.1840/min
 **Cache hit rate:** 100%
 
 **Recommendations:**
-- Run /compact — Session has cost $8.32 so far. Running /compact trims accumulated context before it grows further.
+- Run /compact — Session is burning $0.18/minute. Running /compact now reduces per-turn input cost by cutting accumulated context.
 
-**Agent instructions:** You are currently in a Veyr-monitored session. Session cost so far: $8.32 at $0.017/min on claude-fable-5. Cache hit rate is 100% — good. Keep system prompts stable. This session is long and expensive. Run /compact now to compress context and reduce per-turn cost by ~60%. This is a long conversation. Before your next response, consider running /compact to compress context and reduce per-turn cost.
+**Agent instructions:** You are currently in a Veyr-monitored session. Session cost so far: $0.85 at $0.184/min on claude-sonnet-5. Cache hit rate is 100% — good. Keep system prompts stable. This session is long and expensive. Run /compact now to compress context and reduce per-turn cost by ~60%. This is a long conversation. Before your next response, consider running /compact to compress context and reduce per-turn cost.
 <!-- veyr:spend-status:end -->
 
 <!-- veyr:graph-context:begin -->
 ## Veyr codebase graph
-> Powered by Graphify · Full graph · 2026-07-23 17:54
+> Powered by Graphify · Full graph · 2026-07-24 15:49
 
 ### Architecture
-3288 files, 45582 symbols in 1435 communities. Primary languages: Swift, Rust, TypeScript. Highest-impact code: .logger(), L(), tauri.ts.
+3289 files, 45592 symbols in 1442 communities. Primary languages: Swift, Rust, TypeScript. Highest-impact code: .logger(), L(), tauri.ts.
 
-### Active context: animated-nav.tsx (packages/dashboard/src/components/ui/animated-nav.tsx:1)
-**Imports:** VeyrMark.tsx, VeyrMark()
+### Active context: animated-shader-hero.tsx (packages/dashboard/src/components/ui/animated-shader-hero.tsx:1)
 
 ### Critical path (highest-impact files)
 - **.logger()** (packages/desktop-mac/Sources/CodexBarCore/Logging/CodexBarLog.swift) — 252 connections
