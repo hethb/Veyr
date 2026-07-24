@@ -1,25 +1,27 @@
 <!-- veyr:spend-status:begin -->
 ## Veyr spend status
-> Auto-updated by Veyr · 2026-07-22 00:23 · disable in Veyr settings
+> Auto-updated by Veyr · 2026-07-24 00:13 · disable in Veyr settings
 
-**Current session:** claude-fable-5 · $35.8200/session · $0.1080/min
+**Current session:** claude-fable-5 · $12.3800/session · $0.0140/min
 **Cache hit rate:** 100%
 
 **Recommendations:**
-- use graph context — Your agent re-reads 3 stable files across cli sessions. The Graphify summary in CLAUDE.md / VEYR_STATUS.json covers them — point the agent at the graph summary instead.
-- set budget cap — One project dominating spend is fine on purpose — set a budget cap in Controls so overruns get flagged automatically.
+- Run /compact — Session has cost $12.38 so far. Running /compact trims accumulated context before it grows further.
+- use graph context — Your agent re-reads 4 stable files across cli sessions. The Graphify summary in CLAUDE.md / VEYR_STATUS.json covers them — point the agent at the graph summary instead.
 
-**Agent instructions:** You are currently in a Veyr-monitored session. Session cost so far: $35.82 at $0.108/min on claude-fable-5. Cache hit rate is 100% — good. Keep system prompts stable. This is a long conversation. Before your next response, consider running /compact to compress context and reduce per-turn cost.
+**Agent instructions:** You are currently in a Veyr-monitored session. Session cost so far: $12.38 at $0.014/min on claude-fable-5. Cache hit rate is 100% — good. Keep system prompts stable. This session is long and expensive. Run /compact now to compress context and reduce per-turn cost by ~60%. This is a long conversation. Before your next response, consider running /compact to compress context and reduce per-turn cost.
 <!-- veyr:spend-status:end -->
 
 <!-- veyr:graph-context:begin -->
 ## Veyr codebase graph
-> Powered by Graphify · Full graph · 2026-07-22 00:23
+> Powered by Graphify · Full graph · 2026-07-24 00:13
 
 ### Architecture
-3287 files, 45578 symbols in 1436 communities. Primary languages: Swift, Rust, TypeScript. Highest-impact code: .logger(), L(), tauri.ts.
+3288 files, 45585 symbols in 1437 communities. Primary languages: Swift, Rust, TypeScript. Highest-impact code: .logger(), L(), tauri.ts.
 
-### Active context: tsconfig.json (packages/vscode-extension/tsconfig.json:1)
+### Active context: dashboard.ts (packages/cli/src/commands/dashboard.ts:1)
+**Imports:** ui.ts, divider(), fmtAge(), fmtTokens(), fmtUsd()
+**Imported by:** index.ts
 
 ### Critical path (highest-impact files)
 - **.logger()** (packages/desktop-mac/Sources/CodexBarCore/Logging/CodexBarLog.swift) — 252 connections

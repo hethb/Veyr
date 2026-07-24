@@ -32,7 +32,7 @@ const ACCENTS = ["#076EFF", "#4FABFF", "#B1C5FF"] as const;
 const VEYR_VERSION = "0.2.2";
 // Formspree form that collects waiting-list emails for the Mac app and the
 // VS Code extension. Create the form at formspree.io and paste its ID here.
-const WAITLIST_ENDPOINT = "https://formspree.io/f/REPLACE_WITH_FORM_ID";
+const WAITLIST_ENDPOINT = "https://formspree.io/f/xqerydoa";
 
 export function Landing() {
   // "intro": only the logo animation is on screen. "reveal": the overlay is
