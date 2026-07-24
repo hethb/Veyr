@@ -179,11 +179,18 @@ interface InstallCardProps {
   cta: { href: string; label: string; download?: boolean; external?: boolean };
   accent: string;
   footnote?: ReactNode;
+  highlight?: boolean;
 }
 
-function InstallCard({ icon: Icon, label, title, steps, cta, accent, footnote }: InstallCardProps) {
+function InstallCard({ icon: Icon, label, title, steps, cta, accent, footnote, highlight }: InstallCardProps) {
   return (
-    <div className="flex flex-col border border-white/10 bg-black p-6">
+    <div
+      className={`flex flex-col border p-6 ${
+        highlight
+          ? "border-[#4FABFF]/50 bg-[#076EFF]/[0.06] shadow-[0_0_50px_rgba(7,110,255,0.18)]"
+          : "border-white/10 bg-black"
+      }`}
+    >
       <div className="flex items-center gap-3">
         <div
           className="grid h-10 w-10 place-items-center border"
@@ -286,20 +293,21 @@ function GetRunning() {
             footnote={<CopyCodeBlock code="brew install --cask hethb/veyr/veyr" />}
           />
           <InstallCard
-            icon={Code2}
-            label="VS Code extension"
-            title="Veyr for VS Code"
-            steps={vscodeSteps}
-            cta={{ href: VSIX_URL, label: `Download veyr-vscode-${VSIX_VERSION}.vsix`, download: true }}
-            accent={ACCENTS[1]}
-          />
-          <InstallCard
             icon={Terminal}
             label="CLI"
             title="Veyr CLI"
             steps={cliSteps}
             cta={{ href: "https://www.npmjs.com/package/getcanopy", label: "View on npm", external: true }}
             accent={ACCENTS[2]}
+            highlight
+          />
+          <InstallCard
+            icon={Code2}
+            label="VS Code extension"
+            title="Veyr for VS Code"
+            steps={vscodeSteps}
+            cta={{ href: VSIX_URL, label: `Download veyr-vscode-${VSIX_VERSION}.vsix`, download: true }}
+            accent={ACCENTS[1]}
           />
         </div>
       </div>
@@ -344,16 +352,7 @@ function PrivacySection() {
       optional, used only to read browser cookies for web-based providers or
       OAuth credentials, and both can be scoped to Veyr alone or disabled
       entirely in Settings → Advanced. No Screen Recording, no Accessibility,
-      ever. No passwords stored.{" "}
-      <a
-        href="https://github.com/hethb/Veyr#macos-permissions"
-        target="_blank"
-        rel="noreferrer"
-        className="text-neutral-300 underline decoration-neutral-600 underline-offset-2 hover:text-white"
-      >
-        Full breakdown in the README
-      </a>
-      .
+      ever. No passwords stored.
     </>,
   ];
 
@@ -558,6 +557,27 @@ function DownloadSection() {
             </p>
           </div>
 
+          <div className="flex flex-col border border-[#4FABFF]/50 bg-[#076EFF]/[0.06] p-8 shadow-[0_0_50px_rgba(7,110,255,0.18)]">
+            <Terminal className="h-6 w-6 text-[#4FABFF]" />
+            <h3 className="mt-4 text-lg font-semibold text-white">Veyr CLI</h3>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-neutral-400">
+              Scriptable and CI-friendly. <code className="text-neutral-300">veyr status</code>{" "}
+              and <code className="text-neutral-300">veyr graph</code> read the
+              same local data as the other two surfaces.
+            </p>
+            <div id="cli-install" className="mt-6">
+              <CopyCodeBlock code="npm install -g getcanopy" />
+            </div>
+            <p className="mt-4 text-xs leading-relaxed text-neutral-600">
+              Requires Node 20+. Package name is{" "}
+              <code className="text-neutral-400">getcanopy</code> on npm; the
+              binary is <code className="text-neutral-400">veyr</code>. Already
+              installed?{" "}
+              <code className="text-neutral-400">npm install -g getcanopy@latest</code>{" "}
+              updates it. The CLI nudges you when a newer version is out.
+            </p>
+          </div>
+
           <div className="flex flex-col border border-white/10 p-8">
             <Code2 className="h-6 w-6 text-[#4FABFF]" />
             <h3 className="mt-4 text-lg font-semibold text-white">
@@ -580,27 +600,6 @@ function DownloadSection() {
               Install from file: Extensions panel → ··· → Install from VSIX. Or
               build from source in{" "}
               <code className="text-neutral-400">packages/vscode-extension</code>.
-            </p>
-          </div>
-
-          <div className="flex flex-col border border-white/10 p-8">
-            <Terminal className="h-6 w-6 text-[#4FABFF]" />
-            <h3 className="mt-4 text-lg font-semibold text-white">Veyr CLI</h3>
-            <p className="mt-2 flex-1 text-sm leading-relaxed text-neutral-400">
-              Scriptable and CI-friendly. <code className="text-neutral-300">veyr status</code>{" "}
-              and <code className="text-neutral-300">veyr graph</code> read the
-              same local data as the other two surfaces.
-            </p>
-            <div id="cli-install" className="mt-6">
-              <CopyCodeBlock code="npm install -g getcanopy" />
-            </div>
-            <p className="mt-4 text-xs leading-relaxed text-neutral-600">
-              Requires Node 20+. Package name is{" "}
-              <code className="text-neutral-400">getcanopy</code> on npm; the
-              binary is <code className="text-neutral-400">veyr</code>. Already
-              installed?{" "}
-              <code className="text-neutral-400">npm install -g getcanopy@latest</code>{" "}
-              updates it. The CLI nudges you when a newer version is out.
             </p>
           </div>
         </div>
@@ -642,14 +641,6 @@ function FinalCta() {
             Jump to setup
             <ArrowRight className="h-4 w-4" />
           </a>
-          <a
-            href="https://github.com/hethb/Veyr"
-            target="_blank"
-            rel="noreferrer"
-            className="border border-white/20 px-5 py-3 text-sm font-semibold text-white transition-colors hover:border-[#4FABFF]/50 hover:bg-[#076EFF]/10"
-          >
-            View on GitHub
-          </a>
         </div>
       </div>
     </section>
@@ -680,15 +671,28 @@ function Footer() {
           <a href="#compare" className="transition-colors hover:text-white">
             Compare
           </a>
-          <a
-            href="https://github.com/hethb/Veyr"
-            target="_blank"
-            rel="noreferrer"
-            className="transition-colors hover:text-white"
-          >
-            GitHub
-          </a>
         </div>
+      </div>
+      <div className="mx-auto max-w-6xl border-t border-white/5 px-6 py-4 text-center text-xs text-neutral-600">
+        Built with{" "}
+        <a
+          href="https://github.com/steipete/CodexBar"
+          target="_blank"
+          rel="noreferrer"
+          className="underline decoration-neutral-700 underline-offset-2 transition-colors hover:text-neutral-400"
+        >
+          CodexBar
+        </a>{" "}
+        by Peter Steinberger and{" "}
+        <a
+          href="https://github.com/Graphify-Labs/graphify"
+          target="_blank"
+          rel="noreferrer"
+          className="underline decoration-neutral-700 underline-offset-2 transition-colors hover:text-neutral-400"
+        >
+          Graphify
+        </a>
+        .
       </div>
     </footer>
   );
