@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import VeyrMark from "../components/VeyrMark";
 import {
   ArrowRight,
@@ -13,7 +13,7 @@ import { CopyCodeBlock } from "../components/CopyCodeBlock";
 import { FeaturesSection } from "../components/FeaturesSection";
 import { GraphDemo } from "../components/GraphDemo";
 import { HeroSection } from "../components/HeroSection";
-import { LogoReveal } from "../components/LogoReveal";
+import { IntroReveal } from "../components/IntroReveal";
 import { WorksWithSection } from "../components/WorksWithSection";
 import { AnimatedNav, type AnimatedNavItem } from "@/components/ui/animated-nav";
 
@@ -34,22 +34,36 @@ const VSIX_VERSION = "0.3.0";
 const VSIX_URL = `/downloads/veyr-vscode-${VSIX_VERSION}.vsix`;
 
 export function Landing() {
+  // "intro": only the logo animation is on screen. "reveal": the overlay is
+  // fading out and the page mounts underneath, so the hero's own entrance
+  // plays as it comes into view. "done": overlay unmounted.
+  const [phase, setPhase] = useState<"intro" | "reveal" | "done">("intro");
+
   return (
     <div className="min-h-screen bg-black text-white">
-      <Header />
-      <HeroSection />
-      <LogoReveal />
-      <WorksWithSection />
-      <HowItWorks />
-      <UsageSection />
-      <GraphSection />
-      <GetRunning />
-      <PrivacySection />
-      <ComparisonSection />
-      <FeaturesSection />
-      <DownloadSection />
-      <FinalCta />
-      <Footer />
+      {phase !== "done" && (
+        <IntroReveal
+          onFadeStart={() => setPhase("reveal")}
+          onDone={() => setPhase("done")}
+        />
+      )}
+      {phase !== "intro" && (
+        <>
+          <Header />
+          <HeroSection />
+          <WorksWithSection />
+          <HowItWorks />
+          <UsageSection />
+          <GraphSection />
+          <GetRunning />
+          <PrivacySection />
+          <ComparisonSection />
+          <FeaturesSection />
+          <DownloadSection />
+          <FinalCta />
+          <Footer />
+        </>
+      )}
     </div>
   );
 }
