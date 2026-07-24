@@ -146,7 +146,7 @@ export function AnimatedNav({ items, collapseAfter }: AnimatedNavProps) {
           variants={logoVariants}
           onClick={(e) => e.stopPropagation()}
           className="flex-shrink-0 flex items-center pl-3.5 pr-2"
-          aria-label="Veyr — back to top"
+          aria-label="Veyr, back to top"
         >
           <VeyrMark className="h-6 w-6" />
         </motion.a>

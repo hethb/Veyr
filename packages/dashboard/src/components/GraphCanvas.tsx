@@ -338,14 +338,14 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
             <div className="font-medium text-neutral-300">Veyr insight</div>
             {selected.kind === "function" && degree(selected) <= 2 ? (
               <p className="mt-1 text-neutral-400">
-                ⚡ Low connectivity — a leaf function. Consider claude-haiku-4-5 for edits here.
+                ⚡ Low connectivity: a leaf function. Consider claude-haiku-4-5 for edits here.
               </p>
             ) : degree(selected) > 20 ? (
               <p className="mt-1 text-neutral-400">
-                ⚠️ {degree(selected)} connections — changes ripple widely. Write a test first.
+                ⚠️ {degree(selected)} connections. Changes ripple widely. Write a test first.
               </p>
             ) : (
-              <p className="mt-1 text-neutral-400">{degree(selected)} connections — moderate impact.</p>
+              <p className="mt-1 text-neutral-400">{degree(selected)} connections, moderate impact.</p>
             )}
           </div>
 

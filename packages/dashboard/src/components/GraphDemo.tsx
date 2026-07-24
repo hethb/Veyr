@@ -129,7 +129,7 @@ export function GraphDemo() {
   return (
     <div className="border border-white/[0.07] bg-white/[0.015]">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.07] px-4 py-2.5 text-xs text-neutral-500">
-        <span>Sample repo — drag nodes, scroll to zoom, click to inspect</span>
+        <span>Sample repo: drag nodes, scroll to zoom, click to inspect</span>
         <span className="text-neutral-600">12 nodes · 14 edges (yours will differ)</span>
       </div>
       <div className="flex flex-col md:flex-row">

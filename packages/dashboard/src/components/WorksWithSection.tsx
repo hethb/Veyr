@@ -24,7 +24,7 @@ export function WorksWithSection() {
     <section className="border-t border-white/10 bg-black">
       <div className="mx-auto max-w-6xl px-6 py-14">
         <p className="text-center text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
-          Works with the agents you already run — no new account, nothing to
+          Works with the agents you already run. No new account, nothing to
           switch
         </p>
         <div className="mt-8">

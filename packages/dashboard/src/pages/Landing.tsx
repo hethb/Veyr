@@ -89,21 +89,21 @@ function HowItWorks() {
       icon: Monitor,
       accent: ACCENTS[0],
       title: "Install a surface",
-      body: "Menu bar app, VS Code extension, or CLI — pick one, or use all three, they read the same local data. No account, no API key, no configuration needed to get started.",
+      body: "Menu bar app, VS Code extension, or CLI: pick one, or use all three, they read the same local data. No account, no API key, no configuration needed to get started.",
       code: "npm install -g getcanopy   # or download the .dmg / .vsix",
     },
     {
       icon: Terminal,
       accent: ACCENTS[1],
       title: "Open Claude Code",
-      body: "Veyr reads your local session logs automatically. The moment you start a session, Veyr shows you the cost in real time — by project, by model, by session. (Codex CLI and other providers are read the same way.)",
+      body: "Veyr reads your local session logs automatically. The moment you start a session, Veyr shows you the cost in real time: by project, by model, by session. (Codex CLI and other providers are read the same way.)",
       code: "ls ~/.claude/projects  # the logs Veyr reads",
     },
     {
       icon: Zap,
       accent: ACCENTS[2],
       title: "Let Veyr feed context back",
-      body: "Veyr writes a spend, budget, and codebase-graph summary into your project's CLAUDE.md (on by default, one click to disable) — so your agent knows its burn rate and the shape of the codebase before it starts guessing.",
+      body: "Veyr writes a spend, budget, and codebase-graph summary into your project's CLAUDE.md (on by default, one click to disable) so your agent knows its burn rate and the shape of the codebase before it starts guessing.",
       code: "cat ~/.veyr/agent-status/VEYR_STATUS.json",
     },
   ];
@@ -223,7 +223,7 @@ function GetRunning() {
     },
     {
       title: "Bypass Gatekeeper (required for unsigned builds)",
-      detail: "Removes the quarantine flag so macOS allows it to run. Safe — only affects the Veyr app.",
+      detail: "Removes the quarantine flag so macOS allows it to run. Safe: only affects the Veyr app.",
       code: "xattr -cr /Applications/Veyr.app",
     },
     {
@@ -240,14 +240,14 @@ function GetRunning() {
         "VS Code → Extensions panel (Cmd+Shift+X) → ··· (top right) → \"Install from VSIX…\" → choose the downloaded file.",
     },
     {
-      title: "Done — it activates automatically",
+      title: "Done, it activates automatically",
       detail:
-        "Status bar shows live spend the next time a session is active — the extension reads your local session logs itself, no app required.",
+        "Status bar shows live spend the next time a session is active. The extension reads your local session logs itself, no app required.",
     },
   ];
 
   const cliSteps: SetupStep[] = [
-    { title: "Install", detail: "Requires Node 20+. Nothing else to download — no app, no extension.", code: "npm install -g getcanopy" },
+    { title: "Install", detail: "Requires Node 20+. Nothing else to download. No app, no extension.", code: "npm install -g getcanopy" },
     { title: "Or via Homebrew", code: "brew install hethb/veyr/veyr" },
     {
       title: "Check your spend",
@@ -256,7 +256,7 @@ function GetRunning() {
     },
     {
       title: "Build the codebase graph",
-      detail: "Runs Graphify locally (Python 3.10+) — same graph the app builds.",
+      detail: "Runs Graphify locally (Python 3.10+), the same graph the app builds.",
       code: "veyr graph --refresh",
     },
     {
@@ -271,8 +271,8 @@ function GetRunning() {
       <div className="mx-auto max-w-6xl px-6 py-24">
         <SectionHeader
           eyebrow="Get started"
-          title="Three ways in — pick one, or use all three"
-          subtitle="Each installs independently and works fully standalone — none requires the others. If you use more than one, they share the same local data under ~/.veyr/, so spend is consistent no matter which surface you open."
+          title="Three ways in: pick one, or use all three"
+          subtitle="Each installs independently and works fully standalone. None requires the others. If you use more than one, they share the same local data under ~/.veyr/, so spend is consistent no matter which surface you open."
         />
 
         <div className="mt-14 grid gap-6 lg:grid-cols-3">
@@ -310,7 +310,7 @@ function GetRunning() {
 function PrivacySection() {
   const points = [
     <>
-      Veyr reads your Claude Code and Codex log files from your local disk — the
+      Veyr reads your Claude Code and Codex log files from your local disk, the
       same files your terminal shows with{" "}
       <code className="text-neutral-300">ls ~/.claude/projects/</code>
     </>,
@@ -318,7 +318,7 @@ function PrivacySection() {
     <>
       By default the Mac app&apos;s only network call fetches the public
       models.dev pricing catalog. Optionally, add your own Anthropic API key to
-      enable AI task-complexity analysis — a small Haiku call using your key,
+      enable AI task-complexity analysis: a small Haiku call using your key,
       which you control. Off until you add a key.
     </>,
     <>
@@ -335,12 +335,12 @@ function PrivacySection() {
         Graphify
       </a>{" "}
       (a Python package, pinned to an audited commit) on first launch to enable
-      codebase graph analysis. It runs entirely locally — pure AST parsing, no
+      codebase graph analysis. It runs entirely locally: pure AST parsing, no
       LLM calls, no code leaves your machine. See the README for how to manage
       or disable it.
     </>,
     <>
-      macOS may prompt for Full Disk Access or Keychain access — both are
+      macOS may prompt for Full Disk Access or Keychain access. Both are
       optional, used only to read browser cookies for web-based providers or
       OAuth credentials, and both can be scoped to Veyr alone or disabled
       entirely in Settings → Advanced. No Screen Recording, no Accessibility,
@@ -380,8 +380,8 @@ function PrivacySection() {
 
 function ComparisonSection() {
   const rows: [string, string, string][] = [
-    ["How it sees your usage", "Sits in the request path — you point ANTHROPIC_BASE_URL at it", "Reads session logs already on disk"],
-    ["Setup", "API key + base-URL swap, often an account", "Download and open — no account or key required for spend visibility"],
+    ["How it sees your usage", "Sits in the request path: you point ANTHROPIC_BASE_URL at it", "Reads session logs already on disk"],
+    ["Setup", "API key + base-URL swap, often an account", "Download and open. No account or key required for spend visibility"],
     ["Your traffic", "Passes through their infrastructure", "Never touches it"],
     ["What you get back", "Logs of what happened", "Spend and a codebase map fed into your agent's own context"],
   ];
@@ -430,7 +430,7 @@ function UsageSection() {
       <div className="mx-auto max-w-6xl px-6 py-24">
         <SectionHeader
           eyebrow="Usage & rate limits"
-          title="Every provider, one place — before you hit a wall, not after"
+          title="Every provider, one place, before you hit a wall, not after"
           subtitle="Veyr reads local session logs and, where a provider exposes it, live rate-limit data. No proxy, no API key needed just to see where you stand."
         />
         <div className="mt-14 grid items-center gap-12 lg:grid-cols-2">
@@ -460,7 +460,7 @@ function UsageSection() {
               {[
                 [
                   "Every provider, one place",
-                  "Claude Code, Codex, and 50+ other coding-agent providers, read from local session logs — for Codex, straight from its own local RPC, not scraped or guessed.",
+                  "Claude Code, Codex, and 50+ other coding-agent providers, read from local session logs. For Codex, straight from its own local RPC, not scraped or guessed.",
                 ],
                 [
                   "Rate-limit windows, not just totals",
@@ -468,7 +468,7 @@ function UsageSection() {
                 ],
                 [
                   "Same number everywhere",
-                  "The menu bar app, VS Code status bar, and veyr status all read the same local data — never a proxy in between.",
+                  "The menu bar app, VS Code status bar, and veyr status all read the same local data, never a proxy in between.",
                 ],
               ].map(([title, body]) => (
                 <li key={title} className="flex gap-4">
@@ -495,14 +495,14 @@ function GraphSection() {
         <SectionHeader
           eyebrow="Codebase graph"
           title="Your agent stops exploring and starts knowing"
-          subtitle="Veyr builds a knowledge graph of your codebase locally — powered by Graphify — and hands your agent a 400-token map instead of a 40-file reading list. This is the real graph renderer, not a screenshot — try it below."
+          subtitle="Veyr builds a knowledge graph of your codebase locally, powered by Graphify, and hands your agent a 400-token map instead of a 40-file reading list. This is the real graph renderer, not a screenshot. Try it below."
         />
 
         <div className="mt-14 grid gap-6 sm:grid-cols-3">
           {[
-            ["Built on your machine", "Pure AST parsing via Graphify — pinned install, zero LLM calls, no code leaves your device."],
+            ["Built on your machine", "Pure AST parsing via Graphify: pinned install, zero LLM calls, no code leaves your device."],
             ["Injected where agents look", "The graph summary lands in CLAUDE.md and VEYR_STATUS.json: architecture, the active file's callers and callees, the critical path."],
-            ["Structurally aware suggestions", "Leaf function on Opus, a god node, a redundant re-read, an unexplored dependency, high-connection code with no tests — five structural rules catch what spend data alone can't see."],
+            ["Structurally aware suggestions", "Leaf function on Opus, a god node, a redundant re-read, an unexplored dependency, high-connection code with no tests: five structural rules catch what spend data alone can't see."],
           ].map(([title, body]) => (
             <div key={title}>
               <h3 className="flex items-center gap-3 text-sm font-semibold text-white">
@@ -552,7 +552,7 @@ function DownloadSection() {
             </a>
             <p className="mt-4 text-xs leading-relaxed text-neutral-600">
               macOS 14+ · Apple Silicon &amp; Intel · v{VEYR_VERSION} · unsigned
-              preview build — after installing, run{" "}
+              preview build. After installing, run{" "}
               <code className="text-neutral-400">xattr -cr /Applications/Veyr.app</code>{" "}
               once to pass Gatekeeper.
             </p>
@@ -565,7 +565,7 @@ function DownloadSection() {
             </h3>
             <p className="mt-2 flex-1 text-sm leading-relaxed text-neutral-400">
               Live session cost in your status bar and a panel with burn rate,
-              cache hit rate, and codebase graph status — fed by the Mac
+              cache hit rate, and codebase graph status, fed by the Mac
               app&apos;s local agent feed.
             </p>
             <a
@@ -600,23 +600,14 @@ function DownloadSection() {
               binary is <code className="text-neutral-400">veyr</code>. Already
               installed?{" "}
               <code className="text-neutral-400">npm install -g getcanopy@latest</code>{" "}
-              updates it — the CLI nudges you when a newer version is out.
+              updates it. The CLI nudges you when a newer version is out.
             </p>
           </div>
         </div>
         <p className="mt-8 text-center text-xs text-neutral-600">
           What Veyr reads: your local Claude Code logs
-          (~/.claude/projects). Nothing leaves your machine — no server, no
-          analytics. The Mac app is built on{" "}
-          <a
-            href="https://github.com/steipete/CodexBar"
-            target="_blank"
-            rel="noreferrer"
-            className="underline hover:text-neutral-400"
-          >
-            CodexBar
-          </a>{" "}
-          by Peter Steinberger (MIT).
+          (~/.claude/projects). Nothing leaves your machine. No server, no
+          analytics.
         </p>
       </div>
     </section>
@@ -639,7 +630,7 @@ function FinalCta() {
           Stop guessing what you&apos;re spending on.
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-base text-neutral-500">
-          Download the app, install the extension, or run the CLI — all three
+          Download the app, install the extension, or run the CLI. All three
           read the same local data. No account, no seed command, nothing to
           configure.
         </p>
@@ -698,27 +689,6 @@ function Footer() {
             GitHub
           </a>
         </div>
-      </div>
-      <div className="mx-auto max-w-6xl border-t border-white/5 px-6 py-4 text-center text-xs text-neutral-600">
-        Veyr&apos;s macOS app is built on{" "}
-        <a
-          href="https://github.com/steipete/CodexBar"
-          target="_blank"
-          rel="noreferrer"
-          className="underline decoration-neutral-700 underline-offset-2 transition-colors hover:text-neutral-400"
-        >
-          CodexBar
-        </a>{" "}
-        by Peter Steinberger (
-        <a
-          href="https://github.com/steipete"
-          target="_blank"
-          rel="noreferrer"
-          className="underline decoration-neutral-700 underline-offset-2 transition-colors hover:text-neutral-400"
-        >
-          steipete
-        </a>
-        ) · MIT License
       </div>
     </footer>
   );

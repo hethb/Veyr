@@ -237,7 +237,7 @@ export function HeroSection() {
           >
             <p className="mx-auto mb-8 max-w-xl px-4 text-base font-light leading-relaxed tracking-wide text-neutral-400 sm:text-lg md:text-xl">
               Veyr reads Claude Code and Codex session logs straight off your
-              disk and builds a local map of your codebase — no account, no
+              disk and builds a local map of your codebase. No account, no
               traffic interception, nothing leaves your machine.
             </p>
           </motion.div>
@@ -286,15 +286,7 @@ export function HeroSection() {
               </span>
             </a>
             <p className="text-xs text-neutral-500">
-              No proxy. No account. No traffic interception. ·{" "}
-              <a
-                href="https://github.com/steipete/CodexBar"
-                target="_blank"
-                rel="noreferrer"
-                className="underline decoration-neutral-700 underline-offset-2 transition-colors hover:text-neutral-300"
-              >
-                Built on CodexBar
-              </a>
+              No proxy. No account. No traffic interception.
             </p>
           </motion.div>
         </div>
